@@ -1,0 +1,18 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install"]
+cacheDirectories = ["node_modules"]
+
+[phases.build]
+cmds = [
+  "npx prisma generate --schema=prisma/schema.prisma",
+  "npm run build"
+]
+
+[start]
+cmd = "npx prisma migrate deploy --schema=prisma/schema.prisma && node dist/server.js"
+
+[staticAssets]
+errorsPage = ""
