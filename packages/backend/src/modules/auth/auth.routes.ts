@@ -39,7 +39,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const status = role === Role.DENTIST ? UserStatus.PENDING : UserStatus.ACTIVE
 
     const user = await fastify.prisma.user.create({
-      data: { ...data, password: hashedPassword, role, status },
+      data: { ...data, password: hashedPassword, role, status } as any,
       select: { id: true, name: true, email: true, role: true, status: true },
     })
 
@@ -64,7 +64,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const payload = { id: user.id, email: user.email, role: user.role, name: user.name }
     const accessToken = fastify.jwt.sign(payload, { expiresIn: '15m' })
-    const refreshToken = fastify.jwt.sign({ id: user.id }, { expiresIn: '7d' })
+    const refreshToken = fastify.jwt.sign({ id: user.id } as any, { expiresIn: '7d' })
 
     const unreadPushes = await fastify.prisma.pushNotification.findMany({
       where: {
