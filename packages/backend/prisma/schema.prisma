@@ -1,0 +1,362 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DENTIST
+  LAB_TECH
+  ADMIN
+  FINANCIAL
+  SELLER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+enum CaseStatus {
+  DRAFT
+  SUBMITTED
+  IN_PLANNING
+  WAITING_APPROVAL
+  REVISION_REQUESTED
+  APPROVED
+  IN_PRODUCTION
+  SHIPPED
+  COMPLETED
+  REFINEMENT
+}
+
+enum DocumentType {
+  PHOTO_EXTRA
+  PHOTO_INTRA
+  STL_UPPER
+  STL_LOWER
+  XRAY_PANORAMIC
+  XRAY_CEPHALOMETRIC
+  SETUP
+  OTHER
+}
+
+enum PaymentProvider {
+  REDE
+  SAUDE_SERVICE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PushTargetType {
+  ALL
+  ROLE
+  USER
+  SELLER_PORTFOLIO
+}
+
+enum PushLevel {
+  INFO
+  WARNING
+  URGENT
+}
+
+enum AppModuleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id                String     @id @default(uuid())
+  name              String
+  email             String     @unique
+  password          String
+  role              Role       @default(DENTIST)
+  status            UserStatus @default(PENDING)
+  cro               String?
+  clinic            String?
+  cnpj              String?
+  phone             String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  deliveryAddress   String?
+  totvsCode         String?
+  emailVerified     Boolean    @default(false)
+  emailVerifyToken  String?
+  resetPasswordToken String?
+  resetPasswordExpiry DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  cases             Case[]     @relation("DentistCases")
+  plannings         Planning[] @relation("LabTechPlannings")
+  revisions         Revision[] @relation("RevisionRequester")
+  payments          Payment[]
+  notifications     Notification[]
+  pushReads         PushRead[]
+  pushNotifications PushNotification[] @relation("PushCreator")
+  emailLogs         EmailLog[]
+  sellerClients     SellerClient[] @relation("SellerRelation")
+  clientSellers     SellerClient[] @relation("ClientRelation")
+  financials        Financial[]    @relation("BilledBy")
+}
+
+model Case {
+  id             String     @id @default(uuid())
+  caseNumber     Int        @default(autoincrement())
+  dentistId      String
+  serviceId      String?
+  patientName    String
+  patientDob     DateTime?
+  gender         String?
+  notes          String?
+  status         CaseStatus @default(DRAFT)
+  totvsOrderId   String?
+  isRefinement   Boolean    @default(false)
+  parentCaseId   String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  dentist        User       @relation("DentistCases", fields: [dentistId], references: [id])
+  service        Service?   @relation(fields: [serviceId], references: [id])
+  parentCase     Case?      @relation("CaseRefinements", fields: [parentCaseId], references: [id])
+  refinements    Case[]     @relation("CaseRefinements")
+  documents      CaseDocument[]
+  plannings      Planning[]
+  production     Production?
+  payment        Payment?
+  financial      Financial?
+  activities     CaseActivity[]
+  emailLogs      EmailLog[]
+}
+
+model CaseDocument {
+  id         String       @id @default(uuid())
+  caseId     String
+  type       DocumentType
+  fileName   String
+  url        String
+  size       Int
+  uploadedAt DateTime     @default(now())
+
+  case       Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model Planning {
+  id              String    @id @default(uuid())
+  caseId          String
+  labTechId       String
+  notes           String?
+  alignerUpper    Int?
+  alignerLower    Int?
+  setupUrl        String?
+  setupFileName   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  case            Case      @relation(fields: [caseId], references: [id])
+  labTech         User      @relation("LabTechPlannings", fields: [labTechId], references: [id])
+  revisions       Revision[]
+}
+
+model Revision {
+  id           String    @id @default(uuid())
+  planningId   String
+  requestedBy  String
+  notes        String
+  status       String    @default("PENDING")
+  createdAt    DateTime  @default(now())
+
+  planning     Planning  @relation(fields: [planningId], references: [id])
+  requester    User      @relation("RevisionRequester", fields: [requestedBy], references: [id])
+}
+
+model Production {
+  id           String    @id @default(uuid())
+  caseId       String    @unique
+  trackingCode String?
+  carrier      String?
+  shippedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  case         Case      @relation(fields: [caseId], references: [id])
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  type            String
+  productionDays  Int      @default(15)
+  maxRevisions    Int      @default(2)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  prices          Price[]
+  cases           Case[]
+}
+
+model Price {
+  id          String   @id @default(uuid())
+  serviceId   String
+  price       Decimal  @db.Decimal(10, 2)
+  groupId     String?
+  dentistId   String?
+  validFrom   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  service     Service  @relation(fields: [serviceId], references: [id])
+}
+
+model Payment {
+  id            String          @id @default(uuid())
+  caseId        String          @unique
+  dentistId     String
+  provider      PaymentProvider
+  amount        Decimal         @db.Decimal(10, 2)
+  status        PaymentStatus   @default(PENDING)
+  transactionId String?
+  paidAt        DateTime?
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  case          Case            @relation(fields: [caseId], references: [id])
+  dentist       User            @relation(fields: [dentistId], references: [id])
+}
+
+model Financial {
+  id            String    @id @default(uuid())
+  caseId        String    @unique
+  invoiceNumber String?
+  billedAt      DateTime?
+  billedById    String?
+  amount        Decimal?  @db.Decimal(10, 2)
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  case          Case      @relation(fields: [caseId], references: [id])
+  billedBy      User?     @relation("BilledBy", fields: [billedById], references: [id])
+}
+
+model SellerClient {
+  sellerId   String
+  clientId   String
+  createdAt  DateTime @default(now())
+
+  seller     User     @relation("SellerRelation", fields: [sellerId], references: [id])
+  client     User     @relation("ClientRelation", fields: [clientId], references: [id])
+
+  @@id([sellerId, clientId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushNotification {
+  id          String         @id @default(uuid())
+  createdById String
+  title       String
+  body        String
+  link        String?
+  level       PushLevel      @default(INFO)
+  targetType  PushTargetType @default(ALL)
+  targetId    String?
+  expiresAt   DateTime?
+  createdAt   DateTime       @default(now())
+
+  createdBy   User           @relation("PushCreator", fields: [createdById], references: [id])
+  reads       PushRead[]
+}
+
+model PushRead {
+  id       String           @id @default(uuid())
+  pushId   String
+  userId   String
+  readAt   DateTime         @default(now())
+
+  push     PushNotification @relation(fields: [pushId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pushId, userId])
+}
+
+model AppModule {
+  id          String          @id @default(uuid())
+  name        String
+  slug        String          @unique
+  icon        String?
+  url         String
+  roles       Role[]
+  status      AppModuleStatus @default(ACTIVE)
+  openInNewTab Boolean        @default(false)
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model CaseActivity {
+  id          String   @id @default(uuid())
+  caseId      String
+  userId      String?
+  action      String
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model EmailLog {
+  id         String   @id @default(uuid())
+  caseId     String?
+  userId     String?
+  event      String
+  recipients String[]
+  subject    String
+  status     String   @default("SENT")
+  error      String?
+  sentAt     DateTime @default(now())
+
+  case       Case?    @relation(fields: [caseId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id])
+}
+
+model TotvsLog {
+  id         String   @id @default(uuid())
+  direction  String
+  endpoint   String
+  payload    Json?
+  response   Json?
+  status     String
+  createdAt  DateTime @default(now())
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
