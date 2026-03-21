@@ -85,7 +85,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
     const data = createCaseSchema.parse(request.body)
     
     const caseData = await fastify.prisma.case.create({
-      data: { ...data, dentistId: (request.user as JwtPayload).id, patientDob: data.patientDob ? new Date(data.patientDob) : undefined },
+      data: { ...data, dentistId: (request.user as JwtPayload).id, patientDob: data.patientDob ? new Date(data.patientDob) : undefined } as any,
       include: { dentist: true, service: true },
     })
 
