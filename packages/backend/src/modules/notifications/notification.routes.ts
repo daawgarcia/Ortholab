@@ -1,15 +1,15 @@
 import { FastifyInstance } from 'fastify'
-import { authenticate } from '../../plugins/auth'
+import { authenticate, JwtPayload } from '../../plugins/auth'
 
 export async function notificationRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: authenticate }, async (request) => {
     const notifications = await fastify.prisma.notification.findMany({
-      where: { userId: request.user.id },
+      where: { userId: (request.user as JwtPayload).id },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
     const unreadCount = await fastify.prisma.notification.count({
-      where: { userId: request.user.id, read: false },
+      where: { userId: (request.user as JwtPayload).id, read: false },
     })
     return { notifications, unreadCount }
   })
@@ -22,7 +22,7 @@ export async function notificationRoutes(fastify: FastifyInstance) {
 
   fastify.patch('/read-all', { preHandler: authenticate }, async (request) => {
     await fastify.prisma.notification.updateMany({
-      where: { userId: request.user.id, read: false },
+      where: { userId: (request.user as JwtPayload).id, read: false },
       data: { read: true },
     })
     return { success: true }

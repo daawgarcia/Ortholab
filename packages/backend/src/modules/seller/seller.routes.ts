@@ -1,11 +1,11 @@
 import { FastifyInstance } from 'fastify'
-import { requireRole } from '../../plugins/auth'
+import { requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 
 export async function sellerRoutes(fastify: FastifyInstance) {
   fastify.get('/portfolio', { preHandler: requireRole(Role.SELLER) }, async (request) => {
     const clients = await fastify.prisma.sellerClient.findMany({
-      where: { sellerId: request.user.id },
+      where: { sellerId: (request.user as JwtPayload).id },
       include: {
         client: {
           select: { id: true, name: true, clinic: true, email: true, phone: true, status: true, createdAt: true,
@@ -23,7 +23,7 @@ export async function sellerRoutes(fastify: FastifyInstance) {
     const skip = (parseInt(page) - 1) * parseInt(limit)
 
     const portfolio = await fastify.prisma.sellerClient.findMany({
-      where: { sellerId: request.user.id },
+      where: { sellerId: (request.user as JwtPayload).id },
       select: { clientId: true },
     })
     const clientIds = portfolio.map(p => p.clientId)

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { authenticate, requireRole } from '../../plugins/auth'
+import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
 
@@ -19,7 +19,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     const payment = await fastify.prisma.payment.upsert({
       where: { caseId },
       update: { provider, amount: price, status: 'PENDING' },
-      create: { caseId, dentistId: request.user.id, provider, amount: price, status: 'PENDING' },
+      create: { caseId, dentistId: (request.user as JwtPayload).id, provider, amount: price, status: 'PENDING' },
     })
 
     return { payment, message: 'Pagamento iniciado. Integração com gateway em configuração.' }

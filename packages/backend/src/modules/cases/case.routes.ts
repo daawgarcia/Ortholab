@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { CaseStatus, Role } from '@prisma/client'
-import { authenticate, requireRole } from '../../plugins/auth'
+import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { EventMailer } from '../mailer/event-mailer'
 
 const createCaseSchema = z.object({
@@ -18,7 +18,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
   const mailer = new EventMailer(fastify)
 
   fastify.get('/', { preHandler: authenticate }, async (request) => {
-    const user = request.user
+    const user = request.user as JwtPayload
     const { status, search, page = '1', limit = '20' } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
 
@@ -49,7 +49,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
 
   fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    const user = request.user
+    const user = request.user as JwtPayload
 
     const caseData = await fastify.prisma.case.findUnique({
       where: { id },
@@ -85,12 +85,12 @@ export async function caseRoutes(fastify: FastifyInstance) {
     const data = createCaseSchema.parse(request.body)
     
     const caseData = await fastify.prisma.case.create({
-      data: { ...data, dentistId: request.user.id, patientDob: data.patientDob ? new Date(data.patientDob) : undefined },
+      data: { ...data, dentistId: (request.user as JwtPayload).id, patientDob: data.patientDob ? new Date(data.patientDob) : undefined },
       include: { dentist: true, service: true },
     })
 
     await fastify.prisma.caseActivity.create({
-      data: { caseId: caseData.id, userId: request.user.id, action: 'CREATED', description: 'Caso criado' },
+      data: { caseId: caseData.id, userId: (request.user as JwtPayload).id, action: 'CREATED', description: 'Caso criado' },
     })
 
     return reply.status(201).send({ case: caseData })
@@ -99,7 +99,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
   fastify.patch('/:id', { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const data = request.body as any
-    const user = request.user
+    const user = request.user as JwtPayload
 
     const existing = await fastify.prisma.case.findUnique({ where: { id } })
     if (!existing) return reply.status(404).send({ error: 'Caso não encontrado' })
@@ -124,7 +124,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
       include: { dentist: true, service: true },
     })
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
-    if (caseData.dentistId !== request.user.id) return reply.status(403).send({ error: 'Acesso negado' })
+    if (caseData.dentistId !== (request.user as JwtPayload).id) return reply.status(403).send({ error: 'Acesso negado' })
     if (caseData.status !== CaseStatus.DRAFT) return reply.status(400).send({ error: 'Caso já foi submetido' })
 
     const updated = await fastify.prisma.case.update({
@@ -133,7 +133,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
     })
 
     await fastify.prisma.caseActivity.create({
-      data: { caseId: id, userId: request.user.id, action: 'SUBMITTED', description: 'Caso submetido para análise' },
+      data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'SUBMITTED', description: 'Caso submetido para análise' },
     })
 
     await mailer.onCaseSubmitted(caseData)
@@ -149,7 +149,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
       include: { dentist: true, service: true, plannings: { orderBy: { createdAt: 'desc' }, take: 1 } },
     })
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
-    if (caseData.dentistId !== request.user.id) return reply.status(403).send({ error: 'Acesso negado' })
+    if (caseData.dentistId !== (request.user as JwtPayload).id) return reply.status(403).send({ error: 'Acesso negado' })
     if (caseData.status !== CaseStatus.WAITING_APPROVAL) return reply.status(400).send({ error: 'Caso não está aguardando aprovação' })
 
     const updated = await fastify.prisma.case.update({
@@ -158,7 +158,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
     })
 
     await fastify.prisma.caseActivity.create({
-      data: { caseId: id, userId: request.user.id, action: 'APPROVED', description: 'Planejamento aprovado pelo dentista' },
+      data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'APPROVED', description: 'Planejamento aprovado pelo dentista' },
     })
 
     await mailer.onCaseApproved(caseData)
@@ -175,19 +175,19 @@ export async function caseRoutes(fastify: FastifyInstance) {
       include: { dentist: true, plannings: { orderBy: { createdAt: 'desc' }, take: 1, include: { labTech: true } } },
     })
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
-    if (caseData.dentistId !== request.user.id) return reply.status(403).send({ error: 'Acesso negado' })
+    if (caseData.dentistId !== (request.user as JwtPayload).id) return reply.status(403).send({ error: 'Acesso negado' })
 
     const latestPlanning = caseData.plannings[0]
     if (!latestPlanning) return reply.status(400).send({ error: 'Sem planejamento para revisar' })
 
     await fastify.prisma.revision.create({
-      data: { planningId: latestPlanning.id, requestedBy: request.user.id, notes, status: 'PENDING' },
+      data: { planningId: latestPlanning.id, requestedBy: (request.user as JwtPayload).id, notes, status: 'PENDING' },
     })
 
     await fastify.prisma.case.update({ where: { id }, data: { status: CaseStatus.REVISION_REQUESTED } })
 
     await fastify.prisma.caseActivity.create({
-      data: { caseId: id, userId: request.user.id, action: 'REVISION_REQUESTED', description: `Revisão solicitada: ${notes}` },
+      data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'REVISION_REQUESTED', description: `Revisão solicitada: ${notes}` },
     })
 
     await mailer.onRevisionRequested(caseData, notes)
@@ -208,7 +208,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
     await fastify.prisma.case.update({ where: { id }, data: { status } })
 
     await fastify.prisma.caseActivity.create({
-      data: { caseId: id, userId: request.user.id, action: 'STATUS_CHANGED', description: `Status alterado para ${status}` },
+      data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'STATUS_CHANGED', description: `Status alterado para ${status}` },
     })
 
     if (status === CaseStatus.SHIPPED && trackingCode) {

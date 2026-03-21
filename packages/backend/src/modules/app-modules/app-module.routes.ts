@@ -1,11 +1,11 @@
 import { FastifyInstance } from 'fastify'
-import { authenticate, requireRole } from '../../plugins/auth'
+import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 
 export async function appModuleRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: authenticate }, async (request) => {
     const modules = await fastify.prisma.appModule.findMany({
-      where: { status: 'ACTIVE', roles: { has: request.user.role } },
+      where: { status: 'ACTIVE', roles: { has: (request.user as JwtPayload).role } },
       orderBy: { order: 'asc' },
     })
     return { modules }
