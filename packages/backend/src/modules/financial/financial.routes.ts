@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { requireRole } from '../../plugins/auth'
+import { requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 
 export async function financialRoutes(fastify: FastifyInstance) {
@@ -35,8 +35,8 @@ export async function financialRoutes(fastify: FastifyInstance) {
 
     const financial = await fastify.prisma.financial.upsert({
       where: { caseId },
-      update: { invoiceNumber, amount, billedAt: new Date(), billedById: request.user.id, notes },
-      create: { caseId, invoiceNumber, amount, billedAt: new Date(), billedById: request.user.id, notes },
+      update: { invoiceNumber, amount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
+      create: { caseId, invoiceNumber, amount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
     })
     return { financial }
   })

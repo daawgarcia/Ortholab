@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { Role, UserStatus } from '@prisma/client'
-import { authenticate } from '../../plugins/auth'
+import { authenticate, JwtPayload } from '../../plugins/auth'
 
 const registerSchema = z.object({
   name: z.string().min(3),
@@ -147,7 +147,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   fastify.get('/me', { preHandler: authenticate }, async (request) => {
     const user = await fastify.prisma.user.findUnique({
-      where: { id: request.user.id },
+      where: { id: (request.user as JwtPayload).id },
       select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, cnpj: true, phone: true, address: true, city: true, state: true, zipCode: true, deliveryAddress: true, createdAt: true },
     })
     return { user }
