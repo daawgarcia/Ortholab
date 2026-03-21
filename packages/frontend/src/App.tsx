@@ -1,0 +1,67 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/auth'
+import { Toaster } from '@/components/ui/toaster'
+import { PushModal } from '@/components/push-modal'
+
+import LoginPage from '@/pages/auth/login'
+import RegisterPage from '@/pages/auth/register'
+import ForgotPasswordPage from '@/pages/auth/forgot-password'
+import ResetPasswordPage from '@/pages/auth/reset-password'
+import AppLayout from '@/components/layout/app-layout'
+import DashboardPage from '@/pages/dashboard'
+import CasesPage from '@/pages/cases'
+import CaseDetailPage from '@/pages/cases/detail'
+import NewCasePage from '@/pages/cases/new'
+import PlanningPage from '@/pages/planning'
+import FinancialPage from '@/pages/financial'
+import SellerPage from '@/pages/seller'
+import AdminUsersPage from '@/pages/admin/users'
+import AdminServicesPage from '@/pages/admin/services'
+import AdminPushPage from '@/pages/admin/push'
+import AdminModulesPage from '@/pages/admin/modules'
+import AdminSettingsPage from '@/pages/admin/settings'
+import ProfilePage from '@/pages/profile'
+
+function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
+  const { user } = useAuthStore()
+  if (!user) return <Navigate to="/login" replace />
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
+export default function App() {
+  const { user, pendingPushes, clearPushes } = useAuthStore()
+
+  return (
+    <BrowserRouter>
+      {user && pendingPushes.length > 0 && (
+        <PushModal pushes={pendingPushes} onClose={clearPushes} />
+      )}
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route index element={<DashboardPage />} />
+          <Route path="cases" element={<CasesPage />} />
+          <Route path="cases/new" element={<ProtectedRoute roles={['DENTIST']}><NewCasePage /></ProtectedRoute>} />
+          <Route path="cases/:id" element={<CaseDetailPage />} />
+          <Route path="planning" element={<ProtectedRoute roles={['LAB_TECH','ADMIN']}><PlanningPage /></ProtectedRoute>} />
+          <Route path="financial" element={<ProtectedRoute roles={['FINANCIAL','ADMIN']}><FinancialPage /></ProtectedRoute>} />
+          <Route path="seller" element={<ProtectedRoute roles={['SELLER']}><SellerPage /></ProtectedRoute>} />
+          <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="admin/services" element={<ProtectedRoute roles={['ADMIN']}><AdminServicesPage /></ProtectedRoute>} />
+          <Route path="admin/push" element={<ProtectedRoute roles={['ADMIN','SELLER']}><AdminPushPage /></ProtectedRoute>} />
+          <Route path="admin/modules" element={<ProtectedRoute roles={['ADMIN']}><AdminModulesPage /></ProtectedRoute>} />
+          <Route path="admin/settings" element={<ProtectedRoute roles={['ADMIN']}><AdminSettingsPage /></ProtectedRoute>} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <Toaster />
+    </BrowserRouter>
+  )
+}
