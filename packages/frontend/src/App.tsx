@@ -27,6 +27,9 @@ import NewPatientPage from '@/pages/patients/new'
 import PatientDetailPage from '@/pages/patients/detail'
 import DentistsPage from '@/pages/dentists'
 import DentistDetailPage from '@/pages/dentists/detail'
+import CompletionFormPage from '@/pages/patients/forms/completion'
+import OtherServicesFormPage from '@/pages/patients/forms/other-services'
+import NewClinicalRecordPage from '@/pages/patients/forms/clinical-record'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
@@ -59,6 +62,9 @@ export default function App() {
           <Route path="patients/new" element={<ProtectedRoute roles={PATIENT_ROLES}><NewPatientPage /></ProtectedRoute>} />
           <Route path="patients/:id" element={<ProtectedRoute roles={PATIENT_ROLES}><PatientDetailPage /></ProtectedRoute>} />
           <Route path="patients/:id/edit" element={<ProtectedRoute roles={PATIENT_ROLES}><NewPatientPage /></ProtectedRoute>} />
+          <Route path="patients/:patientId/forms/completion/new" element={<ProtectedRoute roles={PATIENT_ROLES}><CompletionFormPage /></ProtectedRoute>} />
+          <Route path="patients/:patientId/forms/other-services/new" element={<ProtectedRoute roles={PATIENT_ROLES}><OtherServicesFormPage /></ProtectedRoute>} />
+          <Route path="patients/:patientId/clinical-records/new" element={<ProtectedRoute roles={PATIENT_ROLES}><NewClinicalRecordPage /></ProtectedRoute>} />
 
           <Route path="dentists" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL']}><DentistsPage /></ProtectedRoute>} />
           <Route path="dentists/:id" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL']}><DentistDetailPage /></ProtectedRoute>} />

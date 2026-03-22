@@ -53,9 +53,9 @@ export async function patientRoutes(fastify: FastifyInstance) {
         dentist: { select: { name: true, clinic: true, email: true } },
         cases: {
           orderBy: { createdAt: 'desc' },
-          select: {
-            id: true, caseNumber: true, status: true, productType: true,
-            createdAt: true, service: { select: { name: true } },
+          include: {
+            service: { select: { name: true } },
+            workflowEvents: { orderBy: { stage: 'desc' }, take: 1 },
           },
         },
       },
@@ -71,7 +71,6 @@ export async function patientRoutes(fastify: FastifyInstance) {
   fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const data = patientSchema.parse(request.body)
-
     const dentistId = user.role === Role.DENTIST ? user.id : (data.dentistId || user.id)
 
     const patient = await fastify.prisma.patient.create({
@@ -110,5 +109,119 @@ export async function patientRoutes(fastify: FastifyInstance) {
     })
 
     return patient
+  })
+
+  fastify.get('/:id/photos', { preHandler: authenticate }, async (request) => {
+    const { id } = request.params as { id: string }
+    const { isPrivate } = request.query as any
+    const photos = await fastify.prisma.photo.findMany({
+      where: { patientId: id, isPrivate: isPrivate === 'true' },
+      orderBy: { createdAt: 'desc' },
+    })
+    return { photos }
+  })
+
+  fastify.post('/:id/photos', { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const parts = request.parts()
+    const saved: any[] = []
+    let isPrivate = false
+
+    for await (const part of parts) {
+      if (part.type === 'field' && part.fieldname === 'isPrivate') {
+        isPrivate = part.value === 'true'
+      } else if (part.type === 'file') {
+        const chunks: Buffer[] = []
+        for await (const chunk of part.file) chunks.push(chunk)
+        const buffer = Buffer.concat(chunks)
+
+        try {
+          const { url } = await fastify.s3.upload(buffer, part.filename, part.mimetype, `patients/${id}/photos`)
+          const photo = await fastify.prisma.photo.create({
+            data: { patientId: id, url, filename: part.filename, size: buffer.length, isPrivate },
+          })
+          saved.push(photo)
+        } catch {
+          saved.push({ filename: part.filename, error: 'Upload failed - S3 not configured' })
+        }
+      }
+    }
+
+    return reply.status(201).send({ photos: saved })
+  })
+
+  fastify.delete('/:id/photos/:photoId', { preHandler: authenticate }, async (request) => {
+    const { photoId } = request.params as { id: string; photoId: string }
+    await fastify.prisma.photo.delete({ where: { id: photoId } })
+    return { ok: true }
+  })
+
+  fastify.get('/:id/digital-models', { preHandler: authenticate }, async (request) => {
+    const { id } = request.params as { id: string }
+    const files = await fastify.prisma.digitalModel.findMany({
+      where: { patientId: id },
+      orderBy: { createdAt: 'desc' },
+    })
+    return { files }
+  })
+
+  fastify.post('/:id/digital-models', { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const parts = request.parts()
+    let kind = 'upper'
+
+    for await (const part of parts) {
+      if (part.type === 'field' && part.fieldname === 'kind') {
+        kind = String(part.value)
+      } else if (part.type === 'file') {
+        const chunks: Buffer[] = []
+        for await (const chunk of part.file) chunks.push(chunk)
+        const buffer = Buffer.concat(chunks)
+
+        try {
+          const { url } = await fastify.s3.upload(buffer, part.filename, part.mimetype, `patients/${id}/stl`)
+          const file = await fastify.prisma.digitalModel.create({
+            data: { patientId: id, url, filename: part.filename, size: buffer.length, kind },
+          })
+          return reply.status(201).send(file)
+        } catch {
+          return reply.status(201).send({ filename: part.filename, kind, error: 'S3 not configured' })
+        }
+      }
+    }
+    return reply.status(400).send({ error: 'No file provided' })
+  })
+
+  fastify.get('/:id/work-files', { preHandler: authenticate }, async (request) => {
+    const { id } = request.params as { id: string }
+    const files = await fastify.prisma.workFile.findMany({
+      where: { patientId: id },
+      orderBy: { createdAt: 'desc' },
+    })
+    return { files }
+  })
+
+  fastify.post('/:id/work-files', { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const parts = request.parts()
+
+    for await (const part of parts) {
+      if (part.type === 'file') {
+        const chunks: Buffer[] = []
+        for await (const chunk of part.file) chunks.push(chunk)
+        const buffer = Buffer.concat(chunks)
+
+        try {
+          const { url } = await fastify.s3.upload(buffer, part.filename, part.mimetype, `patients/${id}/works`)
+          const file = await fastify.prisma.workFile.create({
+            data: { patientId: id, url, filename: part.filename, size: buffer.length },
+          })
+          return reply.status(201).send(file)
+        } catch {
+          return reply.status(201).send({ filename: part.filename, error: 'S3 not configured' })
+        }
+      }
+    }
+    return reply.status(400).send({ error: 'No file provided' })
   })
 }
