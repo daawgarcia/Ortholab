@@ -86,7 +86,7 @@ export function Sidebar() {
           <NavItem href="/dentists" icon={Users} label="Dentistas" active={isActive('/dentists')} />
         )}
 
-        {['DENTIST', 'LAB_TECH', 'ADMIN'].includes(user?.role || '') && (
+        {['LAB_TECH', 'FINANCIAL'].includes(user?.role || '') && (
           <NavItem href="/cases" icon={FolderOpen} label="Casos" active={isActive('/cases')} />
         )}
 
