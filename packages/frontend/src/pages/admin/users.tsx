@@ -134,6 +134,11 @@ export default function AdminUsersPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast({ title: 'Status atualizado!' }) },
   })
 
+  const updateRole = useMutation({
+    mutationFn: ({ id, role }: { id: string; role: string }) => api.patch(`/admin/users/${id}/role`, { role }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast({ title: 'Perfil atualizado!' }) },
+  })
+
   const users = data?.users || []
 
   return (
@@ -187,7 +192,13 @@ export default function AdminUsersPage() {
                 <div className="col-span-3 font-medium">{u.name}</div>
                 <div className="col-span-3 text-muted-foreground text-xs">{u.email}</div>
                 <div className="col-span-1">
-                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">{ROLE_LABELS[u.role] || u.role}</span>
+                  <select
+                    className="w-full text-xs border border-input rounded px-2 py-1"
+                    value={u.role}
+                    onChange={e => updateRole.mutate({ id: u.id, role: e.target.value })}
+                  >
+                    {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                  </select>
                 </div>
                 <div className="col-span-2 text-xs text-muted-foreground">
                   {u.clinic && <p>{u.clinic}</p>}

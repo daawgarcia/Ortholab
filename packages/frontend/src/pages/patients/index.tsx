@@ -12,6 +12,7 @@ export default function PatientsPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [dentistId, setDentistId] = useState('')
+  const [dentistSearch, setDentistSearch] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['patients', search, dentistId],
@@ -25,8 +26,8 @@ export default function PatientsPage() {
   })
 
   const { data: dentistsData } = useQuery({
-    queryKey: ['dentists-select'],
-    queryFn: () => api.get('/admin/dentists').then(r => r.data),
+    queryKey: ['dentists-select', dentistSearch],
+    queryFn: () => api.get(`/admin/dentists?search=${encodeURIComponent(dentistSearch)}`).then(r => r.data),
     enabled: user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL',
   })
 
@@ -52,6 +53,15 @@ export default function PatientsPage() {
             placeholder="Buscar paciente por nome..."
             value={search}
             onChange={e => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Buscar dentista por nome..."
+            value={dentistSearch}
+            onChange={e => setDentistSearch(e.target.value)}
             className="pl-9"
           />
         </div>
