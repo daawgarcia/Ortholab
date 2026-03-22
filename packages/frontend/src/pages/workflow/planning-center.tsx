@@ -72,11 +72,11 @@ export default function PlanningCenterPage() {
           {!isLoading && cases.length === 0 && (
             <div className="p-8 text-center text-gray-400 text-sm">Nenhum caso nesta aba</div>
           )}
-          {cases.map((c: any) => (
+          {cases.map((c: any, index: number) => (
             <button
               key={c.id}
               onClick={() => navigate(`/cases/${c.id}`)}
-              className="w-full px-5 py-3 flex items-center gap-4 text-left hover:bg-gray-50 transition-colors"
+              className={`w-full px-5 py-3 flex items-center gap-4 text-left hover:bg-gray-50 transition-colors ${index < cases.length - 1 ? 'border-b border-gray-100' : ''}`}
             >
               <span className="text-sm text-primary font-medium hover:underline">
                 {formatDate(c.createdAt)} | {c.patientName} : {String(c.caseNumber).padStart(6, '0')}
