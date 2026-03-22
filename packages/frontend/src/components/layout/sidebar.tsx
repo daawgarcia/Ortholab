@@ -70,7 +70,7 @@ export function Sidebar() {
     <aside className="sidebar-gradient w-64 flex flex-col h-full text-white shrink-0">
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <img src="/logo-ea.png" alt="Esthetic Aligner" className="h-8 w-auto brightness-0 invert" />
+          <img src="/logo-ea.png" alt="Esthetic Aligner" className="h-9 w-auto" />
         </div>
         <p className="text-white/40 text-xs mt-2 pl-0.5">Ortholab</p>
       </div>
