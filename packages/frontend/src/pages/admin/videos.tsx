@@ -43,10 +43,28 @@ function VideoFormModal({ initial, onSave, onClose }: {
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Título do vídeo" />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">URL do Vimeo *</label>
+            <label className="text-xs text-gray-500 mb-1 block">URL do Vimeo ou ficheiro MP4 *</label>
             <input className="w-full border rounded-lg px-3 py-2 text-sm font-mono" value={form.vimeoUrl}
               onChange={e => setForm(f => ({ ...f, vimeoUrl: e.target.value }))}
-              placeholder="https://vimeo.com/123456789" />
+              placeholder="https://vimeo.com/123456789 ou URL direta" />
+            <p className="text-xs text-gray-400 mt-1">Pode inserir URL do Vimeo, URL direto ou fazer upload de um arquivo MP4.</p>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Upload MP4</label>
+            <input type="file" accept="video/mp4,video/webm,video/quicktime"
+              onChange={async e => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const fd = new FormData(); fd.append('file', file)
+                try {
+                  const res = await api.post('/videos/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+                  setForm(f => ({ ...f, vimeoUrl: res.data.url }))
+                  toast({ title: 'Upload concluído, URL preenchida automaticamente' })
+                } catch (err) {
+                  toast({ title: 'Erro no upload de vídeo', variant: 'destructive' })
+                }
+              }}
+              className="w-full" />
           </div>
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Descrição</label>

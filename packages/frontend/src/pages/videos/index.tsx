@@ -36,6 +36,11 @@ function VideoPlayer({ video, onClose }: { video: Video; onClose: () => void }) 
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
             />
+          ) : (video.vimeoUrl.startsWith('http')) ? (
+            <video className="absolute inset-0 w-full h-full rounded-xl bg-black" controls autoPlay>
+              <source src={video.vimeoUrl} type="video/mp4" />
+              Seu navegador não suporta o vídeo.
+            </video>
           ) : (
             <div className="absolute inset-0 bg-gray-900 rounded-xl flex items-center justify-center text-white/50">
               URL de vídeo inválida
