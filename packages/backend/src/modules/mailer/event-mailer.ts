@@ -200,4 +200,21 @@ export class EventMailer {
     await this.mailer.send({ to: caseData.dentist?.email, subject, html })
     await this.logEmail('PAYMENT_FAILED', [caseData.dentist?.email], subject, caseData.id)
   }
+
+  async onRefinementRequested(parentCaseData: any, refinementCaseData: any, notes: string) {
+    const labEmails = await this.getLabEmails()
+    const adminEmails = await this.getAdminEmails()
+    const recipients = [...new Set([...labEmails, ...adminEmails])]
+
+    const subject = `Refinamento solicitado - ${parentCaseData.patientName}`
+    const html = this.mailer.getTemplate(
+      'Refinamento solicitado',
+      `<p>O Dr(a). <strong>${parentCaseData.dentist?.name}</strong> solicitou um refinamento no caso de <strong>${parentCaseData.patientName}</strong>.</p>
+       <p><strong>Tipo:</strong> Refinamento</p>
+       <p><strong>Observações:</strong></p><p style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #e94560;">${notes}</p>`,
+      this.caseLink(refinementCaseData.id), 'Ver Refinamento'
+    )
+    await this.mailer.send({ to: recipients, subject, html })
+    await this.logEmail('REFINEMENT_REQUESTED', recipients, subject, refinementCaseData.id)
+  }
 }

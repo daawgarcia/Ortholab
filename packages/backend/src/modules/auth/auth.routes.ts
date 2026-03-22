@@ -148,8 +148,14 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/me', { preHandler: authenticate }, async (request) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: (request.user as JwtPayload).id },
-      select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, cnpj: true, phone: true, address: true, city: true, state: true, zipCode: true, deliveryAddress: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, cnpj: true, phone: true, address: true, city: true, state: true, zipCode: true, createdAt: true },
     })
     return { user }
+  })
+
+  fastify.post('/logout', { preHandler: authenticate }, async (request, reply) => {
+    // Com JWT stateless, logout é apenas confirmação no frontend
+    // Poderia implementar blacklist em Redis se necessário
+    return { message: 'Logout realizado com sucesso' }
   })
 }
