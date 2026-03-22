@@ -17,18 +17,28 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
   const [loading, setLoading] = useState(false)
+  const [warmingUp, setWarmingUp] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async (data: any) => {
     setLoading(true)
+    setWarmingUp(false)
+    const warmTimer = setTimeout(() => setWarmingUp(true), 5000)
     try {
       const res = await api.post('/auth/login', data)
       setAuth(res.data.user, res.data.accessToken, res.data.refreshToken, res.data.pendingPushes)
       navigate('/')
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Erro no login', description: err.response?.data?.error || 'Tente novamente' })
+      const msg = err.response?.data?.error
+        || err.response?.data?.message
+        || (err.code === 'ERR_NETWORK' ? 'Sem conexão com o servidor. Aguarde 30s e tente novamente (servidor em modo sleep).' : null)
+        || err.message
+        || 'Tente novamente'
+      toast({ variant: 'destructive', title: 'Erro no login', description: msg })
     } finally {
+      clearTimeout(warmTimer)
       setLoading(false)
+      setWarmingUp(false)
     }
   }
 
@@ -75,7 +85,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Entrar
+              {warmingUp ? 'Aquecendo servidor...' : 'Entrar'}
             </Button>
           </form>
 
