@@ -25,7 +25,17 @@ const app = Fastify({ logger: true })
 
 const start = async () => {
   await app.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, cb) => {
+      const allowed = [
+        'http://localhost:5173',
+        process.env.FRONTEND_URL,
+      ].filter(Boolean)
+      if (!origin || allowed.some(o => origin.startsWith(o as string)) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
+        cb(null, true)
+      } else {
+        cb(new Error('Not allowed by CORS'), false)
+      }
+    },
     credentials: true,
   })
 
