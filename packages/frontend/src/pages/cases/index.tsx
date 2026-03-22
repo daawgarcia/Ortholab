@@ -11,6 +11,17 @@ import { formatDate } from '@/lib/utils'
 import { Plus, Search, FolderOpen, Filter } from 'lucide-react'
 
 const statuses = ['','DRAFT','SUBMITTED','IN_PLANNING','WAITING_APPROVAL','REVISION_REQUESTED','APPROVED','IN_PRODUCTION','SHIPPED','COMPLETED']
+const statusLabels: Record<string, string> = {
+  DRAFT: 'Rascunho',
+  SUBMITTED: 'Submetido',
+  IN_PLANNING: 'Em Planejamento',
+  WAITING_APPROVAL: 'Aguard. Aprovação',
+  REVISION_REQUESTED: 'Revisão Solicitada',
+  APPROVED: 'Aprovado',
+  IN_PRODUCTION: 'Em Produção',
+  SHIPPED: 'Enviado',
+  COMPLETED: 'Concluído',
+}
 
 export default function CasesPage() {
   const { user } = useAuthStore()
@@ -48,7 +59,9 @@ export default function CasesPage() {
           value={status}
           onChange={e => { setStatus(e.target.value); setPage(1) }}
           className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-          {statuses.map(s => <option key={s} value={s}>{s || 'Todos os status'}</option>)}
+          {statuses.map(s => (
+            <option key={s} value={s}>{s ? statusLabels[s] ?? s : 'Todos os status'}</option>
+          ))}
         </select>
       </div>
 
