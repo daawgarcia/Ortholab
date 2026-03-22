@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
+import { EventMailer } from '../mailer/event-mailer'
 
 const patientSchema = z.object({
   name: z.string().min(2),
@@ -86,7 +87,8 @@ export async function patientRoutes(fastify: FastifyInstance) {
     })
 
     // Send notification email
-    fastify.eventMailer.onPatientCreated(patient).catch(console.error)
+    const mailer = new EventMailer(fastify)
+    mailer.onPatientCreated(patient).catch(console.error)
 
     return reply.status(201).send(patient)
   })
