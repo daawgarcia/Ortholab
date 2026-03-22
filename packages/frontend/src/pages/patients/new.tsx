@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
+import { DentalChart, ToothData } from '@/components/dental-chart'
 
 const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28]
 const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
@@ -178,8 +179,7 @@ function FormRow({ label, children }: { label: string; children: React.ReactNode
 export default function NewPatientPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [step, setStep] = useState(1)
-  const [selectedTeeth, setSelectedTeeth] = useState<number[]>([])
+  const [toothChart, setToothChart] = useState<ToothData>({})
   const [selectedProduct, setSelectedProduct] = useState('')
   const [planningForm, setPlanningForm] = useState<any>({})
 
@@ -201,7 +201,7 @@ export default function NewPatientPage() {
     mutationFn: async (formData: any) => {
       const patient = await api.post('/patients', {
         ...formData,
-        teethData: { present: selectedTeeth },
+        teethData: toothChart,
         dentistId: user?.role === 'DENTIST' ? user.id : formData.dentistId,
       })
 
@@ -293,13 +293,8 @@ export default function NewPatientPage() {
           <div className="px-5 py-3 border-b bg-gray-50">
             <p className="text-sm font-semibold text-gray-700">Dentes</p>
           </div>
-          <div className="p-6 space-y-4">
-            <div className="flex gap-2 flex-wrap justify-center">
-              {UPPER_TEETH.map(n => <ToothSVG key={n} number={n} selected={selectedTeeth.includes(n)} onClick={() => toggleTooth(n)} />)}
-            </div>
-            <div className="flex gap-2 flex-wrap justify-center">
-              {LOWER_TEETH.map(n => <ToothSVG key={n} number={n} selected={selectedTeeth.includes(n)} onClick={() => toggleTooth(n)} />)}
-            </div>
+          <div className="p-6 space-y-3">
+            <DentalChart value={toothChart} onChange={setToothChart} />
           </div>
         </div>
 

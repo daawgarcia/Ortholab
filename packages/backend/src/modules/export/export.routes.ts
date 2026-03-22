@@ -1,67 +1,127 @@
 import { FastifyInstance } from 'fastify'
-import { requireRole } from '../../plugins/auth'
+import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
-import ExcelJS from 'exceljs'
+
+function toCSV(rows: Record<string, any>[]): string {
+  if (!rows.length) return ''
+  const headers = Object.keys(rows[0])
+  const esc = (v: any) => {
+    const s = v == null ? '' : String(v)
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  return [headers.join(','), ...rows.map(r => headers.map(h => esc(r[h])).join(','))].join('\n')
+}
 
 export async function exportRoutes(fastify: FastifyInstance) {
-  fastify.get('/cases', { preHandler: requireRole(Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL) }, async (request, reply) => {
-    const { status, startDate, endDate } = request.query as any
+  fastify.get('/cases', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { status, dentistId } = request.query as any
     const where: any = {}
+    if (user.role === Role.DENTIST) where.dentistId = user.id
+    else if (dentistId) where.dentistId = dentistId
     if (status) where.status = status
-    if (startDate || endDate) where.createdAt = { ...(startDate && { gte: new Date(startDate) }), ...(endDate && { lte: new Date(endDate) }) }
 
     const cases = await fastify.prisma.case.findMany({
       where,
-      include: { dentist: { select: { name: true, clinic: true, cnpj: true, email: true, cro: true } }, service: true, payment: true, financial: true },
+      include: {
+        dentist: { select: { name: true, clinic: true, cro: true, email: true } },
+        service: { select: { name: true } },
+        financial: { select: { invoiceNumber: true, billedAt: true, amount: true } },
+      },
       orderBy: { createdAt: 'desc' },
+      take: 5000,
     })
 
-    const wb = new ExcelJS.Workbook()
-    const ws = wb.addWorksheet('Casos')
+    const rows = cases.map((c: any) => ({
+      'Nº Caixa': String(c.caseNumber).padStart(6, '0'),
+      'Paciente': c.patientName,
+      'Dentista': c.dentist?.name || '',
+      'Clínica': c.dentist?.clinic || '',
+      'Serviço': c.service?.name || c.productType || '',
+      'Status': c.status,
+      'Tipo Faturamento': c.billingType || '',
+      'Parcelas': c.installmentOption || '',
+      'Seguro': c.dropoutInsurance ? 'Sim' : 'Não',
+      'Pack Ativo': c.packActive ? 'Sim' : 'Não',
+      'Cupom': c.discountCoupon || '',
+      'TOTVS': c.totvsOrderId || '',
+      'NF': c.financial?.invoiceNumber || '',
+      'Criado Em': new Date(c.createdAt).toLocaleDateString('pt-BR'),
+    }))
 
-    ws.columns = [
-      { header: 'Nº Caso', key: 'caseNumber', width: 12 },
-      { header: 'Paciente', key: 'patientName', width: 25 },
-      { header: 'Dentista', key: 'dentist', width: 25 },
-      { header: 'Clínica', key: 'clinic', width: 25 },
-      { header: 'CNPJ', key: 'cnpj', width: 18 },
-      { header: 'CRO', key: 'cro', width: 12 },
-      { header: 'Serviço', key: 'service', width: 20 },
-      { header: 'Status', key: 'status', width: 18 },
-      { header: 'Valor', key: 'amount', width: 14 },
-      { header: 'Pgto Status', key: 'paymentStatus', width: 14 },
-      { header: 'NF', key: 'invoiceNumber', width: 16 },
-      { header: 'Data Criação', key: 'createdAt', width: 18 },
-      { header: 'Última Atualização', key: 'updatedAt', width: 20 },
-    ]
+    const label = status ? `casos-${status}` : 'casos-todos'
+    reply.header('Content-Type', 'text/csv; charset=utf-8')
+    reply.header('Content-Disposition', `attachment; filename="${label}.csv"`)
+    return reply.send('\uFEFF' + toCSV(rows))
+  })
 
-    ws.getRow(1).font = { bold: true }
-    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1a1a2e' } }
-    ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
+  fastify.get('/patients', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { dentistId } = request.query as any
+    const where: any = {}
+    if (user.role === Role.DENTIST) where.dentistId = user.id
+    else if (dentistId) where.dentistId = dentistId
 
-    cases.forEach(c => {
-      ws.addRow({
-        caseNumber: c.caseNumber,
-        patientName: c.patientName,
-        dentist: c.dentist?.name,
-        clinic: c.dentist?.clinic,
-        cnpj: c.dentist?.cnpj,
-        cro: c.dentist?.cro,
-        service: (c as any).service?.name,
-        status: c.status,
-        amount: c.financial?.amount || c.payment?.amount || null,
-        paymentStatus: c.payment?.status || '-',
-        invoiceNumber: c.financial?.invoiceNumber || '-',
-        createdAt: c.createdAt.toLocaleDateString('pt-BR'),
-        updatedAt: c.updatedAt.toLocaleDateString('pt-BR'),
-      })
+    const patients = await fastify.prisma.patient.findMany({
+      where,
+      include: {
+        dentist: { select: { name: true, clinic: true } },
+        _count: { select: { cases: true } },
+      },
+      orderBy: { name: 'asc' },
+      take: 5000,
     })
 
-    const date = new Date().toISOString().split('T')[0]
-    reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    reply.header('Content-Disposition', `attachment; filename="casos_${date}.xlsx"`)
+    const rows = patients.map((p: any) => ({
+      'Nome': p.name,
+      'Sexo': p.gender === 'M' ? 'Masculino' : p.gender === 'F' ? 'Feminino' : '',
+      'Data Nasc.': p.dob ? new Date(p.dob).toLocaleDateString('pt-BR') : '',
+      'Dentista': p.dentist?.name || '',
+      'Clínica': p.dentist?.clinic || '',
+      'Ativo': p.active ? 'Sim' : 'Não',
+      'Total Casos': p._count?.cases || 0,
+      'Cadastrado Em': new Date(p.createdAt).toLocaleDateString('pt-BR'),
+    }))
 
-    const buffer = await wb.xlsx.writeBuffer()
-    return reply.send(buffer)
+    reply.header('Content-Type', 'text/csv; charset=utf-8')
+    reply.header('Content-Disposition', 'attachment; filename="pacientes.csv"')
+    return reply.send('\uFEFF' + toCSV(rows))
+  })
+
+  fastify.get('/clinical-records', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { patientId, dentistId, dateStart, dateEnd } = request.query as any
+    const where: any = {}
+    if (user.role === Role.DENTIST) where.dentistId = user.id
+    else if (dentistId) where.dentistId = dentistId
+    if (patientId) where.patientId = patientId
+    if (dateStart || dateEnd) {
+      where.consultationAt = {}
+      if (dateStart) where.consultationAt.gte = new Date(dateStart)
+      if (dateEnd) where.consultationAt.lte = new Date(dateEnd)
+    }
+
+    const records = await fastify.prisma.clinicalRecord.findMany({
+      where,
+      include: {
+        patient: { select: { name: true } },
+        dentist: { select: { name: true, clinic: true } },
+      },
+      orderBy: { consultationAt: 'desc' },
+      take: 5000,
+    })
+
+    const rows = records.map((r: any) => ({
+      'Data': new Date(r.consultationAt).toLocaleDateString('pt-BR'),
+      'Paciente': r.patient?.name || '',
+      'Dentista': r.dentist?.name || '',
+      'Avaliação': r.evaluation,
+      'Atividades': (r.activities || []).join(' | '),
+      'Observações': r.observations || '',
+    }))
+
+    reply.header('Content-Type', 'text/csv; charset=utf-8')
+    reply.header('Content-Disposition', 'attachment; filename="fichas-clinicas.csv"')
+    return reply.send('\uFEFF' + toCSV(rows))
   })
 }
