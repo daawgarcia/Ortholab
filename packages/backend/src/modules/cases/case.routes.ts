@@ -228,4 +228,42 @@ export async function caseRoutes(fastify: FastifyInstance) {
 
     return { message: 'Status atualizado' }
   })
+
+  fastify.post('/:id/request-refinement', { preHandler: requireRole(Role.DENTIST) }, async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const { notes } = request.body as { notes: string }
+
+    const parentCase = await fastify.prisma.case.findUnique({
+      where: { id },
+      include: { dentist: true, service: true },
+    })
+    if (!parentCase) return reply.status(404).send({ error: 'Caso não encontrado' })
+    if (parentCase.dentistId !== (request.user as JwtPayload).id) return reply.status(403).send({ error: 'Acesso negado' })
+    if (parentCase.status !== CaseStatus.COMPLETED) return reply.status(400).send({ error: 'Refinamento só pode ser solicitado em casos concluídos' })
+
+    // Criar novo caso de refinamento
+    const refinementCase = await fastify.prisma.case.create({
+      data: {
+        dentistId: parentCase.dentistId,
+        patientId: parentCase.patientId,
+        serviceId: parentCase.serviceId,
+        patientName: parentCase.patientName,
+        patientDob: parentCase.patientDob,
+        gender: parentCase.gender,
+        notes: `Refinamento solicitado para caso #${parentCase.caseNumber}: ${notes}`,
+        status: CaseStatus.SUBMITTED,
+        isRefinement: true,
+        parentCaseId: id,
+      },
+      include: { dentist: true, service: true },
+    })
+
+    await fastify.prisma.caseActivity.create({
+      data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'REFINEMENT_REQUESTED', description: `Refinamento solicitado: ${notes}` },
+    })
+
+    await mailer.onRefinementRequested(parentCase, refinementCase, notes)
+
+    return reply.status(201).send({ case: refinementCase, message: 'Refinamento solicitado com sucesso' })
+  })
 }

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
+import { useTokenRefresh } from '@/hooks/use-token-refresh'
 import { Toaster } from '@/components/ui/toaster'
 import { PushModal } from '@/components/push-modal'
 
@@ -49,6 +50,7 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
 
 export default function App() {
   const { user, pendingPushes, clearPushes } = useAuthStore()
+  useTokenRefresh() // Auto-refresh token a cada 14 min
 
   return (
     <BrowserRouter>

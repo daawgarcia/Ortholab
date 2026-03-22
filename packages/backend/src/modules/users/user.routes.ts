@@ -6,7 +6,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.get('/profile', { preHandler: authenticate }, async (request) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: (request.user as JwtPayload).id },
-      select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, cnpj: true, phone: true, address: true, city: true, state: true, zipCode: true, deliveryAddress: true, totvsCode: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, cnpj: true, phone: true, address: true, city: true, state: true, zipCode: true, totvsCode: true, createdAt: true },
     })
     return { user }
   })
