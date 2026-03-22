@@ -39,6 +39,7 @@ import WebinarsPage from '@/pages/webinars'
 import ChatPage from '@/pages/chat'
 import AdminVideosPage from '@/pages/admin/videos'
 import AdminContentPage from '@/pages/admin/content'
+import AdminCouponsPage from '@/pages/admin/coupons'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
@@ -100,6 +101,7 @@ export default function App() {
           <Route path="admin/push" element={<ProtectedRoute roles={['ADMIN','SELLER']}><AdminPushPage /></ProtectedRoute>} />
           <Route path="admin/modules" element={<ProtectedRoute roles={['ADMIN']}><AdminModulesPage /></ProtectedRoute>} />
           <Route path="admin/settings" element={<ProtectedRoute roles={['ADMIN']}><AdminSettingsPage /></ProtectedRoute>} />
+          <Route path="admin/coupons" element={<ProtectedRoute roles={['ADMIN']}><AdminCouponsPage /></ProtectedRoute>} />
 
           <Route path="dentist-financial" element={<ProtectedRoute roles={['DENTIST']}><DentistFinancialPage /></ProtectedRoute>} />
           <Route path="prices-rules" element={<PricesRulesPage />} />

@@ -3,8 +3,10 @@ import { Badge } from '@/components/ui/badge'
 const statusMap: Record<string, { label: string; variant: any }> = {
   DRAFT:              { label: 'Rascunho',           variant: 'secondary' },
   SUBMITTED:          { label: 'Submetido',           variant: 'info' },
-  IN_PLANNING:        { label: 'Em Planejamento',     variant: 'info' },
-  WAITING_APPROVAL:   { label: 'Aguard. Aprovação',   variant: 'warning' },
+  IN_PLANNING:        { label: 'Casos a preparar',    variant: 'info' },
+  IN_MOVEMENT:        { label: 'Casos a movimentar',  variant: 'info' },
+  LAB_APPROVAL:       { label: 'Aprovar resp. lab',   variant: 'warning' },
+  WAITING_APPROVAL:   { label: 'Aguard. aprovação',   variant: 'warning' },
   REVISION_REQUESTED: { label: 'Revisão Solicitada',  variant: 'destructive' },
   APPROVED:           { label: 'Aprovado',            variant: 'success' },
   PRINTING_3D:        { label: 'Impressão 3D',        variant: 'info' },

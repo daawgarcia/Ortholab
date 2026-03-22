@@ -90,7 +90,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
         patientName: patient.name,
         patientDob: patient.dob ?? undefined,
         gender: patient.gender ?? undefined,
-        status: CaseStatus.SUBMITTED,
+        status: CaseStatus.IN_PLANNING,
       },
     })
 
