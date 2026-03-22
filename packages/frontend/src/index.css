@@ -5,42 +5,42 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    --foreground: 215 25% 18%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --primary: 349 89% 60%;
+    --card-foreground: 215 25% 18%;
+    --primary: 215 62% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
+    --secondary: 215 20% 94%;
+    --secondary-foreground: 215 25% 18%;
+    --muted: 215 20% 94%;
+    --muted-foreground: 215 12% 50%;
+    --accent: 215 20% 94%;
+    --accent-foreground: 215 25% 18%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 349 89% 60%;
+    --border: 215 18% 88%;
+    --input: 215 18% 88%;
+    --ring: 215 62% 52%;
     --radius: 0.75rem;
   }
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --primary: 349 89% 60%;
+    --background: 215 35% 8%;
+    --foreground: 210 20% 95%;
+    --card: 215 35% 8%;
+    --card-foreground: 210 20% 95%;
+    --primary: 215 62% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
+    --secondary: 215 27% 16%;
+    --secondary-foreground: 210 20% 95%;
+    --muted: 215 27% 16%;
+    --muted-foreground: 215 12% 60%;
+    --accent: 215 27% 16%;
+    --accent-foreground: 210 20% 95%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 349 89% 60%;
+    --border: 215 27% 20%;
+    --input: 215 27% 20%;
+    --ring: 215 62% 60%;
   }
 }
 
@@ -50,5 +50,9 @@
 }
 
 .sidebar-gradient {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: linear-gradient(180deg, #1a2640 0%, #1e3158 50%, #1d3a6e 100%);
+}
+
+.ea-logo-circle {
+  background: linear-gradient(135deg, #4a7cc7 0%, #7ba8e0 100%);
 }

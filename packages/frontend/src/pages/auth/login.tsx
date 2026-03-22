@@ -46,7 +46,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 sidebar-gradient items-center justify-center p-12">
         <div className="text-white max-w-md">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white font-bold text-2xl mb-8">EA</div>
+          <img src="/logo-ea.png" alt="Esthetic Aligner" className="h-12 w-auto brightness-0 invert mb-8" />
           <h1 className="text-4xl font-bold mb-4">Ortholab</h1>
           <p className="text-white/70 text-lg leading-relaxed">
             O portal digital do laboratório Esthetic Aligner. Envie casos, acompanhe planejamentos e solicite a produção dos seus alinhadores.

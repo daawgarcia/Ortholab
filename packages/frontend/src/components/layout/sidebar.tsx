@@ -54,14 +54,11 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar-gradient w-64 flex flex-col h-full text-white shrink-0">
-      <div className="p-6 border-b border-white/10">
+      <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">EA</div>
-          <div>
-            <p className="font-bold text-sm leading-tight">Ortholab</p>
-            <p className="text-white/50 text-xs">Esthetic Aligner</p>
-          </div>
+          <img src="/logo-ea.png" alt="Esthetic Aligner" className="h-8 w-auto brightness-0 invert" />
         </div>
+        <p className="text-white/40 text-xs mt-2 pl-0.5">Ortholab</p>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
