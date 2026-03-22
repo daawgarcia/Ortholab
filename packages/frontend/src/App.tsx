@@ -30,6 +30,12 @@ import DentistDetailPage from '@/pages/dentists/detail'
 import CompletionFormPage from '@/pages/patients/forms/completion'
 import OtherServicesFormPage from '@/pages/patients/forms/other-services'
 import NewClinicalRecordPage from '@/pages/patients/forms/clinical-record'
+import DentistFinancialPage from '@/pages/dentist-financial'
+import PricesRulesPage from '@/pages/prices-rules'
+import VideoAulasPage from '@/pages/videos'
+import WebinarsPage from '@/pages/webinars'
+import AdminVideosPage from '@/pages/admin/videos'
+import AdminContentPage from '@/pages/admin/content'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
@@ -83,9 +89,17 @@ export default function App() {
 
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>} />
           <Route path="admin/services" element={<ProtectedRoute roles={['ADMIN']}><AdminServicesPage /></ProtectedRoute>} />
+          <Route path="admin/content" element={<ProtectedRoute roles={['ADMIN']}><AdminContentPage /></ProtectedRoute>} />
+          <Route path="admin/videos" element={<ProtectedRoute roles={['ADMIN']}><AdminVideosPage /></ProtectedRoute>} />
           <Route path="admin/push" element={<ProtectedRoute roles={['ADMIN','SELLER']}><AdminPushPage /></ProtectedRoute>} />
           <Route path="admin/modules" element={<ProtectedRoute roles={['ADMIN']}><AdminModulesPage /></ProtectedRoute>} />
           <Route path="admin/settings" element={<ProtectedRoute roles={['ADMIN']}><AdminSettingsPage /></ProtectedRoute>} />
+
+          <Route path="dentist-financial" element={<ProtectedRoute roles={['DENTIST']}><DentistFinancialPage /></ProtectedRoute>} />
+          <Route path="prices-rules" element={<PricesRulesPage />} />
+          <Route path="video-aulas" element={<VideoAulasPage />} />
+          <Route path="webinars" element={<WebinarsPage />} />
+
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 

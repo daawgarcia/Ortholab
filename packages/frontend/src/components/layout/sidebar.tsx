@@ -8,7 +8,8 @@ import {
   LayoutDashboard, FolderOpen, DollarSign,
   Users, Settings, Package, Bell, Wrench, Grid3X3,
   Briefcase, ExternalLink, ChevronRight, ChevronDown,
-  FlaskConical, Printer, Beaker, Send, UserCircle
+  FlaskConical, Printer, Beaker, Send, UserCircle,
+  CreditCard, BookOpen, Radio, PlaySquare, FileText, Video
 } from 'lucide-react'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
@@ -22,9 +23,18 @@ const workflowItems = [
   { label: 'Financeiro', href: '/financial', icon: DollarSign },
 ]
 
+const dentistItems = [
+  { label: 'Financeiro', href: '/dentist-financial', icon: CreditCard },
+  { label: 'Preços e Serviços', href: '/prices-rules', icon: BookOpen },
+  { label: 'Vídeo Aulas', href: '/video-aulas', icon: Video },
+  { label: 'Webinars', href: '/webinars', icon: Radio },
+]
+
 const adminNav = [
   { label: 'Usuários', href: '/admin/users', icon: Users },
   { label: 'Serviços e Preços', href: '/admin/services', icon: Package },
+  { label: 'Conteúdo', href: '/admin/content', icon: FileText },
+  { label: 'Vídeos', href: '/admin/videos', icon: PlaySquare },
   { label: 'Push / Avisos', href: '/admin/push', icon: Bell },
   { label: 'Módulos', href: '/admin/modules', icon: Grid3X3 },
   { label: 'Configurações', href: '/admin/settings', icon: Settings },
@@ -36,6 +46,9 @@ export function Sidebar() {
   const [workflowOpen, setWorkflowOpen] = useState(
     pathname.startsWith('/workflow') || pathname.startsWith('/financial')
   )
+  const [dentistOpen, setDentistOpen] = useState(
+    dentistItems.some(i => pathname.startsWith(i.href))
+  )
 
   const { data: modulesData } = useQuery({
     queryKey: ['app-modules'],
@@ -44,6 +57,7 @@ export function Sidebar() {
   })
 
   const isAdmin = user?.role === 'ADMIN'
+  const isDentist = user?.role === 'DENTIST'
   const isSeller = user?.role === 'SELLER'
   const showWorkflow = WORKFLOW_ROLES.includes(user?.role || '')
   const showPatients = PATIENT_ROLES.includes(user?.role || '')
@@ -78,6 +92,28 @@ export function Sidebar() {
 
         {isSeller && (
           <NavItem href="/seller" icon={Briefcase} label="Carteira" active={isActive('/seller')} />
+        )}
+
+        {isDentist && (
+          <>
+            <button
+              onClick={() => setDentistOpen(o => !o)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <BookOpen className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Minha Área</span>
+              {dentistOpen
+                ? <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                : <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
+            </button>
+            {dentistOpen && (
+              <div className="ml-3 space-y-0.5 border-l border-white/10 pl-3">
+                {dentistItems.map(item => (
+                  <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label} active={isActive(item.href)} small />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {showWorkflow && (

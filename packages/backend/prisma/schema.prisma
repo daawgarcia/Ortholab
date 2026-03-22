@@ -138,6 +138,7 @@ model User {
   otherServicesForms  OtherServicesForm[] @relation("DentistOtherServicesForms")
   clinicalRecords     ClinicalRecord[] @relation("DentistClinicalRecords")
   workflowEvents      WorkflowEvent[] @relation("WorkflowEventPerformer")
+  dentistInvoices     DentistInvoice[] @relation("DentistInvoices")
 }
 
 model Case {
@@ -525,4 +526,65 @@ model WorkflowEvent {
 
   case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
   performer   User?    @relation("WorkflowEventPerformer", fields: [performedBy], references: [id])
+}
+
+enum VideoCategory {
+  VIDEO_AULA
+  WEBINAR
+}
+
+model Video {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  vimeoUrl    String
+  category    VideoCategory
+  thumbnail   String?
+  order       Int           @default(0)
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ContentPage {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  body        String?
+  fileUrl     String?
+  fileName    String?
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}
+
+model DentistInvoice {
+  id            String   @id @default(uuid())
+  dentistId     String
+  totvsId       String?
+  invoiceNumber String
+  description   String
+  amount        Decimal  @db.Decimal(10, 2)
+  dueDate       DateTime
+  paidAt        DateTime?
+  status        String   @default("OPEN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  dentist       User     @relation("DentistInvoices", fields: [dentistId], references: [id], onDelete: Cascade)
+}
+
+model InvoicePayment {
+  id            String   @id @default(uuid())
+  dentistId     String
+  invoiceIds    String[]
+  totalAmount   Decimal  @db.Decimal(10, 2)
+  method        String
+  status        String   @default("PENDING")
+  pixCode       String?
+  pixExpiry     DateTime?
+  cardLast4     String?
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
