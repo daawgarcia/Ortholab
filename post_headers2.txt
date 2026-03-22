@@ -1,0 +1,15 @@
+HTTP/1.1 302 Found
+Server: nginx/1.12.2
+Date: Sun, 22 Mar 2026 01:42:59 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1; mode=block
+X-Content-Type-Options: nosniff
+Location: http://ortholab.estheticaligner.com.br/pt-BR
+Cache-Control: no-cache
+Set-Cookie: _easysmile-web_session=KzMxYnRQVWVQUk1naDZ1RTRjSjlhellMOElRczJlRHI1bjJjWUs0SG8vSk9qb0hnZ3ZoN0FNb2YwRGZhMDZzdDdYaklPL0pZbEUvZGtaeitPdGVXWDd0Yi9lem42SW9kUUFpay8xR2tZUjc1ZVE0SUh4ZXc2VEVndURnZWFQUW02M0RMc1ZiMTVhRE9LK3dhZmdMeEVZNkRwRDN0dk1kcU9Va1RlNGVFWUdzWGhwU3V0WHYrMUFQRk1WWm9QY3Bnc083dDVmbDNxNktBWFdMcXRLdXF1cjVwMFMxYkgxdXFlYWJhOE1mZEI5VlE1V1FxdCt2OWdpYVFiT01FQmVKYnV6Z0ppOGcwSjJKYTRZcU8wbm1DUUE9PS0tV0l3Y21LU0p2cXpWRk1jZmR2NHVkdz09--f71aa2e2eacec5816dddc80ce9ee37704bc1dbd3; path=/; HttpOnly
+X-Request-Id: 617b6a52-e3c5-4214-8ff4-bef7403523a0
+X-Runtime: 0.110676
+

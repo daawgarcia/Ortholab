@@ -68,6 +68,10 @@ export function Sidebar() {
           <NavItem href="/patients" icon={UserCircle} label="Pacientes" active={isActive('/patients')} />
         )}
 
+        {isAdmin && (
+          <NavItem href="/dentists" icon={Users} label="Dentistas" active={isActive('/dentists')} />
+        )}
+
         {['DENTIST', 'LAB_TECH', 'ADMIN'].includes(user?.role || '') && (
           <NavItem href="/cases" icon={FolderOpen} label="Casos" active={isActive('/cases')} />
         )}

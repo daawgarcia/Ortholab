@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Esthetic Aligner</title>
+
+        <link rel="stylesheet" media="all" href="/assets/application-72503499d40b4d04c500b7ea29d8042a81baef2a73ee5d712a5b4ae69901a767.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-1d11c381cadf47545566e2cf5e375205858d827abe8a0a87a02d74ba4606dbd7.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-responsive-b95ed120c3b5e8f4ae81473e6a89779a8e425443238e7439f523f664c95c33a5.css" />
+        <link rel="stylesheet" media="all" href="/assets/dentists-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css" /> 
+        
+
+        <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="VBjEQpZ6HTRKQsMg5FCxMDaY15f0ZIlf9x+Cgk26egIEHSg5wRDUoErLNO57wyYwMm94p0fz4T8M9vaIY3NSfQ==" />
+    </head>
+    <body>
+        <script type="text/javascript">
+//<![CDATA[
+window.gon={};gon.locale="pt-BR";gon.placeholder={"dentists":"Selecione um dentista","patients":"Selecione um paciente"};gon.alertify={"buttonOk":"Confirmar","buttonCancel":"Cancelar","alerts_to_open_orders_awaiting_approval_for_production":"Tem certeza que quer sair dessa página? Ainda existem casos para serem aprovados.","errorSyncTotvs":"Não foi possível sincronizar com a base de dados do sistema Totvs"};gon.confirmMessage={"syncTotvs":"Tem certeza que deseja sincronizar?"};
+//]]>
+</script>
+
+        <!--header start-->
+        <header class="header dark-bg">
+    <div class="toggle-nav">
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+
+    <!--logo start-->
+    <a class="logo" href="/pt-BR">
+      <span class="lite">Esthetic Aligner</span>
+</a>    <!--logo end-->
+
+    <!--  search form start -->
+      <div class="nav search-row" id="top_menu">
+          <ul class="nav top-menu">                    
+              <li>
+                  <form class="navbar-form">
+                      <input type="hidden" name="search" id="search" placeholder="Buscar paciente" class="form-control" />
+                  </form>
+              </li>                    
+          </ul>
+      </div>
+      <!--  search form end -->                
+
+      <div class="top-nav notification-row">                
+          <!-- notificatoin dropdown start-->
+          <ul class="nav pull-right top-menu">
+              <!-- user login dropdown start-->
+              <li class="dropdown">
+                  <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                      <span class="profile-ava">
+                            <img src="https://ortholab.s3.sa-east-1.amazonaws.com/uploads/user/avatar/370/EA_redondo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAJHRPL3ES7WKXJEZQ%2F20260322%2Fsa-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20260322T015110Z&amp;X-Amz-Expires=900&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=2415ab2634bd5b1f5f50f5aaecea572675bcc1be598a547a42e7919214631c6b" alt="Ea redondo" />
+                      </span>
+                      <span class="username">Esthetic Aligner</span>
+                      <b class="caret"></b>
+                  </a>
+                  <ul class="dropdown-menu extended logout">
+                      <div class="log-arrow-up"></div>
+                      <li class="eborder-top">
+                          <a href="/pt-BR/users/edit">
+                            <i class="fa fa-user"></i> Perfil
+</a>                      </li>
+                      <li>
+                          <a href="/pt-BR/users/sign_out">
+                            <i class="fa fa-sign-out"></i> Sair
+</a>                      </li>
+                  </ul>
+              </li>
+              <!-- user login dropdown end -->
+          </ul>
+          <!-- notificatoin dropdown end-->
+      </div>
+</header>
+        <!--header end-->
+
+        <!--sidebar start-->
+          <aside>
+    <div id="sidebar"  class="nav-collapse ">
+        <!-- sidebar menu start-->
+        <ul class="sidebar-menu">
+            <li class="">
+                <a href="/pt-BR/dentists">
+                  <i class="fa fa-user-md"></i><span>Dentista</span>
+</a>            </li>
+            <li class="">
+                <a href="/pt-BR/patients">
+                  <i class="fa fa-user"></i><span>Paciente</span>
+</a>            </li>
+              <li class="sub-menu">
+                <a href="#" class="">
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="menu-arrow fa fa-angle-right"></span>
+                </a>
+                <ul class="sub">
+                  <li>
+                    <a href="/pt-BR/workflow_control/planning_center">
+                      Planning center
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print">
+                      Impressão 3D (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pt">
+                      Impressão 3D (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_co">
+                      Impressão 3D (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_mx">
+                      Impressão 3D (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pe">
+                      Impressão 3D (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/financial">
+                      Financeiro
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory">
+                      Laboratório (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pt">
+                      Laboratório (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_co">
+                      Laboratório (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_mx">
+                      Laboratório (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pe">
+                      Laboratório (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition">
+                      Expedição (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pt">
+                      Expedição (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_co">
+                      Expedição (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_mx">
+                      Expedição (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pe">
+                      Expedição (pe)
+</a>                  </li>
+                </ul>
+              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-file-text-o"></i>
+                      <span>Fichas</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                          <a href="/pt-BR/planning_forms">
+                            Planejamento
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/completion_forms">
+                              Finalização
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/other_services_forms">
+                              Outros serviços
+</a>                        </li>
+                  </ul>
+              </li>
+              <li class="">
+                  <a href="/pt-BR/clinical_records">
+                    <i class="fa fa-medkit"></i><span>Ficha Clínica</span>
+</a>              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-cogs"></i>
+                      <span>Configurações</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                            <a href="/pt-BR/configurations/permissions">
+                              <i class="fa fa-ban"></i>
+                              Permissões
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profiles">
+                              <i class="fa fa-users"></i>
+                              Perfil usuário
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profile_dentist">
+                              <i class="fa fa-link"></i>
+                              Usuário / Dentista
+</a>                        </li>
+                  </ul>
+              </li>
+        </ul>
+        <!-- sidebar menu end-->
+    </div>
+</aside>
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section class="wrapper">
+              <section id="main-content">
+                  <div id="flash-messages">
+
+    <!-- Mensagens de alerta sobre casos em aberto aguardando aprovação do dentista para produção -->
+</div>
+
+                  <div class="row">
+    <div class="col-lg-12">
+        <h3 class="page-header">
+            <i class="fa fa-user-md"></i> Dentista
+        </h3>
+    </div>
+</div>
+
+                  <!-- page start-->
+                  
+
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="form form-validate">
+            <form id="dentist" class="edit_dentist" action="/pt-BR/dentists/36045" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="patch" /><input type="hidden" name="authenticity_token" value="hxjmuwJNyEuhav4Yzzdluttf4wR9O7Deg+kviFouVG/XHQrAVScB36HjCdZQpPK636hMNM6s2L54AFuCdOd8EA==" />
+
+              <!--patients start-->
+              <div class="row">
+                  <div class="form-group col-lg-12">
+                      <a class="pull-right" href="/pt-BR/dentists/36045/patients">
+                        <i class="fa fa-users"></i> Pacientes
+</a>                  </div>
+              </div>
+              <!--patients end-->
+
+              <!--section dentist start-->
+              <section class="panel">
+                  <header class="panel-heading">
+                      ORALL IMPLANTES (PAULO CESAR DA SILVA)
+                  </header>
+                  <div class="panel-body">
+                      <div class="row">
+                          <div class="form-group col-lg-6">
+                            <label class="control-label">Nome</label>
+                            <input type="text" class='form-control' value="ORALL IMPLANTES (PAULO CESAR DA SILVA)" disabled>
+                          </div>
+                          <div class="form-group col-lg-6">
+                            <label class="control-label">E-mail</label>
+                            <input type="text" class='form-control' value="financeiro@orallimplantes.com.br" disabled>
+                          </div>
+                      </div>
+
+                      <div class="row">
+                          <div class="form-group col-lg-3">
+                            <label class="control-label">CRO / OMD</label>
+                            <input type="text" class='form-control' value="3692 SC" disabled>
+                          </div>
+                          <div class="form-group col-lg-3">
+                            <label class="control-label">Data de Nascimento</label>
+                            <input type="text" class='form-control' value="04/02/1983" disabled>
+                          </div>
+                          <div class="form-group col-lg-3">
+                            <label class="control-label">País</label>
+                            <input type="text" class='form-control' value="Brasil" disabled>
+                          </div>
+                          <div class="form-group col-lg-3">
+                            <label class="control-label">CPF / CARTÃO CIDADÃO</label>
+                            <input type="text" class='form-control' value="36458626000193" disabled>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+              <!--section dentist end-->
+
+              <!--section addresses start-->
+              
+                <section class="panel">
+                    <header class="panel-heading">
+                        Endereço Envio
+                    </header>
+                    <div class="panel-body">
+                        <div class="row">
+    <div class="form-group col-lg-6">
+        <label class="control-label" for="dentist_addresses_attributes_0_street">
+          Rua
+          <span class="required">*</span>
+</label>        <input class="form-control" required="required" maxlength="100" size="100" type="text" value="RUA EUGENIO MOREIRA" name="dentist[addresses_attributes][0][street]" id="dentist_addresses_attributes_0_street" />
+    </div>
+    <div class="form-group col-lg-2">
+        <label class="control-label" for="dentist_addresses_attributes_0_number">
+          Número
+          <span class="required">*</span>
+</label>        <input class="form-control" number="true" min="1" required="required" type="number" value="64" name="dentist[addresses_attributes][0][number]" id="dentist_addresses_attributes_0_number" />
+    </div>
+    <div class="form-group col-lg-4">
+        <label class="control-label" for="dentist_addresses_attributes_0_additional_information">Complemento</label>
+        <input class="form-control" maxlength="100" size="100" type="text" value="Orall Implantes" name="dentist[addresses_attributes][0][additional_information]" id="dentist_addresses_attributes_0_additional_information" />
+    </div>
+</div>
+
+<div class="row">
+    <div class="form-group col-lg-2">
+        <label class="control-label" for="dentist_addresses_attributes_0_zip">
+          CEP
+          <span class="required">*</span>
+</label>        <input class="form-control" required="required" type="text" value="89202100" name="dentist[addresses_attributes][0][zip]" id="dentist_addresses_attributes_0_zip" />
+    </div>
+    <div class="form-group col-lg-4">
+        <label class="control-label" for="dentist_addresses_attributes_0_town">Bairro</label>
+        <input class="form-control" maxlength="100" size="100" type="text" value="Anita Garibaldi" name="dentist[addresses_attributes][0][town]" id="dentist_addresses_attributes_0_town" />
+    </div>
+    <div class="form-group col-lg-4">
+        <label class="control-label" for="dentist_addresses_attributes_0_city">
+          Cidade
+          <span class="required">*</span>
+</label>        <input class="form-control" required="required" maxlength="100" size="100" type="text" value="Joinville" name="dentist[addresses_attributes][0][city]" id="dentist_addresses_attributes_0_city" />
+    </div>
+
+    <div class="form-group col-lg-2">
+        <label class="control-label" for="dentist_addresses_attributes_0_state">UF</label>
+        <input class="form-control" maxlength="100" size="100" type="text" value="SC" name="dentist[addresses_attributes][0][state]" id="dentist_addresses_attributes_0_state" />
+    </div>
+</div>
+
+<div class="row">
+    <div class="form-group col-lg-6">
+        <label class="control-label" for="dentist_addresses_attributes_0_business_phone">Tel Comercial</label>
+        <input class="form-control" type="tel" value="4731458300" name="dentist[addresses_attributes][0][business_phone]" id="dentist_addresses_attributes_0_business_phone" />
+    </div>
+    <div class="form-group col-lg-6">
+        <label class="control-label" for="dentist_addresses_attributes_0_mobile_phone">Celular</label>
+        <input class="form-control" type="tel" value="4730400911" name="dentist[addresses_attributes][0][mobile_phone]" id="dentist_addresses_attributes_0_mobile_phone" />
+    </div>
+</div>
+
+                    </div>
+                </section>
+<input type="hidden" value="5408" name="dentist[addresses_attributes][0][id]" id="dentist_addresses_attributes_0_id" />              <!--section addresses end-->
+
+              <!--section acquisition (DEPRECATED)-->
+
+              <div class="row">
+                  <div class="form-group col-lg-6">
+                  </div>
+                  <div class="form-group col-lg-6">
+                      <div class="pull-right">
+                          <input type="submit" name="commit" value="Salvar" class="btn btn-primary" />
+                          <a class="btn btn-default" href="/pt-BR/dentists">Cancelar</a>
+                      </div>
+                  </div>
+              </div>
+
+</form>        </div>
+    </div>
+</div>
+
+
+                  <!-- page end-->
+              </section>
+        </section>
+        <!--main content end-->
+
+        <img id="loading" style="display: none;" src="/assets/loading-ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84.gif" alt="Loading ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84" />
+
+        <script src="/assets/application-7db5a4176af39c077e6284cdf2e1c8b6e9f9a787506c744cfc07bebdf489a339.js"></script>
+        <!-- Internationalization (i18n) select2 de acordo com linguagem configurada -->
+        <script src="/assets/select2_locale_pt-BR-2135e6bb2c56910a3de8eef3600d6922464e0be56eb07cb3e732633dc6b52a8f.js"></script>
+        <script src="/assets/dentists-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+          <script src="/assets/jquery-plugins/validate/jquery.validate.min-d4549477f07a7dc5a5f0c4fe58805d12f8829c99c990c4164ea506e0ea7ea0c6.js"></script>
+  <script src="/assets/jquery-plugins/validate/locales/jquery.validate.pt-BR-b340e7fa4c470ad0ec5128e9849faa6040a31c56f49a8e3c821d96d2c2590ed5.js"></script>
+  <script src="/assets/dentists.form-84ef34d319fe8a347fc21f157fc88ec23e1d014f2e7458798b905b0747c1ae09.js"></script>
+
+    </body>
+</html>

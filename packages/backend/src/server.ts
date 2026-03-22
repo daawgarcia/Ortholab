@@ -21,6 +21,10 @@ import { totvsRoutes } from './modules/totvs/totvs.routes'
 import { notificationRoutes } from './modules/notifications/notification.routes'
 import { adminRoutes } from './modules/admin/admin.routes'
 import { patientRoutes } from './modules/patients/patient.routes'
+import { dentistRoutes } from './modules/dentists/dentist.routes'
+import { workflowEventRoutes } from './modules/workflow/workflow.routes'
+import { clinicalRecordRoutes } from './modules/clinical-records/clinical-record.routes'
+import { formsRoutes } from './modules/forms/forms.routes'
 
 const app = Fastify({ logger: true })
 
@@ -68,6 +72,10 @@ const start = async () => {
   await app.register(notificationRoutes, { prefix: '/api/notifications' })
   await app.register(adminRoutes, { prefix: '/api/admin' })
   await app.register(patientRoutes, { prefix: '/api/patients' })
+  await app.register(dentistRoutes, { prefix: '/api/dentists' })
+  await app.register(workflowEventRoutes, { prefix: '/api/workflow' })
+  await app.register(clinicalRecordRoutes, { prefix: '/api/clinical-records' })
+  await app.register(formsRoutes, { prefix: '/api/forms' })
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 

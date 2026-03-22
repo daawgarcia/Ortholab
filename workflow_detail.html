@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Esthetic Aligner</title>
+
+        <link rel="stylesheet" media="all" href="/assets/application-72503499d40b4d04c500b7ea29d8042a81baef2a73ee5d712a5b4ae69901a767.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-1d11c381cadf47545566e2cf5e375205858d827abe8a0a87a02d74ba4606dbd7.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-responsive-b95ed120c3b5e8f4ae81473e6a89779a8e425443238e7439f523f664c95c33a5.css" />
+        <link rel="stylesheet" media="all" href="/assets/workflows-e667e89b7517059b2e2305127234fd3d5653eb0ffee53063ce969dffb5506a4a.css" /> 
+          <link rel="stylesheet" media="all" href="/assets/bootstrap-datepicker.min-7254cf5544806be030cc0eeba1da3d90671bfdc3f7952caba116275b8a46fadd.css" />
+
+
+        <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="rFr179UB8wee1M/oTUF8gAcsBga3s5/rRGapBDKlOzX8XxmUgms6k55dOCbS0uuAA9upNgQk94u/j90OHGwTSg==" />
+    </head>
+    <body>
+        <script type="text/javascript">
+//<![CDATA[
+window.gon={};gon.locale="pt-BR";gon.placeholder={"dentists":"Selecione um dentista","patients":"Selecione um paciente"};gon.alertify={"buttonOk":"Confirmar","buttonCancel":"Cancelar","alerts_to_open_orders_awaiting_approval_for_production":"Tem certeza que quer sair dessa página? Ainda existem casos para serem aprovados.","required_fields":"Preencha os campos obrigatórios!","errorCancel":"Não foi possível cancelar o fluxo em aberto","errorBillingType":"Não foi possível salvar o tipo de faturamento","errorPack":"Não foi possível atualizar"};gon.confirmMessage={"save":"Tem certeza que deseja registrar o evento?","cancel":"Tem certeza que deseja cancelar?","updateBillingType":"Tem certeza que deseja salvar o tipo de faturamento?","dropoutInsurance":"Seguro contra desistência","aboutHireDropoutInsurance":"\u003cb\u003eCom uma taxa adicional de apenas 10% sobre o custo total dos alinhadores, você pode assegurar o seu caso contra desistências.\u003c/b\u003e \u003cbr\u003e \u003cbr\u003eCaso o paciente decida interromper o tratamento, ao acionar o seguro, todos os títulos a vencer são automaticamente suspensos. Tenha tranquilidade e segurança ao parcelar o tratamento para o seu paciente. \u003cbr\u003e \u003cbr\u003e\u0026nbsp\u0026nbsp*válido para todos os pacotes adquiridos com opção de parcelamento \u003cbr\u003e\u0026nbsp**taxa aplicada sobre o valor total faturado do pacote \u003cbr\u003e***parcelas em atraso não são suspensas","approve":"Tem certeza que deseja aprovar?","request_change":"Tem certeza que deseja solicitar alteração?","update":"Tem certeza que deseja atualizar?","update_pack":"Tem certeza que deseja atualizar?"};gon.order_installment_options={"select":"Selecione uma opção...","unit_opt1":"Valor por placa R$ 95,00 + Sedex","unit_insurance_opt1":"Valor por placa R$ 104,50 + Sedex","MID_opt1":"Á vista R$3.800,00 + Guias de Att + Sedex","MID_opt2":"6x de R$718,00 + Guias de Att + Sedex","MID_opt3":"12x de R$384,00 + Guias de Att + Sedex","MID_insurance_opt1":"Á vista R$3.800,00 (Não se aplica o seguro) + Guias de Att + Sedex","MID_insurance_opt2":"6x de R$834,90 + Guias de Att + Sedex","MID_insurance_opt3":"12x de R$446,50 + Guias de Att + Sedex","FULL_opt1":"Á vista R$4.999,00 + Sedex","FULL_opt2":"6x de R$940,00 + Sedex","FULL_opt3":"12x de R$498,00 + Sedex","FULL_opt4":"21x de R$311,00 + Sedex","FULL_insurance_opt1":"Á vista R$4.999,00 (Não se aplica o seguro)","FULL_insurance_opt2":"6x de R$1.092,60 + Sedex","FULL_insurance_opt3":"12x de R$578,40 + Sedex","FULL_insurance_opt4":"21x de R$361,80 + Sedex"};
+//]]>
+</script>
+
+        <!--header start-->
+        <header class="header dark-bg">
+    <div class="toggle-nav">
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+
+    <!--logo start-->
+    <a class="logo" href="/pt-BR">
+      <span class="lite">Esthetic Aligner</span>
+</a>    <!--logo end-->
+
+    <!--  search form start -->
+      <div class="nav search-row" id="top_menu">
+          <ul class="nav top-menu">                    
+              <li>
+                  <form class="navbar-form">
+                      <input type="hidden" name="search" id="search" placeholder="Buscar paciente" class="form-control" />
+                  </form>
+              </li>                    
+          </ul>
+      </div>
+      <!--  search form end -->                
+
+      <div class="top-nav notification-row">                
+          <!-- notificatoin dropdown start-->
+          <ul class="nav pull-right top-menu">
+              <!-- user login dropdown start-->
+              <li class="dropdown">
+                  <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                      <span class="profile-ava">
+                            <img src="https://ortholab.s3.sa-east-1.amazonaws.com/uploads/user/avatar/370/EA_redondo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAJHRPL3ES7WKXJEZQ%2F20260322%2Fsa-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20260322T015003Z&amp;X-Amz-Expires=900&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=d3764577529eb7dbe91124fb2d2ef18bb531b57749fbf5d6ad2417d6699e1459" alt="Ea redondo" />
+                      </span>
+                      <span class="username">Esthetic Aligner</span>
+                      <b class="caret"></b>
+                  </a>
+                  <ul class="dropdown-menu extended logout">
+                      <div class="log-arrow-up"></div>
+                      <li class="eborder-top">
+                          <a href="/pt-BR/users/edit">
+                            <i class="fa fa-user"></i> Perfil
+</a>                      </li>
+                      <li>
+                          <a href="/pt-BR/users/sign_out">
+                            <i class="fa fa-sign-out"></i> Sair
+</a>                      </li>
+                  </ul>
+              </li>
+              <!-- user login dropdown end -->
+          </ul>
+          <!-- notificatoin dropdown end-->
+      </div>
+</header>
+        <!--header end-->
+
+        <!--sidebar start-->
+          <aside>
+    <div id="sidebar"  class="nav-collapse ">
+        <!-- sidebar menu start-->
+        <ul class="sidebar-menu">
+            <li class="">
+                <a href="/pt-BR/dentists">
+                  <i class="fa fa-user-md"></i><span>Dentista</span>
+</a>            </li>
+            <li class="">
+                <a href="/pt-BR/patients">
+                  <i class="fa fa-user"></i><span>Paciente</span>
+</a>            </li>
+              <li class="sub-menu">
+                <a href="#" class="">
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="menu-arrow fa fa-angle-right"></span>
+                </a>
+                <ul class="sub">
+                  <li>
+                    <a href="/pt-BR/workflow_control/planning_center">
+                      Planning center
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print">
+                      Impressão 3D (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pt">
+                      Impressão 3D (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_co">
+                      Impressão 3D (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_mx">
+                      Impressão 3D (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pe">
+                      Impressão 3D (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/financial">
+                      Financeiro
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory">
+                      Laboratório (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pt">
+                      Laboratório (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_co">
+                      Laboratório (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_mx">
+                      Laboratório (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pe">
+                      Laboratório (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition">
+                      Expedição (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pt">
+                      Expedição (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_co">
+                      Expedição (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_mx">
+                      Expedição (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pe">
+                      Expedição (pe)
+</a>                  </li>
+                </ul>
+              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-file-text-o"></i>
+                      <span>Fichas</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                          <a href="/pt-BR/planning_forms">
+                            Planejamento
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/completion_forms">
+                              Finalização
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/other_services_forms">
+                              Outros serviços
+</a>                        </li>
+                  </ul>
+              </li>
+              <li class="">
+                  <a href="/pt-BR/clinical_records">
+                    <i class="fa fa-medkit"></i><span>Ficha Clínica</span>
+</a>              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-cogs"></i>
+                      <span>Configurações</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                            <a href="/pt-BR/configurations/permissions">
+                              <i class="fa fa-ban"></i>
+                              Permissões
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profiles">
+                              <i class="fa fa-users"></i>
+                              Perfil usuário
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profile_dentist">
+                              <i class="fa fa-link"></i>
+                              Usuário / Dentista
+</a>                        </li>
+                  </ul>
+              </li>
+        </ul>
+        <!-- sidebar menu end-->
+    </div>
+</aside>
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section class="wrapper">
+              <section id="main-content">
+                  <div id="flash-messages">
+
+    <!-- Mensagens de alerta sobre casos em aberto aguardando aprovação do dentista para produção -->
+</div>
+
+                  <div class="row">
+    <div class="col-lg-12">
+        <h3 class="page-header">
+            <i class="fa fa-code-fork"></i> Workflow
+        </h3>
+    </div>
+</div>
+
+                  <!-- page start-->
+                    
+
+<div class="row">
+  <div class="col-lg-12">
+      <!--patient menu start-->
+        <div class="row">
+      <div class="pull-right">
+          <ul class="nav nav-pills">
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="/pt-BR/patients/29326/workflows/progress">
+                      Em aberto
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/patients/29326/workflows">
+                      Concluídos
+</a>                  </li>
+                </ul>
+              </li>
+
+              <li>
+                  <a href="/pt-BR/patients/29326/photos">
+                    <i class="fa fa-file-image-o"></i> Fotos
+</a>              </li>
+
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
+                  <i class="fa fa-cube"></i>
+                  <span>Modelos Digitais</span>
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="/pt-BR/patients/29326/stl/lower_digital_models">
+                      Modelo Digital Inferior .STL
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/patients/29326/stl/upper_digital_models">
+                      Modelo Digital Superior .STL
+</a>                  </li>
+                </ul>
+              </li>
+
+                  <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
+                          <i class="fa fa-file-text-o"></i>
+                          <span>Fichas</span>
+                          <span class="caret"></span>
+                      </a>
+                      <ul class="dropdown-menu">
+                          <li>
+                              <a href="/pt-BR/patients/29326/planning_forms">
+                                Planejamento alinhadores
+</a>                          </li>
+                          <li>
+                              <a href="/pt-BR/patients/29326/completion_forms">
+                                Finalização alinhadores
+</a>                          </li>
+                          <li>
+                              <a href="/pt-BR/patients/29326/other_services_forms">
+                                Outros serviços
+</a>                          </li>
+                      </ul>
+                  </li>
+
+                <li>
+                  <a href="/pt-BR/patients/29326/v2/works">
+                    <i class="fa fa-briefcase"></i> Relatório
+</a>                </li>
+
+                <li>
+                    <a href="/pt-BR/patients/29326/clinical_records">
+                      <i class="fa fa-medkit"></i> Ficha Clínica
+</a>                </li>
+
+              &nbsp;&nbsp;
+          </ul>
+      </div>
+  </div>
+
+      <!--patient menu end-->
+      
+      <!--section patient start-->
+      <section class="panel">
+        <header class="panel-heading">
+          Paciente:  	Aurea Maria Martins Vaz : 027614 (ORALL IMPLANTES (PAULO CESAR DA SILVA))
+        </header>
+        <div class="panel-body">
+        <form id="workflow" class="edit_workflow_order" action="/pt-BR/workflows/46954/events" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="patch" /><input type="hidden" name="authenticity_token" value="Gv4falsCx2GM0NjvxOMJVZ8AoawyncC+YbJGlsXHv/tK+/MRDGgO9YxZLyFbcJ5Vm/cOnIEKqN6aWzKc6w6XhA==" />
+
+          <input type="hidden" id="order_id" name="order[id]" value=46954 >
+
+
+            <!--section pack start-->
+              <div class="row">
+                <div class="col-sm-2 text-center">
+                  <label class="control-label">Pacote ativo</label>
+                  <br/>
+                  <label>Não</label>
+                </div>
+                  <div class="col-lg-3 pack_billing">
+                    <label class="control-label">Opções de faturamento
+                    <br/>
+                    <label>Unidade, MID, FULL</label>
+                  </div>
+              </div>
+            <hr/>
+            <!--section pack end-->
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-arrow-circle-o-right fa-2x"></i>
+    <p>Recebimento <br/>dos modelos</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>14/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+    <p>Seu caso será analisado e preparado em até 4 dias úteis desde que os modelos estejam adequados e a ficha de planejamento esteja preenchida.</p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Suporte EA</i></p>
+  </div>
+</div>
+<hr/>
+
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-pencil fa-2x"></i>
+    <p>Preparo dos <br/>modelos</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>16/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+    <p></p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Digital  Laboratório </i></p>
+  </div>
+</div>
+<hr/>
+
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-exchange fa-2x"></i>
+    <p>Movimento</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>16/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Digital  Laboratório </i></p>
+  </div>
+</div>
+<hr/>
+
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-clock-o fa-2x"></i>
+    <p>Status de aprovação <br/>enviado</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>16/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+        <p></p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Digital  Laboratório </i></p>
+  </div>
+</div>
+<hr/>
+
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-wrench fa-2x"></i>
+    <p>Caso aprovado <br/>para produção</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>16/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+    <p>Aprovado por Digital  Laboratório .</p>
+      <p>&#34;Aprovação automática EA MIO SUPERIOR
+&#34;</p>
+    <p>Produção dos alinhadores em até 4 dias úteis.</p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Digital  Laboratório </i></p>
+  </div>
+</div>
+<hr/>
+
+
+                
+<div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-barcode fa-2x"></i>
+    <p>Tipo de faturamento</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Tipo</label>&nbsp;
+    <label class="control-label" style="cursor:pointer" data-toggle="modal" data-target="#billingTypeModal">
+      <i class="fa fa-info-circle"></i>
+    </label>
+      <p>
+          Unidade
+          <br/><br/>
+          <i>(* Preenchido automaticamente)</i>
+      </p>
+  </div>
+    <div class="col-sm-2">
+      <label class="control-label">Seguro contra desistência</label>&nbsp;
+      <label class="control-label" style="cursor:pointer" data-toggle="modal" data-target="#dropoutInsuranceModal">
+        <i class="fa fa-info-circle"></i>
+      </label>
+      <br/>
+        <p>Não contratado</p>
+    </div>
+    <div class="col-sm-2">
+      <label class="control-label">Parcelamento</label>
+      <br/>
+        <p></p>
+    </div>
+  <div class="col-sm-2">
+    <label class="control-label">Cupom de desconto</label>
+      <p></p>
+  </div>
+  <div class="col-sm-2">
+  </div>
+  <div class="col-sm-2">
+    <label class="control-label"><i>* O não preenchimento do TIPO DE FATURAMENTO será considerado automaticamente como faturamento por &#39;Unidade&#39;</i></label>
+  </div>
+</div>
+<hr/>
+
+<!-- INFO: Modal Billing Type-->
+<div class="modal fade" id="billingTypeModal" tabindex="-1" role="dialog" aria-labelledby="billingTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-billing_type" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="billingTypeModalLabel">Tipo de faturamento</h5>
+      </div>
+      <div class="modal-body">
+          <img src="/assets/workflow/billing_type_brasil-7fb6680275f7cc5790fe1a146a4b6bc415bd9c7a66a0af1094db129219c0a89e.png" alt="Billing type brasil 7fb6680275f7cc5790fe1a146a4b6bc415bd9c7a66a0af1094db129219c0a89e" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- INFO: Modal Dropout Insurance-->
+<div class="modal fade" id="dropoutInsuranceModal" tabindex="-1" role="dialog" aria-labelledby="dropoutInsuranceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dropoutInsuranceModalLabel">Seguro contra desistência</h5>
+      </div>
+      <div class="modal-body">
+        <p><b>Com uma taxa adicional de apenas 10% sobre o custo total dos alinhadores, você pode assegurar o seu caso contra desistências.</b> <br> <br>Caso o paciente decida interromper o tratamento, ao acionar o seguro, todos os títulos a vencer são automaticamente suspensos. Tenha tranquilidade e segurança ao parcelar o tratamento para o seu paciente. <br> <br>&nbsp&nbsp*válido para todos os pacotes adquiridos com opção de parcelamento <br>&nbsp**taxa aplicada sobre o valor total faturado do pacote <br>***parcelas em atraso não são suspensas</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-cubes fa-2x"></i>
+    <p>Impressão 3D</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>20/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+    <p></p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Gisleide Yamada</i></p>
+  </div>
+</div>
+<hr/>
+
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-cut fa-2x"></i>
+    <p>Recorte <br/>acabamento</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>20/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+    <p></p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Recorte EA</i></p>
+  </div>
+</div>
+<hr/>
+
+
+              <div class="row active-event">
+  <div class="col-sm-2 text-center">
+    <i class="fa fa-truck fa-2x"></i>
+    <p>Postagem dos <br/>alinhadores</p>
+  </div>
+  <div class="form-group col-sm-2">
+    <label class="control-label">Data</label>
+    <p>23/01/2026</p>
+  </div>
+  <div class="col-sm-6">
+        <p>AB946916075BR</p>
+  </div>
+  <div class="col-sm-2">
+      <p><i>Usuário:</i></p>
+      <p><i>Suporte EA</i></p>
+  </div>
+</div>
+<hr/>
+
+
+
+
+</form>        </div>
+
+      </section>
+  </div>
+</div>
+
+<!-- PALIATIVO BUG MENU-->
+  <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+                  <!-- page end-->
+              </section>
+        </section>
+        <!--main content end-->
+
+        <img id="loading" style="display: none;" src="/assets/loading-ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84.gif" alt="Loading ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84" />
+
+        <script src="/assets/application-7db5a4176af39c077e6284cdf2e1c8b6e9f9a787506c744cfc07bebdf489a339.js"></script>
+        <!-- Internationalization (i18n) select2 de acordo com linguagem configurada -->
+        <script src="/assets/select2_locale_pt-BR-2135e6bb2c56910a3de8eef3600d6922464e0be56eb07cb3e732633dc6b52a8f.js"></script>
+        <script src="/assets/workflows-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+          <script src="/assets/bootstrap-datepicker/bootstrap-datepicker.min-5a08a002657e104362fe7c7bd4675fe479f29e03a1853055cd8625a993bb2bb2.js"></script>
+  <script src="/assets/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min-ad4cdcfc00077ddef46c8494be8b89c3db7934a700f823f9f65bf98275852839.js"></script>
+  <script src="/assets/jquery-plugins/validate/jquery.validate.min-d4549477f07a7dc5a5f0c4fe58805d12f8829c99c990c4164ea506e0ea7ea0c6.js"></script>
+  <script src="/assets/jquery-plugins/validate/locales/jquery.validate.pt-BR-b340e7fa4c470ad0ec5128e9849faa6040a31c56f49a8e3c821d96d2c2590ed5.js"></script>
+  <script src="/assets/workflows.show-0efb23ecec24f90c5147f03ce07b3dac0e6d831a57e7f0a8d5356d367e9d4fe4.js"></script>
+  <script src="/assets/workflows.billing_type-181778fa239ccb81bb33d0ae8fc893f3d3f275f65ed77951a7ad52ec0eadf543.js"></script>
+
+    </body>
+</html>
