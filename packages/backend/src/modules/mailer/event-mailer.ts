@@ -66,6 +66,8 @@ export class EventMailer {
     await this.mailer.send({ to: recipients, subject, html })
     await this.logEmail('PATIENT_CREATED', recipients, subject)
   }
+
+  async onCaseSubmitted(caseData: any) {
     const adminEmails = await this.getAdminEmails()
     const labEmails = await this.getLabEmails()
     const sellerEmails = await this.getSellerEmailsForDentist(caseData.dentistId)
