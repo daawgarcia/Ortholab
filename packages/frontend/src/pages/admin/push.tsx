@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { Plus, Bell, Loader2 } from 'lucide-react'
+import { Plus, Bell, Loader2, X } from 'lucide-react'
 
 export default function AdminPushPage() {
   const { user } = useAuthStore()
@@ -16,6 +16,18 @@ export default function AdminPushPage() {
   const [form, setForm] = useState({ title: '', body: '', link: '', level: 'INFO', targetType: 'ALL', targetId: '' })
 
   const { data } = useQuery({ queryKey: ['pushes'], queryFn: () => api.get('/push').then(r => r.data) })
+  const [userSearch, setUserSearch] = useState('')
+  const [userCandidates, setUserCandidates] = useState<any[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+
+  const { data: searchResults } = useQuery({
+    queryKey: ['search-users', userSearch],
+    queryFn: () => {
+      if (!userSearch.trim()) return { users: [] }
+      return api.get(`/admin/users?search=${encodeURIComponent(userSearch.trim())}`).then(r => r.data)
+    },
+    staleTime: 0,
+  })
 
   const createMutation = useMutation({
     mutationFn: () => api.post('/push', form),
@@ -70,15 +82,72 @@ export default function AdminPushPage() {
                   </select>
                 </div>
                 <div className="space-y-1"><label className="text-xs font-medium">Destinatário</label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.targetType} onChange={e => setForm(f => ({ ...f, targetType: e.target.value }))}>
-                    <option value="ALL">Todos</option><option value="ROLE">Por Perfil</option><option value="USER">Usuário Específico</option>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.targetType} onChange={e => setForm(f => ({ ...f, targetType: e.target.value, targetId: '' }))}>
+                    <option value="ALL">Todos</option>
+                    <option value="ROLE">Por Perfil</option>
+                    <option value="USER">Usuário Específico</option>
                     {user?.role === 'SELLER' && <option value="SELLER_PORTFOLIO">Minha Carteira</option>}
                   </select>
                 </div>
               </div>
-              {(form.targetType === 'ROLE' || form.targetType === 'USER') && (
-                <div className="space-y-1"><label className="text-xs font-medium">{form.targetType === 'ROLE' ? 'Perfil (ex: DENTIST)' : 'ID do usuário'}</label>
-                  <Input value={form.targetId} onChange={e => setForm(f => ({ ...f, targetId: e.target.value }))} />
+
+              {form.targetType === 'ROLE' && (
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Selecionar perfil</label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.targetId} onChange={e => setForm(f => ({ ...f, targetId: e.target.value }))}>
+                    <option value="">-- choose --</option>
+                    <option value="DENTIST">DENTIST</option>
+                    <option value="LAB_TECH">LAB_TECH</option>
+                    <option value="FINANCIAL">FINANCIAL</option>
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="SELLER">SELLER</option>
+                  </select>
+                </div>
+              )}
+
+              {form.targetType === 'USER' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium">Buscar usuário (nome ou email)</label>
+                  <Input 
+                    value={userSearch} 
+                    onChange={e => setUserSearch(e.target.value)}
+                    placeholder="Digite nome ou email..."
+                  />
+
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {userSearch.trim() && searchResults?.users?.length > 0 ? (
+                      searchResults.users.map(u => (
+                        <button 
+                          key={u.id} 
+                          type="button" 
+                          className="w-full text-left p-2 border rounded hover:bg-blue-50 transition-colors text-sm"
+                          onClick={() => { 
+                            setForm(f => ({ ...f, targetId: u.id })); 
+                            setUserSearch(u.name)
+                          }}
+                        >
+                          <div className="font-medium">{u.name}</div>
+                          <div className="text-xs text-gray-500">{u.email} — {u.role}</div>
+                        </button>
+                      ))
+                    ) : userSearch.trim() ? (
+                      <p className="text-xs text-muted-foreground p-2">Nenhum usuário encontrado</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground p-2">Digite para buscar usuários...</p>
+                    )}
+                  </div>
+
+                  {form.targetId && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium">Usuário selecionado</label>
+                      <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                        <span>{userSearch}</span>
+                        <button type="button" onClick={() => { setForm(f => ({ ...f, targetId: '' })); setUserSearch('') }}>
+                          <X className="w-4 h-4 text-gray-400" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex gap-2 justify-end">
