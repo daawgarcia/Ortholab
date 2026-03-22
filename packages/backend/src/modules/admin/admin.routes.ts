@@ -3,6 +3,21 @@ import { requireRole, JwtPayload } from '../../plugins/auth'
 import { Role, UserStatus } from '@prisma/client'
 
 export async function adminRoutes(fastify: FastifyInstance) {
+  fastify.post('/users', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
+    const bcrypt = require('bcryptjs')
+    const { name, email, password, role, cro, clinic, cnpj, phone, address, city, state, zipCode } = request.body as any
+
+    const existing = await fastify.prisma.user.findUnique({ where: { email } })
+    if (existing) return reply.status(400).send({ error: 'E-mail já cadastrado' })
+
+    const hash = await bcrypt.hash(password, 12)
+    const user = await fastify.prisma.user.create({
+      data: { name, email, password: hash, role: role || 'DENTIST', status: 'ACTIVE', emailVerified: true, cro, clinic, cnpj, phone, address, city, state, zipCode },
+      select: { id: true, name: true, email: true, role: true, status: true },
+    })
+    return reply.status(201).send({ user })
+  })
+
   fastify.get('/users', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
     const { role, status, search, page = '1', limit = '20' } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
