@@ -83,7 +83,6 @@ const start = async () => {
   await app.register(videoRoutes, { prefix: '/api/videos' })
   await app.register(contentRoutes, { prefix: '/api/content' })
   await app.register(dentistFinancialRoutes, { prefix: '/api/dentist-financial' })
-  await app.register(exportRoutes, { prefix: '/api/export' })
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 
