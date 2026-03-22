@@ -20,6 +20,7 @@ import { exportRoutes } from './modules/export/export.routes'
 import { totvsRoutes } from './modules/totvs/totvs.routes'
 import { notificationRoutes } from './modules/notifications/notification.routes'
 import { adminRoutes } from './modules/admin/admin.routes'
+import { patientRoutes } from './modules/patients/patient.routes'
 
 const app = Fastify({ logger: true })
 
@@ -66,6 +67,7 @@ const start = async () => {
   await app.register(totvsRoutes, { prefix: '/api/totvs' })
   await app.register(notificationRoutes, { prefix: '/api/notifications' })
   await app.register(adminRoutes, { prefix: '/api/admin' })
+  await app.register(patientRoutes, { prefix: '/api/patients' })
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 

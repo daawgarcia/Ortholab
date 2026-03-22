@@ -12,7 +12,6 @@ import DashboardPage from '@/pages/dashboard'
 import CasesPage from '@/pages/cases'
 import CaseDetailPage from '@/pages/cases/detail'
 import NewCasePage from '@/pages/cases/new'
-import PlanningPage from '@/pages/planning'
 import FinancialPage from '@/pages/financial'
 import SellerPage from '@/pages/seller'
 import AdminUsersPage from '@/pages/admin/users'
@@ -21,6 +20,13 @@ import AdminPushPage from '@/pages/admin/push'
 import AdminModulesPage from '@/pages/admin/modules'
 import AdminSettingsPage from '@/pages/admin/settings'
 import ProfilePage from '@/pages/profile'
+import PlanningCenterPage from '@/pages/workflow/planning-center'
+import { PrintingPage, LaboratoryPage, ExpeditionPage } from '@/pages/workflow/workflow-stages'
+import PatientsPage from '@/pages/patients'
+import NewPatientPage from '@/pages/patients/new'
+
+const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
+const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user } = useAuthStore()
@@ -45,12 +51,23 @@ export default function App() {
 
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<DashboardPage />} />
+
+          <Route path="patients" element={<ProtectedRoute roles={PATIENT_ROLES}><PatientsPage /></ProtectedRoute>} />
+          <Route path="patients/new" element={<ProtectedRoute roles={PATIENT_ROLES}><NewPatientPage /></ProtectedRoute>} />
+          <Route path="patients/:id" element={<ProtectedRoute roles={PATIENT_ROLES}><NewPatientPage /></ProtectedRoute>} />
+
           <Route path="cases" element={<CasesPage />} />
           <Route path="cases/new" element={<ProtectedRoute roles={['DENTIST']}><NewCasePage /></ProtectedRoute>} />
           <Route path="cases/:id" element={<CaseDetailPage />} />
-          <Route path="planning" element={<ProtectedRoute roles={['LAB_TECH','ADMIN']}><PlanningPage /></ProtectedRoute>} />
+
+          <Route path="workflow/planning-center" element={<ProtectedRoute roles={WORKFLOW_ROLES}><PlanningCenterPage /></ProtectedRoute>} />
+          <Route path="workflow/printing" element={<ProtectedRoute roles={WORKFLOW_ROLES}><PrintingPage /></ProtectedRoute>} />
+          <Route path="workflow/laboratory" element={<ProtectedRoute roles={WORKFLOW_ROLES}><LaboratoryPage /></ProtectedRoute>} />
+          <Route path="workflow/expedition" element={<ProtectedRoute roles={WORKFLOW_ROLES}><ExpeditionPage /></ProtectedRoute>} />
+
           <Route path="financial" element={<ProtectedRoute roles={['FINANCIAL','ADMIN']}><FinancialPage /></ProtectedRoute>} />
           <Route path="seller" element={<ProtectedRoute roles={['SELLER']}><SellerPage /></ProtectedRoute>} />
+
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>} />
           <Route path="admin/services" element={<ProtectedRoute roles={['ADMIN']}><AdminServicesPage /></ProtectedRoute>} />
           <Route path="admin/push" element={<ProtectedRoute roles={['ADMIN','SELLER']}><AdminPushPage /></ProtectedRoute>} />
