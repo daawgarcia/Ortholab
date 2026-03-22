@@ -28,10 +28,20 @@ enum CaseStatus {
   WAITING_APPROVAL
   REVISION_REQUESTED
   APPROVED
+  PRINTING_3D
+  LABORATORY
+  EXPEDITION
   IN_PRODUCTION
   SHIPPED
   COMPLETED
   REFINEMENT
+}
+
+enum ProductType {
+  ALINHADORES
+  FINALIZACAO
+  PLACA_MIORRELAXANTE
+  EA_AIR2
 }
 
 enum DocumentType {
@@ -100,6 +110,7 @@ model User {
   updatedAt         DateTime   @updatedAt
 
   cases             Case[]     @relation("DentistCases")
+  patients          Patient[]  @relation("DentistPatients")
   plannings         Planning[] @relation("LabTechPlannings")
   revisions         Revision[] @relation("RevisionRequester")
   payments          Payment[]
@@ -113,32 +124,51 @@ model User {
 }
 
 model Case {
-  id             String     @id @default(uuid())
-  caseNumber     Int        @default(autoincrement())
-  dentistId      String
-  serviceId      String?
-  patientName    String
-  patientDob     DateTime?
-  gender         String?
-  notes          String?
-  status         CaseStatus @default(DRAFT)
-  totvsOrderId   String?
-  isRefinement   Boolean    @default(false)
-  parentCaseId   String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id               String      @id @default(uuid())
+  caseNumber       Int         @default(autoincrement())
+  dentistId        String
+  patientId        String?
+  serviceId        String?
+  productType      ProductType?
+  patientName      String
+  patientDob       DateTime?
+  gender           String?
+  notes            String?
+  planningFormData Json?
+  status           CaseStatus  @default(DRAFT)
+  totvsOrderId     String?
+  isRefinement     Boolean     @default(false)
+  parentCaseId     String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
-  dentist        User       @relation("DentistCases", fields: [dentistId], references: [id])
-  service        Service?   @relation(fields: [serviceId], references: [id])
-  parentCase     Case?      @relation("CaseRefinements", fields: [parentCaseId], references: [id])
-  refinements    Case[]     @relation("CaseRefinements")
-  documents      CaseDocument[]
-  plannings      Planning[]
-  production     Production?
-  payment        Payment?
-  financial      Financial?
-  activities     CaseActivity[]
-  emailLogs      EmailLog[]
+  dentist          User        @relation("DentistCases", fields: [dentistId], references: [id])
+  patient          Patient?    @relation(fields: [patientId], references: [id])
+  service          Service?    @relation(fields: [serviceId], references: [id])
+  parentCase       Case?       @relation("CaseRefinements", fields: [parentCaseId], references: [id])
+  refinements      Case[]      @relation("CaseRefinements")
+  documents        CaseDocument[]
+  plannings        Planning[]
+  production       Production?
+  payment          Payment?
+  financial        Financial?
+  activities       CaseActivity[]
+  emailLogs        EmailLog[]
+}
+
+model Patient {
+  id        String    @id @default(uuid())
+  name      String
+  gender    String?
+  dob       DateTime?
+  dentistId String
+  active    Boolean   @default(true)
+  teethData Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  dentist   User      @relation("DentistPatients", fields: [dentistId], references: [id])
+  cases     Case[]
 }
 
 model CaseDocument {

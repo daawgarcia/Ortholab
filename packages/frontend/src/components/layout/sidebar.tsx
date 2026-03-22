@@ -1,20 +1,25 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 import {
-  LayoutDashboard, FolderOpen, FlaskConical, DollarSign,
+  LayoutDashboard, FolderOpen, DollarSign,
   Users, Settings, Package, Bell, Wrench, Grid3X3,
-  Briefcase, ExternalLink, ChevronRight
+  Briefcase, ExternalLink, ChevronRight, ChevronDown,
+  FlaskConical, Printer, Beaker, Send, UserCircle
 } from 'lucide-react'
 
-const baseNav = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['DENTIST','LAB_TECH','ADMIN','FINANCIAL','SELLER'] },
-  { label: 'Casos', href: '/cases', icon: FolderOpen, roles: ['DENTIST','LAB_TECH','ADMIN'] },
-  { label: 'Planejamento', href: '/planning', icon: FlaskConical, roles: ['LAB_TECH','ADMIN'] },
-  { label: 'Financeiro', href: '/financial', icon: DollarSign, roles: ['FINANCIAL','ADMIN'] },
-  { label: 'Carteira', href: '/seller', icon: Briefcase, roles: ['SELLER'] },
+const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
+const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
+
+const workflowItems = [
+  { label: 'Planning Center', href: '/workflow/planning-center', icon: FlaskConical },
+  { label: 'Impressão 3D', href: '/workflow/printing', icon: Printer },
+  { label: 'Laboratório', href: '/workflow/laboratory', icon: Beaker },
+  { label: 'Expedição', href: '/workflow/expedition', icon: Send },
+  { label: 'Financeiro', href: '/financial', icon: DollarSign },
 ]
 
 const adminNav = [
@@ -28,6 +33,9 @@ const adminNav = [
 export function Sidebar() {
   const { user } = useAuthStore()
   const { pathname } = useLocation()
+  const [workflowOpen, setWorkflowOpen] = useState(
+    pathname.startsWith('/workflow') || pathname.startsWith('/financial')
+  )
 
   const { data: modulesData } = useQuery({
     queryKey: ['app-modules'],
@@ -35,9 +43,14 @@ export function Sidebar() {
     enabled: !!user,
   })
 
-  const navItems = baseNav.filter(i => i.roles.includes(user?.role || ''))
   const isAdmin = user?.role === 'ADMIN'
   const isSeller = user?.role === 'SELLER'
+  const showWorkflow = WORKFLOW_ROLES.includes(user?.role || '')
+  const showPatients = PATIENT_ROLES.includes(user?.role || '')
+
+  const isActive = (href: string) => href === '/'
+    ? pathname === '/'
+    : pathname.startsWith(href)
 
   return (
     <aside className="sidebar-gradient w-64 flex flex-col h-full text-white shrink-0">
@@ -52,18 +65,51 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map(item => {
-          const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-          return (
-            <Link key={item.href} to={item.href}
-              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
-                active ? 'bg-white/15 text-white font-medium' : 'text-white/70 hover:bg-white/10 hover:text-white')}>
-              <item.icon className="w-4 h-4 shrink-0" />
-              {item.label}
-              {active && <ChevronRight className="w-3 h-3 ml-auto" />}
-            </Link>
-          )
-        })}
+        <NavItem href="/" icon={LayoutDashboard} label="Dashboard" active={isActive('/')} />
+
+        {showPatients && (
+          <NavItem href="/patients" icon={UserCircle} label="Pacientes" active={isActive('/patients')} />
+        )}
+
+        {['DENTIST', 'LAB_TECH', 'ADMIN'].includes(user?.role || '') && (
+          <NavItem href="/cases" icon={FolderOpen} label="Casos" active={isActive('/cases')} />
+        )}
+
+        {isSeller && (
+          <NavItem href="/seller" icon={Briefcase} label="Carteira" active={isActive('/seller')} />
+        )}
+
+        {showWorkflow && (
+          <>
+            <button
+              onClick={() => setWorkflowOpen(o => !o)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <Grid3X3 className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Workflow</span>
+              {workflowOpen
+                ? <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                : <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
+            </button>
+            {workflowOpen && (
+              <div className="ml-3 space-y-0.5 border-l border-white/10 pl-3">
+                {workflowItems.map(item => {
+                  if (item.href === '/financial' && user?.role !== 'ADMIN' && user?.role !== 'FINANCIAL') return null
+                  return (
+                    <NavItem
+                      key={item.href}
+                      href={item.href}
+                      icon={item.icon}
+                      label={item.label}
+                      active={isActive(item.href)}
+                      small
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
 
         {(isAdmin || isSeller) && (
           <>
@@ -72,17 +118,9 @@ export function Sidebar() {
                 {isAdmin ? 'Administração' : 'Vendedor'}
               </p>
             </div>
-            {(isAdmin ? adminNav : [{ label: 'Push / Avisos', href: '/admin/push', icon: Bell }]).map(item => {
-              const active = pathname.startsWith(item.href)
-              return (
-                <Link key={item.href} to={item.href}
-                  className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
-                    active ? 'bg-white/15 text-white font-medium' : 'text-white/70 hover:bg-white/10 hover:text-white')}>
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  {item.label}
-                </Link>
-              )
-            })}
+            {(isAdmin ? adminNav : [{ label: 'Push / Avisos', href: '/admin/push', icon: Bell }]).map(item => (
+              <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label} active={isActive(item.href)} />
+            ))}
           </>
         )}
 
@@ -116,5 +154,22 @@ export function Sidebar() {
         </Link>
       </div>
     </aside>
+  )
+}
+
+function NavItem({ href, icon: Icon, label, active, small }: {
+  href: string; icon: any; label: string; active: boolean; small?: boolean
+}) {
+  return (
+    <Link to={href}
+      className={cn(
+        'flex items-center gap-3 px-3 rounded-lg text-sm transition-all',
+        small ? 'py-2' : 'py-2.5',
+        active ? 'bg-white/15 text-white font-medium' : 'text-white/70 hover:bg-white/10 hover:text-white'
+      )}>
+      <Icon className={cn('shrink-0', small ? 'w-3.5 h-3.5' : 'w-4 h-4')} />
+      {label}
+      {active && !small && <ChevronRight className="w-3 h-3 ml-auto" />}
+    </Link>
   )
 }
