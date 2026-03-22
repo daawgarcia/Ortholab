@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Esthetic Aligner</title>
+
+        <link rel="stylesheet" media="all" href="/assets/application-72503499d40b4d04c500b7ea29d8042a81baef2a73ee5d712a5b4ae69901a767.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-1d11c381cadf47545566e2cf5e375205858d827abe8a0a87a02d74ba4606dbd7.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-responsive-b95ed120c3b5e8f4ae81473e6a89779a8e425443238e7439f523f664c95c33a5.css" />
+         
+          <link rel="stylesheet" media="all" href="/assets/fileinput-d5686e2fa28a259acba98591c3cced7e30480a93a78314690209c8761ad788fd.css" />
+
+
+        <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="e6x5ThyGjJU0vNEItIBoMkJCGuwziQOh4MWghk4BKuErqZU1S+xFATQ1JsYrE/8yRrW13IAea8EbLNSMYMgCng==" />
+    </head>
+    <body>
+        <script type="text/javascript">
+//<![CDATA[
+window.gon={};gon.locale="pt-BR";gon.placeholder={"dentists":"Selecione um dentista","patients":"Selecione um paciente"};gon.alertify={"buttonOk":"Confirmar","buttonCancel":"Cancelar","alerts_to_open_orders_awaiting_approval_for_production":"Tem certeza que quer sair dessa página? Ainda existem casos para serem aprovados."};
+//]]>
+</script>
+
+        <!--header start-->
+        <header class="header dark-bg">
+    <div class="toggle-nav">
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+
+    <!--logo start-->
+    <a class="logo" href="/pt-BR">
+      <span class="lite">Esthetic Aligner</span>
+</a>    <!--logo end-->
+
+    <!--  search form start -->
+      <div class="nav search-row" id="top_menu">
+          <ul class="nav top-menu">                    
+              <li>
+                  <form class="navbar-form">
+                      <input type="hidden" name="search" id="search" placeholder="Buscar paciente" class="form-control" />
+                  </form>
+              </li>                    
+          </ul>
+      </div>
+      <!--  search form end -->                
+
+      <div class="top-nav notification-row">                
+          <!-- notificatoin dropdown start-->
+          <ul class="nav pull-right top-menu">
+              <!-- user login dropdown start-->
+              <li class="dropdown">
+                  <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                      <span class="profile-ava">
+                            <img src="https://ortholab.s3.sa-east-1.amazonaws.com/uploads/user/avatar/370/EA_redondo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAJHRPL3ES7WKXJEZQ%2F20260322%2Fsa-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20260322T014344Z&amp;X-Amz-Expires=900&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=ad7af7319f96f5e468fb6035cb06b8356092eb13ef1fb534c326166c931cdfd0" alt="Ea redondo" />
+                      </span>
+                      <span class="username">Esthetic Aligner</span>
+                      <b class="caret"></b>
+                  </a>
+                  <ul class="dropdown-menu extended logout">
+                      <div class="log-arrow-up"></div>
+                      <li class="eborder-top">
+                          <a href="/pt-BR/users/edit">
+                            <i class="fa fa-user"></i> Perfil
+</a>                      </li>
+                      <li>
+                          <a href="/pt-BR/users/sign_out">
+                            <i class="fa fa-sign-out"></i> Sair
+</a>                      </li>
+                  </ul>
+              </li>
+              <!-- user login dropdown end -->
+          </ul>
+          <!-- notificatoin dropdown end-->
+      </div>
+</header>
+        <!--header end-->
+
+        <!--sidebar start-->
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section class="wrapper">
+              <!-- page start-->
+              
+
+
+<div class="row">
+    <div class="col-sm-offset-3 col-sm-6 col-md-4 col-md-offset-4">
+      <h2>Alterar</h2>
+
+      <form class="edit_user" id="edit_user" enctype="multipart/form-data" action="/pt-BR/users" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="r+dBsw2Y4e1iYXW0sM2W+9VkJgBxjp3A68QDhkjEFkD/4q3IWvIoeWLognovXgH70ZOJMMIZ9aAQLXeMZg0+Pw==" />
+
+        <p class="field">
+            <label for="user_avatar">Avatar</label>
+            <input type="file" name="user[avatar]" id="user_avatar" />
+        </p>
+
+        <p class="field">
+            <label for="user_name">Nome</label>
+            <input autofocus="autofocus" class="form-control" required="required" maxlength="100" size="100" type="text" value="Esthetic Aligner" name="user[name]" id="user_name" />
+        </p>
+
+        <p class="field">
+            <label for="user_last_name">Sobrenome</label>
+            <input class="form-control" maxlength="100" size="100" type="text" value="" name="user[last_name]" id="user_last_name" />
+        </p>
+
+
+        <p class="field">
+            <label for="user_password">Nova senha</label> <i>(Deixe em branco se você não quiser alterar)</i>
+            <input autocomplete="off" class="form-control" type="password" name="user[password]" id="user_password" />
+        </p>
+
+        <p class="field">
+            <label for="user_password_confirmation">Confirme nova senha</label><br />
+            <input autocomplete="off" class="form-control" type="password" name="user[password_confirmation]" id="user_password_confirmation" />
+        </p>
+
+        <p class="field">
+            <label for="user_current_password">Senha atual</label> <i>(Digite sua senha atual para confirmar as alterações)</i><br />
+            <input autocomplete="off" class="form-control" type="password" name="user[current_password]" id="user_current_password" />
+        </p>
+
+        <p class="actions">
+            <input type="submit" name="commit" value="Atualizar" class="btn btn-primary" />
+            <a class="btn btn-default" href="javascript:history.back()">Voltar</a>
+        </p>
+</form>
+</div></div>
+
+              <!-- page end-->
+        </section>
+        <!--main content end-->
+
+        <img id="loading" style="display: none;" src="/assets/loading-ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84.gif" alt="Loading ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84" />
+
+        <script src="/assets/application-7db5a4176af39c077e6284cdf2e1c8b6e9f9a787506c744cfc07bebdf489a339.js"></script>
+        <!-- Internationalization (i18n) select2 de acordo com linguagem configurada -->
+        <script src="/assets/select2_locale_pt-BR-2135e6bb2c56910a3de8eef3600d6922464e0be56eb07cb3e732633dc6b52a8f.js"></script>
+        
+          <script src="/assets/fileinput/fileinput.min-33648d40b24f494975f8a0419670e189fd81c1b74a31e384252198b5fbcc1e16.js"></script>
+  <script src="/assets/fileinput/locales/fileinput_locale_pt-BR-48b11f079f749df72baf9f2fd35d515d27c29ab617224ca8ead85edb28b4dac4.js"></script>
+  <script src="/assets/avatar-973037f054cbc7a899b81adcbcad33734fe0277cea01a3da8dcc0c99af49a58e.js"></script>
+
+    </body>
+</html>

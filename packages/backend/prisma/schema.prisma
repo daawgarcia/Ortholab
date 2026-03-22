@@ -86,41 +86,58 @@ enum AppModuleStatus {
 }
 
 model User {
-  id                String     @id @default(uuid())
-  name              String
-  email             String     @unique
-  password          String
-  role              Role       @default(DENTIST)
-  status            UserStatus @default(PENDING)
-  cro               String?
-  clinic            String?
-  cnpj              String?
-  phone             String?
-  address           String?
-  city              String?
-  state             String?
-  zipCode           String?
-  deliveryAddress   String?
-  totvsCode         String?
-  emailVerified     Boolean    @default(false)
-  emailVerifyToken  String?
-  resetPasswordToken String?
+  id                  String     @id @default(uuid())
+  name                String
+  email               String     @unique
+  password            String
+  role                Role       @default(DENTIST)
+  status              UserStatus @default(PENDING)
+  cro                 String?
+  clinic              String?
+  cnpj                String?
+  phone               String?
+  address             String?
+  city                String?
+  state               String?
+  zipCode             String?
+  country             String?    @default("BR")
+  deliveryStreet      String?
+  deliveryNumber      String?
+  deliveryComplement  String?
+  deliveryNeighborhood String?
+  deliveryCity        String?
+  deliveryState       String?
+  deliveryZip         String?
+  deliveryPhone       String?
+  deliveryMobile      String?
+  totvsCode           String?
+  totvsChave          String?
+  totvsLoja           String?
+  totvsProteusClient  String?
+  emailVerified       Boolean    @default(false)
+  emailVerifyToken    String?
+  resetPasswordToken  String?
   resetPasswordExpiry DateTime?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  cases             Case[]     @relation("DentistCases")
-  patients          Patient[]  @relation("DentistPatients")
-  plannings         Planning[] @relation("LabTechPlannings")
-  revisions         Revision[] @relation("RevisionRequester")
-  payments          Payment[]
-  notifications     Notification[]
-  pushReads         PushRead[]
-  pushNotifications PushNotification[] @relation("PushCreator")
-  emailLogs         EmailLog[]
-  sellerClients     SellerClient[] @relation("SellerRelation")
-  clientSellers     SellerClient[] @relation("ClientRelation")
-  financials        Financial[]    @relation("BilledBy")
+  cases               Case[]     @relation("DentistCases")
+  patients            Patient[]  @relation("DentistPatients")
+  plannings           Planning[] @relation("LabTechPlannings")
+  revisions           Revision[] @relation("RevisionRequester")
+  payments            Payment[]
+  notifications       Notification[]
+  pushReads           PushRead[]
+  pushNotifications   PushNotification[] @relation("PushCreator")
+  emailLogs           EmailLog[]
+  sellerClients       SellerClient[] @relation("SellerRelation")
+  clientSellers       SellerClient[] @relation("ClientRelation")
+  financials          Financial[]    @relation("BilledBy")
+  planningForms       PlanningForm[] @relation("DentistPlanningForms")
+  completionForms     CompletionForm[] @relation("DentistCompletionForms")
+  otherServicesForms  OtherServicesForm[] @relation("DentistOtherServicesForms")
+  clinicalRecords     ClinicalRecord[] @relation("DentistClinicalRecords")
+  workflowEvents      WorkflowEvent[] @relation("WorkflowEventPerformer")
 }
 
 model Case {
@@ -136,6 +153,11 @@ model Case {
   notes            String?
   planningFormData Json?
   status           CaseStatus  @default(DRAFT)
+  billingType      String?
+  installmentOption String?
+  dropoutInsurance Boolean     @default(false)
+  discountCoupon   String?
+  packActive       Boolean     @default(false)
   totvsOrderId     String?
   isRefinement     Boolean     @default(false)
   parentCaseId     String?
@@ -154,6 +176,7 @@ model Case {
   financial        Financial?
   activities       CaseActivity[]
   emailLogs        EmailLog[]
+  workflowEvents   WorkflowEvent[]
 }
 
 model Patient {
@@ -167,8 +190,15 @@ model Patient {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  dentist   User      @relation("DentistPatients", fields: [dentistId], references: [id])
-  cases     Case[]
+  dentist            User               @relation("DentistPatients", fields: [dentistId], references: [id])
+  cases              Case[]
+  photos             Photo[]
+  digitalModels      DigitalModel[]
+  workFiles          WorkFile[]
+  planningForms      PlanningForm[]
+  completionForms    CompletionForm[]
+  otherServicesForms OtherServicesForm[]
+  clinicalRecords    ClinicalRecord[]
 }
 
 model CaseDocument {
@@ -389,4 +419,110 @@ model SystemSetting {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model Photo {
+  id        String   @id @default(uuid())
+  patientId String
+  url       String
+  filename  String
+  size      Int?
+  isPrivate Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model DigitalModel {
+  id        String   @id @default(uuid())
+  patientId String
+  url       String
+  filename  String
+  size      Int?
+  kind      String
+  createdAt DateTime @default(now())
+
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model WorkFile {
+  id        String   @id @default(uuid())
+  patientId String
+  url       String
+  filename  String
+  size      Int?
+  createdAt DateTime @default(now())
+
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model PlanningForm {
+  id        String   @id @default(uuid())
+  patientId String
+  dentistId String
+  formData  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  dentist   User     @relation("DentistPlanningForms", fields: [dentistId], references: [id])
+}
+
+model CompletionForm {
+  id              String   @id @default(uuid())
+  patientId       String
+  dentistId       String
+  formData        Json
+  contentionUpper Int?
+  contentionLower Int?
+  observations    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  dentist         User     @relation("DentistCompletionForms", fields: [dentistId], references: [id])
+}
+
+model OtherServicesForm {
+  id           String   @id @default(uuid())
+  patientId    String
+  dentistId    String
+  eaGuard      Boolean  @default(false)
+  eaSplint     Boolean  @default(false)
+  eaMio        String?
+  eaAir        Boolean  @default(false)
+  observations String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  patient      Patient  @relation(fields: [patientId], references: [id])
+  dentist      User     @relation("DentistOtherServicesForms", fields: [dentistId], references: [id])
+}
+
+model ClinicalRecord {
+  id             String   @id @default(uuid())
+  patientId      String
+  dentistId      String
+  consultationAt DateTime
+  evaluation     String
+  activities     String[]
+  observations   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  dentist        User     @relation("DentistClinicalRecords", fields: [dentistId], references: [id])
+}
+
+model WorkflowEvent {
+  id          String   @id @default(uuid())
+  caseId      String
+  stage       Int
+  stageName   String
+  performedBy String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  performer   User?    @relation("WorkflowEventPerformer", fields: [performedBy], references: [id])
 }

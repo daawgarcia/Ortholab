@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Esthetic Aligner</title>
+
+        <link rel="stylesheet" media="all" href="/assets/application-72503499d40b4d04c500b7ea29d8042a81baef2a73ee5d712a5b4ae69901a767.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-1d11c381cadf47545566e2cf5e375205858d827abe8a0a87a02d74ba4606dbd7.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-responsive-b95ed120c3b5e8f4ae81473e6a89779a8e425443238e7439f523f664c95c33a5.css" />
+        <link rel="stylesheet" media="all" href="/assets/configurations/permissions-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css" /> 
+        
+
+        <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="1/6yaAbPkrKEeTKYwfa56Z1Rf2iC2imGCwsYZrMslvGH+14TUaVbJoTwxVZeZS7pmabQWDFNQebw4mxsneW+jg==" />
+    </head>
+    <body>
+        <script type="text/javascript">
+//<![CDATA[
+window.gon={};gon.locale="pt-BR";gon.placeholder={"dentists":"Selecione um dentista","patients":"Selecione um paciente"};gon.alertify={"buttonOk":"Confirmar","buttonCancel":"Cancelar","alerts_to_open_orders_awaiting_approval_for_production":"Tem certeza que quer sair dessa página? Ainda existem casos para serem aprovados."};
+//]]>
+</script>
+
+        <!--header start-->
+        <header class="header dark-bg">
+    <div class="toggle-nav">
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+
+    <!--logo start-->
+    <a class="logo" href="/pt-BR">
+      <span class="lite">Esthetic Aligner</span>
+</a>    <!--logo end-->
+
+    <!--  search form start -->
+      <div class="nav search-row" id="top_menu">
+          <ul class="nav top-menu">                    
+              <li>
+                  <form class="navbar-form">
+                      <input type="hidden" name="search" id="search" placeholder="Buscar paciente" class="form-control" />
+                  </form>
+              </li>                    
+          </ul>
+      </div>
+      <!--  search form end -->                
+
+      <div class="top-nav notification-row">                
+          <!-- notificatoin dropdown start-->
+          <ul class="nav pull-right top-menu">
+              <!-- user login dropdown start-->
+              <li class="dropdown">
+                  <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                      <span class="profile-ava">
+                            <img src="https://ortholab.s3.sa-east-1.amazonaws.com/uploads/user/avatar/370/EA_redondo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAJHRPL3ES7WKXJEZQ%2F20260322%2Fsa-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20260322T014337Z&amp;X-Amz-Expires=900&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=e3b45b5012e207bc25385fe18fd6a45505bbf4d816227d522e9c7eeb8d83fad6" alt="Ea redondo" />
+                      </span>
+                      <span class="username">Esthetic Aligner</span>
+                      <b class="caret"></b>
+                  </a>
+                  <ul class="dropdown-menu extended logout">
+                      <div class="log-arrow-up"></div>
+                      <li class="eborder-top">
+                          <a href="/pt-BR/users/edit">
+                            <i class="fa fa-user"></i> Perfil
+</a>                      </li>
+                      <li>
+                          <a href="/pt-BR/users/sign_out">
+                            <i class="fa fa-sign-out"></i> Sair
+</a>                      </li>
+                  </ul>
+              </li>
+              <!-- user login dropdown end -->
+          </ul>
+          <!-- notificatoin dropdown end-->
+      </div>
+</header>
+        <!--header end-->
+
+        <!--sidebar start-->
+          <aside>
+    <div id="sidebar"  class="nav-collapse ">
+        <!-- sidebar menu start-->
+        <ul class="sidebar-menu">
+            <li class="">
+                <a href="/pt-BR/dentists">
+                  <i class="fa fa-user-md"></i><span>Dentista</span>
+</a>            </li>
+            <li class="">
+                <a href="/pt-BR/patients">
+                  <i class="fa fa-user"></i><span>Paciente</span>
+</a>            </li>
+              <li class="sub-menu">
+                <a href="#" class="">
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="menu-arrow fa fa-angle-right"></span>
+                </a>
+                <ul class="sub">
+                  <li>
+                    <a href="/pt-BR/workflow_control/planning_center">
+                      Planning center
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print">
+                      Impressão 3D (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pt">
+                      Impressão 3D (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_co">
+                      Impressão 3D (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_mx">
+                      Impressão 3D (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pe">
+                      Impressão 3D (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/financial">
+                      Financeiro
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory">
+                      Laboratório (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pt">
+                      Laboratório (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_co">
+                      Laboratório (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_mx">
+                      Laboratório (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pe">
+                      Laboratório (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition">
+                      Expedição (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pt">
+                      Expedição (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_co">
+                      Expedição (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_mx">
+                      Expedição (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pe">
+                      Expedição (pe)
+</a>                  </li>
+                </ul>
+              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-file-text-o"></i>
+                      <span>Fichas</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                          <a href="/pt-BR/planning_forms">
+                            Planejamento
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/completion_forms">
+                              Finalização
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/other_services_forms">
+                              Outros serviços
+</a>                        </li>
+                  </ul>
+              </li>
+              <li class="">
+                  <a href="/pt-BR/clinical_records">
+                    <i class="fa fa-medkit"></i><span>Ficha Clínica</span>
+</a>              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-cogs"></i>
+                      <span>Configurações</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                            <a href="/pt-BR/configurations/permissions">
+                              <i class="fa fa-ban"></i>
+                              Permissões
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profiles">
+                              <i class="fa fa-users"></i>
+                              Perfil usuário
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profile_dentist">
+                              <i class="fa fa-link"></i>
+                              Usuário / Dentista
+</a>                        </li>
+                  </ul>
+              </li>
+        </ul>
+        <!-- sidebar menu end-->
+    </div>
+</aside>
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section class="wrapper">
+              <section id="main-content">
+                  <div id="flash-messages">
+
+    <!-- Mensagens de alerta sobre casos em aberto aguardando aprovação do dentista para produção -->
+</div>
+
+                  <div class="row">
+    <div class="col-lg-12">
+        <h3 class="page-header">
+            <i class="fa fa-ban"></i> Permissões
+        </h3>
+    </div>
+</div>
+
+                  <!-- page start-->
+                  <form action="/pt-BR/configurations/permissions" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="EUkP3GPdCCPMkTupc6whAXrw0wnqeGMPyvxK0jRwoo1BTOOnNLfBt8wYzGfsP7YBfgd8OVnvC28xFT7YGrmK8g==" />
+  <table class="table permissions">
+      <thead class="panel-heading">
+          <tr>
+              <th>Recurso</th>
+                <th>Administrador</th>
+                <th>Dentista</th>
+                <th>Funcionário (br)</th>
+                <th>Funcionário (co)</th>
+                <th>Funcionário (mx)</th>
+                <th>Funcionário (pe)</th>
+                <th>Funcionário (pt)</th>
+          </tr>
+      </thead>
+      <tbody>
+                                     <!-- deprecated -->
+              <tr >
+                  <td>Ficha Clínica</td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][admin]" id="permissions_ClinicalRecord_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][dentist]" id="permissions_ClinicalRecord_control_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][worker]" id="permissions_ClinicalRecord_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][worker_co]" id="permissions_ClinicalRecord_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][worker_mx]" id="permissions_ClinicalRecord_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][worker_pe]" id="permissions_ClinicalRecord_control_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[ClinicalRecord][control][worker_pt]" id="permissions_ClinicalRecord_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Ficha de Finalização</td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][admin]" id="permissions_CompletionForm_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][dentist]" id="permissions_CompletionForm_control_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][worker]" id="permissions_CompletionForm_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][worker_co]" id="permissions_CompletionForm_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][worker_mx]" id="permissions_CompletionForm_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][worker_pe]" id="permissions_CompletionForm_control_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[CompletionForm][control][worker_pt]" id="permissions_CompletionForm_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Ficha de Planejamento</td>
+                    <td><input type="checkbox" name="permissions[Plan][control][admin]" id="permissions_Plan_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Plan][control][dentist]" id="permissions_Plan_control_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Plan][control][worker]" id="permissions_Plan_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Plan][control][worker_co]" id="permissions_Plan_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Plan][control][worker_mx]" id="permissions_Plan_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Plan][control][worker_pe]" id="permissions_Plan_control_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Plan][control][worker_pt]" id="permissions_Plan_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+                         <!-- deprecated -->
+              <tr >
+                  <td>Ficha para Outros Serviços</td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][admin]" id="permissions_OtherServicesForm_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][dentist]" id="permissions_OtherServicesForm_control_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][worker]" id="permissions_OtherServicesForm_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][worker_co]" id="permissions_OtherServicesForm_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][worker_mx]" id="permissions_OtherServicesForm_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][worker_pe]" id="permissions_OtherServicesForm_control_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[OtherServicesForm][control][worker_pt]" id="permissions_OtherServicesForm_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Fotos Restritas</td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][admin]" id="permissions_PrivatePhoto_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][dentist]" id="permissions_PrivatePhoto_control_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][worker]" id="permissions_PrivatePhoto_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][worker_co]" id="permissions_PrivatePhoto_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][worker_mx]" id="permissions_PrivatePhoto_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][worker_pe]" id="permissions_PrivatePhoto_control_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[PrivatePhoto][control][worker_pt]" id="permissions_PrivatePhoto_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Paciente - Adicionar</td>
+                    <td><input type="checkbox" name="permissions[Patient][new][admin]" id="permissions_Patient_new_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][new][dentist]" id="permissions_Patient_new_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][new][worker]" id="permissions_Patient_new_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][new][worker_co]" id="permissions_Patient_new_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][new][worker_mx]" id="permissions_Patient_new_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][new][worker_pe]" id="permissions_Patient_new_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][new][worker_pt]" id="permissions_Patient_new_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Paciente - Excluir</td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][admin]" id="permissions_Patient_destroy_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][dentist]" id="permissions_Patient_destroy_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][worker]" id="permissions_Patient_destroy_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][worker_co]" id="permissions_Patient_destroy_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][worker_mx]" id="permissions_Patient_destroy_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][worker_pe]" id="permissions_Patient_destroy_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Patient][destroy][worker_pt]" id="permissions_Patient_destroy_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Perfil de Usuário - Configurar</td>
+                    <td><input type="checkbox" name="permissions[User][config][admin]" id="permissions_User_config_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][config][dentist]" id="permissions_User_config_dentist" value="3" disabled="disabled" /></td>
+                    <td><input type="checkbox" name="permissions[User][config][worker]" id="permissions_User_config_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][config][worker_co]" id="permissions_User_config_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[User][config][worker_mx]" id="permissions_User_config_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[User][config][worker_pe]" id="permissions_User_config_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[User][config][worker_pt]" id="permissions_User_config_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Perfil de Usuário - Excluir</td>
+                    <td><input type="checkbox" name="permissions[User][destroy][admin]" id="permissions_User_destroy_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][destroy][dentist]" id="permissions_User_destroy_dentist" value="3" disabled="disabled" /></td>
+                    <td><input type="checkbox" name="permissions[User][destroy][worker]" id="permissions_User_destroy_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][destroy][worker_co]" id="permissions_User_destroy_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][destroy][worker_mx]" id="permissions_User_destroy_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][destroy][worker_pe]" id="permissions_User_destroy_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[User][destroy][worker_pt]" id="permissions_User_destroy_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Permissão - Configurar</td>
+                    <td><input type="checkbox" name="permissions[Permission][config][admin]" id="permissions_Permission_config_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Permission][config][dentist]" id="permissions_Permission_config_dentist" value="3" disabled="disabled" /></td>
+                    <td><input type="checkbox" name="permissions[Permission][config][worker]" id="permissions_Permission_config_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Permission][config][worker_co]" id="permissions_Permission_config_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Permission][config][worker_mx]" id="permissions_Permission_config_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Permission][config][worker_pe]" id="permissions_Permission_config_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Permission][config][worker_pt]" id="permissions_Permission_config_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Relatório</td>
+                    <td><input type="checkbox" name="permissions[Work][control][admin]" id="permissions_Work_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][control][dentist]" id="permissions_Work_control_dentist" value="3" disabled="disabled" /></td>
+                    <td><input type="checkbox" name="permissions[Work][control][worker]" id="permissions_Work_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][control][worker_co]" id="permissions_Work_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][control][worker_mx]" id="permissions_Work_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][control][worker_pe]" id="permissions_Work_control_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][control][worker_pt]" id="permissions_Work_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+                                                 <!-- deprecated -->
+              <tr >
+                  <td>Relatório - Visualizar/Imprimir</td>
+                    <td><input type="checkbox" name="permissions[Work][report][admin]" id="permissions_Work_report_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][report][dentist]" id="permissions_Work_report_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][report][worker]" id="permissions_Work_report_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][report][worker_co]" id="permissions_Work_report_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][report][worker_mx]" id="permissions_Work_report_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Work][report][worker_pe]" id="permissions_Work_report_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Work][report][worker_pt]" id="permissions_Work_report_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+                         <!-- deprecated -->
+              <tr >
+                  <td>Usuário/Dentista - Vincular</td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][admin]" id="permissions_Dentist_config_user_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][dentist]" id="permissions_Dentist_config_user_dentist" value="3" disabled="disabled" /></td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][worker]" id="permissions_Dentist_config_user_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][worker_co]" id="permissions_Dentist_config_user_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][worker_mx]" id="permissions_Dentist_config_user_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][worker_pe]" id="permissions_Dentist_config_user_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Dentist][config_user][worker_pt]" id="permissions_Dentist_config_user_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow</td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][admin]" id="permissions_Workflow_control_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][dentist]" id="permissions_Workflow_control_dentist" value="3" disabled="disabled" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][worker]" id="permissions_Workflow_control_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][worker_co]" id="permissions_Workflow_control_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][worker_mx]" id="permissions_Workflow_control_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][worker_pe]" id="permissions_Workflow_control_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][control][worker_pt]" id="permissions_Workflow_control_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Aprovar ou solicitar alteração</td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][admin]" id="permissions_Workflow_approve_or_request_change_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][dentist]" id="permissions_Workflow_approve_or_request_change_dentist" value="3" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][worker]" id="permissions_Workflow_approve_or_request_change_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][worker_co]" id="permissions_Workflow_approve_or_request_change_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][worker_mx]" id="permissions_Workflow_approve_or_request_change_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][worker_pe]" id="permissions_Workflow_approve_or_request_change_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][approve_or_request_change][worker_pt]" id="permissions_Workflow_approve_or_request_change_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Cancelar</td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][admin]" id="permissions_Workflow_cancel_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][dentist]" id="permissions_Workflow_cancel_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][worker]" id="permissions_Workflow_cancel_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][worker_co]" id="permissions_Workflow_cancel_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][worker_mx]" id="permissions_Workflow_cancel_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][worker_pe]" id="permissions_Workflow_cancel_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][cancel][worker_pt]" id="permissions_Workflow_cancel_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Expedição (BR)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][admin]" id="permissions_Workflow_expedition_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][dentist]" id="permissions_Workflow_expedition_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][worker]" id="permissions_Workflow_expedition_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][worker_co]" id="permissions_Workflow_expedition_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][worker_mx]" id="permissions_Workflow_expedition_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][worker_pe]" id="permissions_Workflow_expedition_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition][worker_pt]" id="permissions_Workflow_expedition_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Expedição (CO)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][admin]" id="permissions_Workflow_expedition_co_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][dentist]" id="permissions_Workflow_expedition_co_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][worker]" id="permissions_Workflow_expedition_co_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][worker_co]" id="permissions_Workflow_expedition_co_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][worker_mx]" id="permissions_Workflow_expedition_co_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][worker_pe]" id="permissions_Workflow_expedition_co_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_co][worker_pt]" id="permissions_Workflow_expedition_co_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Expedição (MX)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][admin]" id="permissions_Workflow_expedition_mx_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][dentist]" id="permissions_Workflow_expedition_mx_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][worker]" id="permissions_Workflow_expedition_mx_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][worker_co]" id="permissions_Workflow_expedition_mx_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][worker_mx]" id="permissions_Workflow_expedition_mx_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][worker_pe]" id="permissions_Workflow_expedition_mx_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_mx][worker_pt]" id="permissions_Workflow_expedition_mx_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Expedição (PE)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][admin]" id="permissions_Workflow_expedition_pe_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][dentist]" id="permissions_Workflow_expedition_pe_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][worker]" id="permissions_Workflow_expedition_pe_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][worker_co]" id="permissions_Workflow_expedition_pe_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][worker_mx]" id="permissions_Workflow_expedition_pe_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][worker_pe]" id="permissions_Workflow_expedition_pe_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pe][worker_pt]" id="permissions_Workflow_expedition_pe_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Expedição (PT)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][admin]" id="permissions_Workflow_expedition_pt_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][dentist]" id="permissions_Workflow_expedition_pt_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][worker]" id="permissions_Workflow_expedition_pt_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][worker_co]" id="permissions_Workflow_expedition_pt_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][worker_mx]" id="permissions_Workflow_expedition_pt_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][worker_pe]" id="permissions_Workflow_expedition_pt_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][expedition_pt][worker_pt]" id="permissions_Workflow_expedition_pt_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Financeiro</td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][admin]" id="permissions_Workflow_financial_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][dentist]" id="permissions_Workflow_financial_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][worker]" id="permissions_Workflow_financial_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][worker_co]" id="permissions_Workflow_financial_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][worker_mx]" id="permissions_Workflow_financial_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][worker_pe]" id="permissions_Workflow_financial_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][financial][worker_pt]" id="permissions_Workflow_financial_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Impressão 3D (BR)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][admin]" id="permissions_Workflow_print_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][dentist]" id="permissions_Workflow_print_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][worker]" id="permissions_Workflow_print_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][worker_co]" id="permissions_Workflow_print_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][worker_mx]" id="permissions_Workflow_print_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][worker_pe]" id="permissions_Workflow_print_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print][worker_pt]" id="permissions_Workflow_print_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Impressão 3D (CO)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][admin]" id="permissions_Workflow_print_co_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][dentist]" id="permissions_Workflow_print_co_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][worker]" id="permissions_Workflow_print_co_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][worker_co]" id="permissions_Workflow_print_co_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][worker_mx]" id="permissions_Workflow_print_co_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][worker_pe]" id="permissions_Workflow_print_co_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_co][worker_pt]" id="permissions_Workflow_print_co_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Impressão 3D (MX)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][admin]" id="permissions_Workflow_print_mx_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][dentist]" id="permissions_Workflow_print_mx_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][worker]" id="permissions_Workflow_print_mx_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][worker_co]" id="permissions_Workflow_print_mx_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][worker_mx]" id="permissions_Workflow_print_mx_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][worker_pe]" id="permissions_Workflow_print_mx_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_mx][worker_pt]" id="permissions_Workflow_print_mx_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Impressão 3D (PE)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][admin]" id="permissions_Workflow_print_pe_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][dentist]" id="permissions_Workflow_print_pe_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][worker]" id="permissions_Workflow_print_pe_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][worker_co]" id="permissions_Workflow_print_pe_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][worker_mx]" id="permissions_Workflow_print_pe_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][worker_pe]" id="permissions_Workflow_print_pe_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pe][worker_pt]" id="permissions_Workflow_print_pe_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Impressão 3D (PT)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][admin]" id="permissions_Workflow_print_pt_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][dentist]" id="permissions_Workflow_print_pt_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][worker]" id="permissions_Workflow_print_pt_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][worker_co]" id="permissions_Workflow_print_pt_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][worker_mx]" id="permissions_Workflow_print_pt_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][worker_pe]" id="permissions_Workflow_print_pt_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][print_pt][worker_pt]" id="permissions_Workflow_print_pt_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Laboratório (BR)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][admin]" id="permissions_Workflow_laboratory_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][dentist]" id="permissions_Workflow_laboratory_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][worker]" id="permissions_Workflow_laboratory_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][worker_co]" id="permissions_Workflow_laboratory_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][worker_mx]" id="permissions_Workflow_laboratory_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][worker_pe]" id="permissions_Workflow_laboratory_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory][worker_pt]" id="permissions_Workflow_laboratory_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Laboratório (CO)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][admin]" id="permissions_Workflow_laboratory_co_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][dentist]" id="permissions_Workflow_laboratory_co_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][worker]" id="permissions_Workflow_laboratory_co_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][worker_co]" id="permissions_Workflow_laboratory_co_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][worker_mx]" id="permissions_Workflow_laboratory_co_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][worker_pe]" id="permissions_Workflow_laboratory_co_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_co][worker_pt]" id="permissions_Workflow_laboratory_co_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Laboratório (MX)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][admin]" id="permissions_Workflow_laboratory_mx_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][dentist]" id="permissions_Workflow_laboratory_mx_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][worker]" id="permissions_Workflow_laboratory_mx_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][worker_co]" id="permissions_Workflow_laboratory_mx_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][worker_mx]" id="permissions_Workflow_laboratory_mx_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][worker_pe]" id="permissions_Workflow_laboratory_mx_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_mx][worker_pt]" id="permissions_Workflow_laboratory_mx_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Laboratório (PE)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][admin]" id="permissions_Workflow_laboratory_pe_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][dentist]" id="permissions_Workflow_laboratory_pe_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][worker]" id="permissions_Workflow_laboratory_pe_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][worker_co]" id="permissions_Workflow_laboratory_pe_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][worker_mx]" id="permissions_Workflow_laboratory_pe_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][worker_pe]" id="permissions_Workflow_laboratory_pe_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pe][worker_pt]" id="permissions_Workflow_laboratory_pe_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Laboratório (PT)</td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][admin]" id="permissions_Workflow_laboratory_pt_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][dentist]" id="permissions_Workflow_laboratory_pt_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][worker]" id="permissions_Workflow_laboratory_pt_worker" value="2" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][worker_co]" id="permissions_Workflow_laboratory_pt_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][worker_mx]" id="permissions_Workflow_laboratory_pt_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][worker_pe]" id="permissions_Workflow_laboratory_pt_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][laboratory_pt][worker_pt]" id="permissions_Workflow_laboratory_pt_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Planning Center</td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][admin]" id="permissions_Workflow_planning_center_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][dentist]" id="permissions_Workflow_planning_center_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][worker]" id="permissions_Workflow_planning_center_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][worker_co]" id="permissions_Workflow_planning_center_worker_co" value="6" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][worker_mx]" id="permissions_Workflow_planning_center_worker_mx" value="7" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][worker_pe]" id="permissions_Workflow_planning_center_worker_pe" value="8" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][planning_center][worker_pt]" id="permissions_Workflow_planning_center_worker_pt" value="5" /></td>
+              </tr>
+             <!-- deprecated -->
+              <tr >
+                  <td>Workflow - Visualizar usuário</td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][admin]" id="permissions_Workflow_view_user_admin" value="1" disabled="disabled" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][dentist]" id="permissions_Workflow_view_user_dentist" value="3" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][worker]" id="permissions_Workflow_view_user_worker" value="2" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][worker_co]" id="permissions_Workflow_view_user_worker_co" value="6" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][worker_mx]" id="permissions_Workflow_view_user_worker_mx" value="7" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][worker_pe]" id="permissions_Workflow_view_user_worker_pe" value="8" checked="checked" /></td>
+                    <td><input type="checkbox" name="permissions[Workflow][view_user][worker_pt]" id="permissions_Workflow_view_user_worker_pt" value="5" checked="checked" /></td>
+              </tr>
+      </tbody>
+  </table>
+
+  <div class="pull-right">
+      <input type="submit" name="commit" value="Salvar" class="btn btn-primary" />
+      <a class="btn btn-default" href="/pt-BR/configurations/permissions">Cancelar</a>
+  </div>
+</form>
+                  <!-- page end-->
+              </section>
+        </section>
+        <!--main content end-->
+
+        <img id="loading" style="display: none;" src="/assets/loading-ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84.gif" alt="Loading ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84" />
+
+        <script src="/assets/application-7db5a4176af39c077e6284cdf2e1c8b6e9f9a787506c744cfc07bebdf489a339.js"></script>
+        <!-- Internationalization (i18n) select2 de acordo com linguagem configurada -->
+        <script src="/assets/select2_locale_pt-BR-2135e6bb2c56910a3de8eef3600d6922464e0be56eb07cb3e732633dc6b52a8f.js"></script>
+        <script src="/assets/configurations/permissions-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+        
+    </body>
+</html>

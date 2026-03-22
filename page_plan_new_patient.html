@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Esthetic Aligner</title>
+
+        <link rel="stylesheet" media="all" href="/assets/application-72503499d40b4d04c500b7ea29d8042a81baef2a73ee5d712a5b4ae69901a767.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-1d11c381cadf47545566e2cf5e375205858d827abe8a0a87a02d74ba4606dbd7.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-responsive-b95ed120c3b5e8f4ae81473e6a89779a8e425443238e7439f523f664c95c33a5.css" />
+        <link rel="stylesheet" media="all" href="/assets/planning_forms-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css" /> 
+        
+
+        <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="BVUyYlY8agckFY5+9abNJ0bZEjDazdh7/PNJxSMSC4BVUN4ZAVajkyScebBqNVonQi69AGlasBsHGj3PDdsj/w==" />
+    </head>
+    <body>
+        <script type="text/javascript">
+//<![CDATA[
+window.gon={};gon.locale="pt-BR";gon.placeholder={"dentists":"Selecione um dentista","patients":"Selecione um paciente"};gon.alertify={"buttonOk":"Confirmar","buttonCancel":"Cancelar","alerts_to_open_orders_awaiting_approval_for_production":"Tem certeza que quer sair dessa página? Ainda existem casos para serem aprovados.","required_fields":"Preencha os campos obrigatórios!","required_teeth":"Selecione ao menos um dente para melhorar!"};gon.disclaimer="Este formulário constitui a prescrição final e completa do tratamento Esthetic Aligner®. Não há qualquer garantia, implícita, acerca do resultado final do tratamento. Ortodontia não é uma ciência exata e, portanto a Esthetic Aligner® não pode garantir qualquer resultado específico. O critério de seleção de casos está detalhadamente descrito no manual do programa de habilitação. Prescrições incompletas e/ou ilegíveis atrasarão o envio de alinhadores. O diagnóstico e plano de tratamento são de responsabilidade exclusiva do ortodontista. A Esthetic Aligner® se reserva no direito de não aceitar um caso. A Checagem Virtual 3D só será cobrada caso o ortodontista não solicite a produção de alinhadores em 30 dias. Caso a aprovação e solicitação de alinhadores ocorra em até 30 dias, o valor da Checagem Virtual 3D será descontado. Para Checagens Virtuais 3D com mais de 60 dias, recomendamos o envio de novo escaneamento para a produção de uma nova Checagem Virtual 3D.";
+//]]>
+</script>
+
+        <!--header start-->
+        <header class="header dark-bg">
+    <div class="toggle-nav">
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+
+    <!--logo start-->
+    <a class="logo" href="/pt-BR">
+      <span class="lite">Esthetic Aligner</span>
+</a>    <!--logo end-->
+
+    <!--  search form start -->
+      <div class="nav search-row" id="top_menu">
+          <ul class="nav top-menu">                    
+              <li>
+                  <form class="navbar-form">
+                      <input type="hidden" name="search" id="search" placeholder="Buscar paciente" class="form-control" />
+                  </form>
+              </li>                    
+          </ul>
+      </div>
+      <!--  search form end -->                
+
+      <div class="top-nav notification-row">                
+          <!-- notificatoin dropdown start-->
+          <ul class="nav pull-right top-menu">
+              <!-- user login dropdown start-->
+              <li class="dropdown">
+                  <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                      <span class="profile-ava">
+                            <img src="https://ortholab.s3.sa-east-1.amazonaws.com/uploads/user/avatar/370/EA_redondo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAJHRPL3ES7WKXJEZQ%2F20260322%2Fsa-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20260322T014839Z&amp;X-Amz-Expires=900&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=c668065e4fb411a85c3158980249828a7f82febdbe94e8be835b7f4e76216194" alt="Ea redondo" />
+                      </span>
+                      <span class="username">Esthetic Aligner</span>
+                      <b class="caret"></b>
+                  </a>
+                  <ul class="dropdown-menu extended logout">
+                      <div class="log-arrow-up"></div>
+                      <li class="eborder-top">
+                          <a href="/pt-BR/users/edit">
+                            <i class="fa fa-user"></i> Perfil
+</a>                      </li>
+                      <li>
+                          <a href="/pt-BR/users/sign_out">
+                            <i class="fa fa-sign-out"></i> Sair
+</a>                      </li>
+                  </ul>
+              </li>
+              <!-- user login dropdown end -->
+          </ul>
+          <!-- notificatoin dropdown end-->
+      </div>
+</header>
+        <!--header end-->
+
+        <!--sidebar start-->
+          <aside>
+    <div id="sidebar"  class="nav-collapse ">
+        <!-- sidebar menu start-->
+        <ul class="sidebar-menu">
+            <li class="">
+                <a href="/pt-BR/dentists">
+                  <i class="fa fa-user-md"></i><span>Dentista</span>
+</a>            </li>
+            <li class="">
+                <a href="/pt-BR/patients">
+                  <i class="fa fa-user"></i><span>Paciente</span>
+</a>            </li>
+              <li class="sub-menu">
+                <a href="#" class="">
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="menu-arrow fa fa-angle-right"></span>
+                </a>
+                <ul class="sub">
+                  <li>
+                    <a href="/pt-BR/workflow_control/planning_center">
+                      Planning center
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print">
+                      Impressão 3D (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pt">
+                      Impressão 3D (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_co">
+                      Impressão 3D (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_mx">
+                      Impressão 3D (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pe">
+                      Impressão 3D (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/financial">
+                      Financeiro
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory">
+                      Laboratório (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pt">
+                      Laboratório (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_co">
+                      Laboratório (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_mx">
+                      Laboratório (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pe">
+                      Laboratório (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition">
+                      Expedição (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pt">
+                      Expedição (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_co">
+                      Expedição (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_mx">
+                      Expedição (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pe">
+                      Expedição (pe)
+</a>                  </li>
+                </ul>
+              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-file-text-o"></i>
+                      <span>Fichas</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                          <a href="/pt-BR/planning_forms">
+                            Planejamento
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/completion_forms">
+                              Finalização
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/other_services_forms">
+                              Outros serviços
+</a>                        </li>
+                  </ul>
+              </li>
+              <li class="">
+                  <a href="/pt-BR/clinical_records">
+                    <i class="fa fa-medkit"></i><span>Ficha Clínica</span>
+</a>              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-cogs"></i>
+                      <span>Configurações</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                            <a href="/pt-BR/configurations/permissions">
+                              <i class="fa fa-ban"></i>
+                              Permissões
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profiles">
+                              <i class="fa fa-users"></i>
+                              Perfil usuário
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profile_dentist">
+                              <i class="fa fa-link"></i>
+                              Usuário / Dentista
+</a>                        </li>
+                  </ul>
+              </li>
+        </ul>
+        <!-- sidebar menu end-->
+    </div>
+</aside>
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section class="wrapper">
+              <section id="main-content">
+                  <div id="flash-messages">
+
+    <!-- Mensagens de alerta sobre casos em aberto aguardando aprovação do dentista para produção -->
+</div>
+
+                  <div class="row">
+    <div class="col-lg-12">
+        <h3 class="page-header">
+            <i class="fa fa-file-text-o"></i> Planejamento alinhadores
+        </h3>
+    </div>
+</div>
+
+                  <!-- page start-->
+                  
+
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="form form-validate">
+      <form id="planning_form" class="new_plan" action="/pt-BR/patients/29326/planning_forms" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="jb6RzOCCrzlrCPIxeE4Lr0bQ9fSv7Vj/9G9MESYl2Ozdu323t+hmrWuBBf/n3ZyvQidaxBx6MJ8PhjgbCOzwkw==" />
+        <!--patient menu start-->
+          <div class="row">
+      <div class="pull-right">
+          <ul class="nav nav-pills">
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="/pt-BR/patients/29326/workflows/progress">
+                      Em aberto
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/patients/29326/workflows">
+                      Concluídos
+</a>                  </li>
+                </ul>
+              </li>
+
+              <li>
+                  <a href="/pt-BR/patients/29326/photos">
+                    <i class="fa fa-file-image-o"></i> Fotos
+</a>              </li>
+
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
+                  <i class="fa fa-cube"></i>
+                  <span>Modelos Digitais</span>
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="/pt-BR/patients/29326/stl/lower_digital_models">
+                      Modelo Digital Inferior .STL
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/patients/29326/stl/upper_digital_models">
+                      Modelo Digital Superior .STL
+</a>                  </li>
+                </ul>
+              </li>
+
+                  <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
+                          <i class="fa fa-file-text-o"></i>
+                          <span>Fichas</span>
+                          <span class="caret"></span>
+                      </a>
+                      <ul class="dropdown-menu">
+                          <li>
+                              <a href="/pt-BR/patients/29326/planning_forms">
+                                Planejamento alinhadores
+</a>                          </li>
+                          <li>
+                              <a href="/pt-BR/patients/29326/completion_forms">
+                                Finalização alinhadores
+</a>                          </li>
+                          <li>
+                              <a href="/pt-BR/patients/29326/other_services_forms">
+                                Outros serviços
+</a>                          </li>
+                      </ul>
+                  </li>
+
+                <li>
+                  <a href="/pt-BR/patients/29326/v2/works">
+                    <i class="fa fa-briefcase"></i> Relatório
+</a>                </li>
+
+                <li>
+                    <a href="/pt-BR/patients/29326/clinical_records">
+                      <i class="fa fa-medkit"></i> Ficha Clínica
+</a>                </li>
+
+              &nbsp;&nbsp;
+          </ul>
+      </div>
+  </div>
+
+        <!--patient menu end-->
+
+        <!--section patient start-->
+        <section class="panel">
+          <header class="panel-heading">
+          Paciente:  	Aurea Maria Martins Vaz : 027614 (ORALL IMPLANTES (PAULO CESAR DA SILVA))
+          </header>
+          <div class="panel-body">
+
+            <div class="row">
+              <!-- :arcades_to_be_treated -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_arcades_to_be_treated">Arcadas a serem tratadas</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="upper" name="plan[arcades_to_be_treated]" id="plan_arcades_to_be_treated_upper" /> Superior</label>
+                <label class="radio-inline"><input required="required" type="radio" value="lower" name="plan[arcades_to_be_treated]" id="plan_arcades_to_be_treated_lower" /> Inferior</label>
+                <label class="radio-inline"><input required="required" type="radio" value="both" name="plan[arcades_to_be_treated]" id="plan_arcades_to_be_treated_both" /> Ambas</label>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <!-- :upper_expansion -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_upper_expansion">Expansão superior</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="yes" name="plan[upper_expansion]" id="plan_upper_expansion_yes" /> Sim</label>
+                <label class="radio-inline"><input required="required" type="radio" value="no" name="plan[upper_expansion]" id="plan_upper_expansion_no" /> Não</label>
+                <label class="radio-inline"><input required="required" type="radio" value="maybe" name="plan[upper_expansion]" id="plan_upper_expansion_maybe" /> Se necessário</label>
+              </div>
+            </div>
+            <div class="row">
+              <!-- :lower_expansion -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_lower_expansion">Expansão inferior</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="yes" name="plan[lower_expansion]" id="plan_lower_expansion_yes" /> Sim</label>
+                <label class="radio-inline"><input required="required" type="radio" value="no" name="plan[lower_expansion]" id="plan_lower_expansion_no" /> Não</label>
+                <label class="radio-inline"><input required="required" type="radio" value="maybe" name="plan[lower_expansion]" id="plan_lower_expansion_maybe" /> Se necessário</label>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <!-- :interproximal_wear -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_interproximal_wear">Desgaste interproximal</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="accept" name="plan[interproximal_wear]" id="plan_interproximal_wear_accept" /> Aceita</label>
+                <label class="radio-inline"><input required="required" type="radio" value="not_accept" name="plan[interproximal_wear]" id="plan_interproximal_wear_not_accept" /> Não aceita</label>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <!-- :length_upper_arch -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_length_upper_arch">Comprimento de arco superior</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[length_upper_arch]" id="plan_length_upper_arch_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="magnify" name="plan[length_upper_arch]" id="plan_length_upper_arch_magnify" /> Aumentar</label>
+                <label class="radio-inline"><input required="required" type="radio" value="minify" name="plan[length_upper_arch]" id="plan_length_upper_arch_minify" /> Reduzir</label>
+              </div>
+            </div>
+            <div class="row">
+              <!-- :length_lower_arch -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_length_lower_arch">Comprimento de arco inferior</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[length_lower_arch]" id="plan_length_lower_arch_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="magnify" name="plan[length_lower_arch]" id="plan_length_lower_arch_magnify" /> Aumentar</label>
+                <label class="radio-inline"><input required="required" type="radio" value="minify" name="plan[length_lower_arch]" id="plan_length_lower_arch_minify" /> Reduzir</label>
+              </div>
+            </div>
+            <hr/>
+
+
+            <!--section teeth start-->
+            <div class="row">
+              <div class="col-lg-12">
+                <label class="control-label">Melhorar os seguintes dentes:</label>
+              </div>
+            </div>
+            <!-- tooth 18..11 / 21..28 -->
+            <div class="row">
+              <div class="col-lg-12 text-center">
+                    
+                      <div class="btn-group" id="tooth_18">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818151][tooth_id]" id="plan_plan_tooths_attributes_1818151_tooth_id" value="1818151" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818151][status]" id="plan_plan_tooths_attributes_1818151_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>18</span> <br/>
+            <span><img id="img_18" src="/assets/teeth/18-unselected-3871204831165a3cd91b04010aa1b323b386ceae91f023f5a4f8ce9c6051aa88.png" alt="18 unselected 3871204831165a3cd91b04010aa1b323b386ceae91f023f5a4f8ce9c6051aa88" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="18" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/18-unselected-3871204831165a3cd91b04010aa1b323b386ceae91f023f5a4f8ce9c6051aa88.png" alt="18 unselected 3871204831165a3cd91b04010aa1b323b386ceae91f023f5a4f8ce9c6051aa88" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="18" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/18-rectify-a4f13784b7bf4393696c0b3d1a8634c45701f0d729eb127b296bbe0cb2283379.png" alt="18 rectify a4f13784b7bf4393696c0b3d1a8634c45701f0d729eb127b296bbe0cb2283379" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_17">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818152][tooth_id]" id="plan_plan_tooths_attributes_1818152_tooth_id" value="1818152" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818152][status]" id="plan_plan_tooths_attributes_1818152_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>17</span> <br/>
+            <span><img id="img_17" src="/assets/teeth/17-unselected-2d2f6f531bf8da390e574c71d575236de0c1830ba08cea5a8d53daca9a97c035.png" alt="17 unselected 2d2f6f531bf8da390e574c71d575236de0c1830ba08cea5a8d53daca9a97c035" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="17" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/17-unselected-2d2f6f531bf8da390e574c71d575236de0c1830ba08cea5a8d53daca9a97c035.png" alt="17 unselected 2d2f6f531bf8da390e574c71d575236de0c1830ba08cea5a8d53daca9a97c035" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="17" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/17-rectify-9da19f6fd77a49641a315eec87e7c24ea0aa5af2f8e9d299de20e5c08f9d4003.png" alt="17 rectify 9da19f6fd77a49641a315eec87e7c24ea0aa5af2f8e9d299de20e5c08f9d4003" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_16">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818153][tooth_id]" id="plan_plan_tooths_attributes_1818153_tooth_id" value="1818153" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818153][status]" id="plan_plan_tooths_attributes_1818153_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>16</span> <br/>
+            <span><img id="img_16" src="/assets/teeth/16-unselected-9a4a371969a60bc46c0e7b81e9852e3b347dde03fae95a8c61d11f7f1f2f98a3.png" alt="16 unselected 9a4a371969a60bc46c0e7b81e9852e3b347dde03fae95a8c61d11f7f1f2f98a3" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="16" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/16-unselected-9a4a371969a60bc46c0e7b81e9852e3b347dde03fae95a8c61d11f7f1f2f98a3.png" alt="16 unselected 9a4a371969a60bc46c0e7b81e9852e3b347dde03fae95a8c61d11f7f1f2f98a3" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="16" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/16-rectify-a09b3ea6d8bd991d591ae475128b77648122d38f7726df17b061a34c8457be26.png" alt="16 rectify a09b3ea6d8bd991d591ae475128b77648122d38f7726df17b061a34c8457be26" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_15">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818154][tooth_id]" id="plan_plan_tooths_attributes_1818154_tooth_id" value="1818154" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818154][status]" id="plan_plan_tooths_attributes_1818154_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>15</span> <br/>
+            <span><img id="img_15" src="/assets/teeth/15-unselected-33d7221e0ed53bb7cd7d9693425d1df105b1218980982d1cf53073f8632c96e1.png" alt="15 unselected 33d7221e0ed53bb7cd7d9693425d1df105b1218980982d1cf53073f8632c96e1" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="15" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/15-unselected-33d7221e0ed53bb7cd7d9693425d1df105b1218980982d1cf53073f8632c96e1.png" alt="15 unselected 33d7221e0ed53bb7cd7d9693425d1df105b1218980982d1cf53073f8632c96e1" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="15" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/15-rectify-ce66dd0adec83214585f37c177734ef871e36637d3ba452ac3c3adb8376dfb3e.png" alt="15 rectify ce66dd0adec83214585f37c177734ef871e36637d3ba452ac3c3adb8376dfb3e" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_14">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818155][tooth_id]" id="plan_plan_tooths_attributes_1818155_tooth_id" value="1818155" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818155][status]" id="plan_plan_tooths_attributes_1818155_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>14</span> <br/>
+            <span><img id="img_14" src="/assets/teeth/14-unselected-404c140ba7228d062d57918a8e4fa9625df94cd253970c647e1f43c6dedb48b9.png" alt="14 unselected 404c140ba7228d062d57918a8e4fa9625df94cd253970c647e1f43c6dedb48b9" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="14" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/14-unselected-404c140ba7228d062d57918a8e4fa9625df94cd253970c647e1f43c6dedb48b9.png" alt="14 unselected 404c140ba7228d062d57918a8e4fa9625df94cd253970c647e1f43c6dedb48b9" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="14" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/14-rectify-341d4bf8c572c7a7bba8f68f69f943aa6113137156fa7d84f013be46efe18cc7.png" alt="14 rectify 341d4bf8c572c7a7bba8f68f69f943aa6113137156fa7d84f013be46efe18cc7" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_13">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818156][tooth_id]" id="plan_plan_tooths_attributes_1818156_tooth_id" value="1818156" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818156][status]" id="plan_plan_tooths_attributes_1818156_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>13</span> <br/>
+            <span><img id="img_13" src="/assets/teeth/13-unselected-de8035123d6d4a87303a9db9881eb4f587f0229c0f3858eba432361411c70a22.png" alt="13 unselected de8035123d6d4a87303a9db9881eb4f587f0229c0f3858eba432361411c70a22" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="13" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/13-unselected-de8035123d6d4a87303a9db9881eb4f587f0229c0f3858eba432361411c70a22.png" alt="13 unselected de8035123d6d4a87303a9db9881eb4f587f0229c0f3858eba432361411c70a22" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="13" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/13-rectify-2377c7123fee157f6d1030b70e586e45dbb0f023a2986df4e9c7c7283fdc68c4.png" alt="13 rectify 2377c7123fee157f6d1030b70e586e45dbb0f023a2986df4e9c7c7283fdc68c4" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_12">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818157][tooth_id]" id="plan_plan_tooths_attributes_1818157_tooth_id" value="1818157" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818157][status]" id="plan_plan_tooths_attributes_1818157_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>12</span> <br/>
+            <span><img id="img_12" src="/assets/teeth/12-unselected-aed401b6fe270ef5d8fae852aaaa4c8bc6ed437076242a7caaf553d536ebcb8a.png" alt="12 unselected aed401b6fe270ef5d8fae852aaaa4c8bc6ed437076242a7caaf553d536ebcb8a" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="12" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/12-unselected-aed401b6fe270ef5d8fae852aaaa4c8bc6ed437076242a7caaf553d536ebcb8a.png" alt="12 unselected aed401b6fe270ef5d8fae852aaaa4c8bc6ed437076242a7caaf553d536ebcb8a" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="12" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/12-rectify-cc6b6cdb276019dc225e500664303209e1c165cfc7df8d9496da4d979ec408c5.png" alt="12 rectify cc6b6cdb276019dc225e500664303209e1c165cfc7df8d9496da4d979ec408c5" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_11">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818158][tooth_id]" id="plan_plan_tooths_attributes_1818158_tooth_id" value="1818158" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818158][status]" id="plan_plan_tooths_attributes_1818158_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>11</span> <br/>
+            <span><img id="img_11" src="/assets/teeth/11-unselected-4dcec51255f1e7171043ced3619572d851fb2926ce0a24957927a11383bf4947.png" alt="11 unselected 4dcec51255f1e7171043ced3619572d851fb2926ce0a24957927a11383bf4947" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="11" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/11-unselected-4dcec51255f1e7171043ced3619572d851fb2926ce0a24957927a11383bf4947.png" alt="11 unselected 4dcec51255f1e7171043ced3619572d851fb2926ce0a24957927a11383bf4947" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="11" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/11-rectify-3acc5ad41a91494dcb2b02071983f973c3545413f037987ebb4aeeb65c6f9111.png" alt="11 rectify 3acc5ad41a91494dcb2b02071983f973c3545413f037987ebb4aeeb65c6f9111" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_21">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818159][tooth_id]" id="plan_plan_tooths_attributes_1818159_tooth_id" value="1818159" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818159][status]" id="plan_plan_tooths_attributes_1818159_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>21</span> <br/>
+            <span><img id="img_21" src="/assets/teeth/21-unselected-594b0ab0b8326bd0b8ee3c007f9a0492345df1a8f14d166cd561f9220dc5aa91.png" alt="21 unselected 594b0ab0b8326bd0b8ee3c007f9a0492345df1a8f14d166cd561f9220dc5aa91" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="21" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/21-unselected-594b0ab0b8326bd0b8ee3c007f9a0492345df1a8f14d166cd561f9220dc5aa91.png" alt="21 unselected 594b0ab0b8326bd0b8ee3c007f9a0492345df1a8f14d166cd561f9220dc5aa91" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="21" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/21-rectify-11e99b9383bab383171ae5e777e095b91b53801e49ace78c2787aba86af89ba1.png" alt="21 rectify 11e99b9383bab383171ae5e777e095b91b53801e49ace78c2787aba86af89ba1" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_22">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818160][tooth_id]" id="plan_plan_tooths_attributes_1818160_tooth_id" value="1818160" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818160][status]" id="plan_plan_tooths_attributes_1818160_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>22</span> <br/>
+            <span><img id="img_22" src="/assets/teeth/22-unselected-604d04e5b4236d4728451c571358b1feae44a8bdae1bcacba4f16bc0928c9bb0.png" alt="22 unselected 604d04e5b4236d4728451c571358b1feae44a8bdae1bcacba4f16bc0928c9bb0" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="22" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/22-unselected-604d04e5b4236d4728451c571358b1feae44a8bdae1bcacba4f16bc0928c9bb0.png" alt="22 unselected 604d04e5b4236d4728451c571358b1feae44a8bdae1bcacba4f16bc0928c9bb0" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="22" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/22-rectify-66b9bd7a49b47a8af0f51f870364f4daad7f434808f2b2957038078ee47ac061.png" alt="22 rectify 66b9bd7a49b47a8af0f51f870364f4daad7f434808f2b2957038078ee47ac061" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_23">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818161][tooth_id]" id="plan_plan_tooths_attributes_1818161_tooth_id" value="1818161" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818161][status]" id="plan_plan_tooths_attributes_1818161_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>23</span> <br/>
+            <span><img id="img_23" src="/assets/teeth/23-unselected-ae69bd366be31cb06574d078703e1948021a74f1226d48b72b1b38dbd93eac3b.png" alt="23 unselected ae69bd366be31cb06574d078703e1948021a74f1226d48b72b1b38dbd93eac3b" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="23" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/23-unselected-ae69bd366be31cb06574d078703e1948021a74f1226d48b72b1b38dbd93eac3b.png" alt="23 unselected ae69bd366be31cb06574d078703e1948021a74f1226d48b72b1b38dbd93eac3b" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="23" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/23-rectify-01137ccd8c31a4ad759b97ab181a8787b88107e8e1f3524908353fcb830bf595.png" alt="23 rectify 01137ccd8c31a4ad759b97ab181a8787b88107e8e1f3524908353fcb830bf595" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_24">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818162][tooth_id]" id="plan_plan_tooths_attributes_1818162_tooth_id" value="1818162" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818162][status]" id="plan_plan_tooths_attributes_1818162_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>24</span> <br/>
+            <span><img id="img_24" src="/assets/teeth/24-unselected-2672b6ce98f0df5a35c99ccf3b0b3884f4f926fe53842d7b9ae27a52e9beeefd.png" alt="24 unselected 2672b6ce98f0df5a35c99ccf3b0b3884f4f926fe53842d7b9ae27a52e9beeefd" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="24" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/24-unselected-2672b6ce98f0df5a35c99ccf3b0b3884f4f926fe53842d7b9ae27a52e9beeefd.png" alt="24 unselected 2672b6ce98f0df5a35c99ccf3b0b3884f4f926fe53842d7b9ae27a52e9beeefd" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="24" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/24-rectify-4f4172ba6c06b18d176ffa847430cb3931ee080df1e25b490054ea22eafa5f63.png" alt="24 rectify 4f4172ba6c06b18d176ffa847430cb3931ee080df1e25b490054ea22eafa5f63" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_25">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818163][tooth_id]" id="plan_plan_tooths_attributes_1818163_tooth_id" value="1818163" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818163][status]" id="plan_plan_tooths_attributes_1818163_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>25</span> <br/>
+            <span><img id="img_25" src="/assets/teeth/25-unselected-8a230d5aa6c80bf7e74c536ca887200a0a30d5f81cbc848c63807f89a771fb37.png" alt="25 unselected 8a230d5aa6c80bf7e74c536ca887200a0a30d5f81cbc848c63807f89a771fb37" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="25" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/25-unselected-8a230d5aa6c80bf7e74c536ca887200a0a30d5f81cbc848c63807f89a771fb37.png" alt="25 unselected 8a230d5aa6c80bf7e74c536ca887200a0a30d5f81cbc848c63807f89a771fb37" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="25" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/25-rectify-d8b115ada9e6eecdd932d8c47cd80744dc797dec67500b675f7d6c1678e8e35d.png" alt="25 rectify d8b115ada9e6eecdd932d8c47cd80744dc797dec67500b675f7d6c1678e8e35d" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_26">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818164][tooth_id]" id="plan_plan_tooths_attributes_1818164_tooth_id" value="1818164" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818164][status]" id="plan_plan_tooths_attributes_1818164_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>26</span> <br/>
+            <span><img id="img_26" src="/assets/teeth/26-unselected-1305708f297a61a872845197f93485be2ff1945c1852f3b210ce5e895850e0f8.png" alt="26 unselected 1305708f297a61a872845197f93485be2ff1945c1852f3b210ce5e895850e0f8" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="26" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/26-unselected-1305708f297a61a872845197f93485be2ff1945c1852f3b210ce5e895850e0f8.png" alt="26 unselected 1305708f297a61a872845197f93485be2ff1945c1852f3b210ce5e895850e0f8" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="26" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/26-rectify-6c2fe7088071f1ecc28e503258a8081086fe1d65adb0d4a4ce5af465c0937c9b.png" alt="26 rectify 6c2fe7088071f1ecc28e503258a8081086fe1d65adb0d4a4ce5af465c0937c9b" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_27">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818165][tooth_id]" id="plan_plan_tooths_attributes_1818165_tooth_id" value="1818165" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818165][status]" id="plan_plan_tooths_attributes_1818165_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>27</span> <br/>
+            <span><img id="img_27" src="/assets/teeth/27-unselected-9217854c124ce21e0134ca5fac377a4257e4eb0fbfe5f528775a43ff477d31de.png" alt="27 unselected 9217854c124ce21e0134ca5fac377a4257e4eb0fbfe5f528775a43ff477d31de" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="27" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/27-unselected-9217854c124ce21e0134ca5fac377a4257e4eb0fbfe5f528775a43ff477d31de.png" alt="27 unselected 9217854c124ce21e0134ca5fac377a4257e4eb0fbfe5f528775a43ff477d31de" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="27" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/27-rectify-1870fd46c4dc2d2279216e85115cd0278b4036e3e0011936e7b4bf788081fc9e.png" alt="27 rectify 1870fd46c4dc2d2279216e85115cd0278b4036e3e0011936e7b4bf788081fc9e" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_28">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818166][tooth_id]" id="plan_plan_tooths_attributes_1818166_tooth_id" value="1818166" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818166][status]" id="plan_plan_tooths_attributes_1818166_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>28</span> <br/>
+            <span><img id="img_28" src="/assets/teeth/28-unselected-b8a59be972e333b81d49fe28928ed4abfd3ca813a87dcf236ee5206dbb4aa590.png" alt="28 unselected b8a59be972e333b81d49fe28928ed4abfd3ca813a87dcf236ee5206dbb4aa590" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="28" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/28-unselected-b8a59be972e333b81d49fe28928ed4abfd3ca813a87dcf236ee5206dbb4aa590.png" alt="28 unselected b8a59be972e333b81d49fe28928ed4abfd3ca813a87dcf236ee5206dbb4aa590" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="28" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/28-rectify-06a196cabc121964c35045ffda0096a08d7b670f86d04ccaf55d3a57d24a387e.png" alt="28 rectify 06a196cabc121964c35045ffda0096a08d7b670f86d04ccaf55d3a57d24a387e" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+              </div>
+            </div>
+            <!-- tooth 48..41 / 31..38 -->
+            <div class="row">
+              <div class="col-lg-12 text-center">
+                    
+                      <div class="btn-group" id="tooth_48">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818167][tooth_id]" id="plan_plan_tooths_attributes_1818167_tooth_id" value="1818167" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818167][status]" id="plan_plan_tooths_attributes_1818167_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>48</span> <br/>
+            <span><img id="img_48" src="/assets/teeth/48-unselected-9c88800abc2e6f4ad8d994cfc0703517856e4dec6ed87e056805e2ff77ae752a.png" alt="48 unselected 9c88800abc2e6f4ad8d994cfc0703517856e4dec6ed87e056805e2ff77ae752a" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="48" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/48-unselected-9c88800abc2e6f4ad8d994cfc0703517856e4dec6ed87e056805e2ff77ae752a.png" alt="48 unselected 9c88800abc2e6f4ad8d994cfc0703517856e4dec6ed87e056805e2ff77ae752a" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="48" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/48-rectify-863d1de09010dbdbc85056589f346bb78524f23a626fc9ceea719000c60bc16b.png" alt="48 rectify 863d1de09010dbdbc85056589f346bb78524f23a626fc9ceea719000c60bc16b" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_47">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818168][tooth_id]" id="plan_plan_tooths_attributes_1818168_tooth_id" value="1818168" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818168][status]" id="plan_plan_tooths_attributes_1818168_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>47</span> <br/>
+            <span><img id="img_47" src="/assets/teeth/47-unselected-ba683a86560d961696f98f26cbcd386773bcace15a38cfb33b22eb918a71528f.png" alt="47 unselected ba683a86560d961696f98f26cbcd386773bcace15a38cfb33b22eb918a71528f" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="47" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/47-unselected-ba683a86560d961696f98f26cbcd386773bcace15a38cfb33b22eb918a71528f.png" alt="47 unselected ba683a86560d961696f98f26cbcd386773bcace15a38cfb33b22eb918a71528f" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="47" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/47-rectify-d3cf7c90c7a3eac4b5c2f369266357ad008107aecfb6fc8d305fe7fbd8e2c66d.png" alt="47 rectify d3cf7c90c7a3eac4b5c2f369266357ad008107aecfb6fc8d305fe7fbd8e2c66d" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_46">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818169][tooth_id]" id="plan_plan_tooths_attributes_1818169_tooth_id" value="1818169" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818169][status]" id="plan_plan_tooths_attributes_1818169_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>46</span> <br/>
+            <span><img id="img_46" src="/assets/teeth/46-unselected-ba2320e85b8691939bde80e43dc3ce336919e9f4335c3060b9a415deac508f00.png" alt="46 unselected ba2320e85b8691939bde80e43dc3ce336919e9f4335c3060b9a415deac508f00" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="46" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/46-unselected-ba2320e85b8691939bde80e43dc3ce336919e9f4335c3060b9a415deac508f00.png" alt="46 unselected ba2320e85b8691939bde80e43dc3ce336919e9f4335c3060b9a415deac508f00" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="46" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/46-rectify-adace149b0af50dfd8d84552ab839f0f901fc07090f2af3e13304c17056904f4.png" alt="46 rectify adace149b0af50dfd8d84552ab839f0f901fc07090f2af3e13304c17056904f4" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_45">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818170][tooth_id]" id="plan_plan_tooths_attributes_1818170_tooth_id" value="1818170" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818170][status]" id="plan_plan_tooths_attributes_1818170_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>45</span> <br/>
+            <span><img id="img_45" src="/assets/teeth/45-unselected-e92322e54513da840c98e1308c7d1f7815905423db839e87b6dc1720c0357d9c.png" alt="45 unselected e92322e54513da840c98e1308c7d1f7815905423db839e87b6dc1720c0357d9c" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="45" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/45-unselected-e92322e54513da840c98e1308c7d1f7815905423db839e87b6dc1720c0357d9c.png" alt="45 unselected e92322e54513da840c98e1308c7d1f7815905423db839e87b6dc1720c0357d9c" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="45" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/45-rectify-003d504f98bc50939fc08bf483cbd79a96cf73a5258a0847d1590159499eb1e5.png" alt="45 rectify 003d504f98bc50939fc08bf483cbd79a96cf73a5258a0847d1590159499eb1e5" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_44">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818171][tooth_id]" id="plan_plan_tooths_attributes_1818171_tooth_id" value="1818171" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818171][status]" id="plan_plan_tooths_attributes_1818171_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>44</span> <br/>
+            <span><img id="img_44" src="/assets/teeth/44-unselected-cdec609aca4b7c9ef2779b355c97770e3fe6841938e6b37cc2b617f0d1341fa4.png" alt="44 unselected cdec609aca4b7c9ef2779b355c97770e3fe6841938e6b37cc2b617f0d1341fa4" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="44" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/44-unselected-cdec609aca4b7c9ef2779b355c97770e3fe6841938e6b37cc2b617f0d1341fa4.png" alt="44 unselected cdec609aca4b7c9ef2779b355c97770e3fe6841938e6b37cc2b617f0d1341fa4" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="44" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/44-rectify-da4f8964c509f6d4cabc737a951927f631079354bc6ebf1fe4db3d5e4e21f6eb.png" alt="44 rectify da4f8964c509f6d4cabc737a951927f631079354bc6ebf1fe4db3d5e4e21f6eb" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_43">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818172][tooth_id]" id="plan_plan_tooths_attributes_1818172_tooth_id" value="1818172" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818172][status]" id="plan_plan_tooths_attributes_1818172_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>43</span> <br/>
+            <span><img id="img_43" src="/assets/teeth/43-unselected-1f324305f548af992616dac3b3ab0cf33a523d320a9bc3ae7f26cf21b59d386f.png" alt="43 unselected 1f324305f548af992616dac3b3ab0cf33a523d320a9bc3ae7f26cf21b59d386f" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="43" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/43-unselected-1f324305f548af992616dac3b3ab0cf33a523d320a9bc3ae7f26cf21b59d386f.png" alt="43 unselected 1f324305f548af992616dac3b3ab0cf33a523d320a9bc3ae7f26cf21b59d386f" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="43" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/43-rectify-9270bee43f1a8e87a776e4f0467b41d9c3e9afe79b50cfbffc00e98810f1066c.png" alt="43 rectify 9270bee43f1a8e87a776e4f0467b41d9c3e9afe79b50cfbffc00e98810f1066c" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_42">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818173][tooth_id]" id="plan_plan_tooths_attributes_1818173_tooth_id" value="1818173" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818173][status]" id="plan_plan_tooths_attributes_1818173_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>42</span> <br/>
+            <span><img id="img_42" src="/assets/teeth/42-unselected-b2b9b078a4a9d960f40ab4e31ec11e6c3766bc24a8cf606bd279c063a68173b6.png" alt="42 unselected b2b9b078a4a9d960f40ab4e31ec11e6c3766bc24a8cf606bd279c063a68173b6" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="42" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/42-unselected-b2b9b078a4a9d960f40ab4e31ec11e6c3766bc24a8cf606bd279c063a68173b6.png" alt="42 unselected b2b9b078a4a9d960f40ab4e31ec11e6c3766bc24a8cf606bd279c063a68173b6" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="42" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/42-rectify-88b43691dcc0262626475e06157bc48aac146962fff5f0010baedf36086e3304.png" alt="42 rectify 88b43691dcc0262626475e06157bc48aac146962fff5f0010baedf36086e3304" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_41">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818174][tooth_id]" id="plan_plan_tooths_attributes_1818174_tooth_id" value="1818174" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818174][status]" id="plan_plan_tooths_attributes_1818174_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>41</span> <br/>
+            <span><img id="img_41" src="/assets/teeth/41-unselected-30ca1ab53aa6956e378ae6b3d39d356d8712c4fc3341644ad84328f1b4263cdb.png" alt="41 unselected 30ca1ab53aa6956e378ae6b3d39d356d8712c4fc3341644ad84328f1b4263cdb" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="41" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/41-unselected-30ca1ab53aa6956e378ae6b3d39d356d8712c4fc3341644ad84328f1b4263cdb.png" alt="41 unselected 30ca1ab53aa6956e378ae6b3d39d356d8712c4fc3341644ad84328f1b4263cdb" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="41" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/41-rectify-26d37345014285d320c8d63f72ad2045fb1e56e7aeb1a034376e41801283361f.png" alt="41 rectify 26d37345014285d320c8d63f72ad2045fb1e56e7aeb1a034376e41801283361f" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_31">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818175][tooth_id]" id="plan_plan_tooths_attributes_1818175_tooth_id" value="1818175" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818175][status]" id="plan_plan_tooths_attributes_1818175_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>31</span> <br/>
+            <span><img id="img_31" src="/assets/teeth/31-unselected-361f9e21b46b872dc4ed8953d04b026fe7cf19cf9f9937060c053b15e8b4fa91.png" alt="31 unselected 361f9e21b46b872dc4ed8953d04b026fe7cf19cf9f9937060c053b15e8b4fa91" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="31" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/31-unselected-361f9e21b46b872dc4ed8953d04b026fe7cf19cf9f9937060c053b15e8b4fa91.png" alt="31 unselected 361f9e21b46b872dc4ed8953d04b026fe7cf19cf9f9937060c053b15e8b4fa91" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="31" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/31-rectify-e18d7866e396a14d2f1de0a1c0cb046c63d76f1987598dee1de28cc3bea4e76b.png" alt="31 rectify e18d7866e396a14d2f1de0a1c0cb046c63d76f1987598dee1de28cc3bea4e76b" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_32">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818176][tooth_id]" id="plan_plan_tooths_attributes_1818176_tooth_id" value="1818176" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818176][status]" id="plan_plan_tooths_attributes_1818176_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>32</span> <br/>
+            <span><img id="img_32" src="/assets/teeth/32-unselected-19542c4dd757d5d09297a146ffceee086bb183b163b5aa91c571666339dad1a2.png" alt="32 unselected 19542c4dd757d5d09297a146ffceee086bb183b163b5aa91c571666339dad1a2" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="32" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/32-unselected-19542c4dd757d5d09297a146ffceee086bb183b163b5aa91c571666339dad1a2.png" alt="32 unselected 19542c4dd757d5d09297a146ffceee086bb183b163b5aa91c571666339dad1a2" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="32" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/32-rectify-41da2687b62018b2dc0ef92c73470df79cd64985d89a99a0e9ea5ba3d364a43e.png" alt="32 rectify 41da2687b62018b2dc0ef92c73470df79cd64985d89a99a0e9ea5ba3d364a43e" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_33">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818177][tooth_id]" id="plan_plan_tooths_attributes_1818177_tooth_id" value="1818177" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818177][status]" id="plan_plan_tooths_attributes_1818177_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>33</span> <br/>
+            <span><img id="img_33" src="/assets/teeth/33-unselected-3f2ac305570655f4bae1f5d183ad83ec0496add9d18e4ba57569ffdb2c1c01c9.png" alt="33 unselected 3f2ac305570655f4bae1f5d183ad83ec0496add9d18e4ba57569ffdb2c1c01c9" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="33" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/33-unselected-3f2ac305570655f4bae1f5d183ad83ec0496add9d18e4ba57569ffdb2c1c01c9.png" alt="33 unselected 3f2ac305570655f4bae1f5d183ad83ec0496add9d18e4ba57569ffdb2c1c01c9" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="33" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/33-rectify-8ff437f66e13c773003bd6e74f65fa99103cdeb85d5c8c298e0cede3e527567b.png" alt="33 rectify 8ff437f66e13c773003bd6e74f65fa99103cdeb85d5c8c298e0cede3e527567b" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_34">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818178][tooth_id]" id="plan_plan_tooths_attributes_1818178_tooth_id" value="1818178" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818178][status]" id="plan_plan_tooths_attributes_1818178_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>34</span> <br/>
+            <span><img id="img_34" src="/assets/teeth/34-unselected-1079e204115f3d92d341c88cd55467581e6d6ef0201a506b34e05d0645e6066f.png" alt="34 unselected 1079e204115f3d92d341c88cd55467581e6d6ef0201a506b34e05d0645e6066f" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="34" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/34-unselected-1079e204115f3d92d341c88cd55467581e6d6ef0201a506b34e05d0645e6066f.png" alt="34 unselected 1079e204115f3d92d341c88cd55467581e6d6ef0201a506b34e05d0645e6066f" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="34" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/34-rectify-59af31aefcaf3d02fd824c032d91e1779be7a568df17aaffdb656d07a32bad6c.png" alt="34 rectify 59af31aefcaf3d02fd824c032d91e1779be7a568df17aaffdb656d07a32bad6c" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_35">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818179][tooth_id]" id="plan_plan_tooths_attributes_1818179_tooth_id" value="1818179" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818179][status]" id="plan_plan_tooths_attributes_1818179_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>35</span> <br/>
+            <span><img id="img_35" src="/assets/teeth/35-unselected-b1eaaf3b3752c948a7551452a0b5283c16e42ee0aa1287ba79f54e5fc62b29ca.png" alt="35 unselected b1eaaf3b3752c948a7551452a0b5283c16e42ee0aa1287ba79f54e5fc62b29ca" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="35" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/35-unselected-b1eaaf3b3752c948a7551452a0b5283c16e42ee0aa1287ba79f54e5fc62b29ca.png" alt="35 unselected b1eaaf3b3752c948a7551452a0b5283c16e42ee0aa1287ba79f54e5fc62b29ca" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="35" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/35-rectify-70b8d15298ea429a4f9e05c0a8a6aa5980cf3a098d976a4079a04251fd103576.png" alt="35 rectify 70b8d15298ea429a4f9e05c0a8a6aa5980cf3a098d976a4079a04251fd103576" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_36">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818180][tooth_id]" id="plan_plan_tooths_attributes_1818180_tooth_id" value="1818180" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818180][status]" id="plan_plan_tooths_attributes_1818180_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>36</span> <br/>
+            <span><img id="img_36" src="/assets/teeth/36-unselected-bb14ae7d975460e90a170bdf579c7642d5eba5db20cd75d2f1558e11bbb36059.png" alt="36 unselected bb14ae7d975460e90a170bdf579c7642d5eba5db20cd75d2f1558e11bbb36059" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="36" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/36-unselected-bb14ae7d975460e90a170bdf579c7642d5eba5db20cd75d2f1558e11bbb36059.png" alt="36 unselected bb14ae7d975460e90a170bdf579c7642d5eba5db20cd75d2f1558e11bbb36059" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="36" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/36-rectify-3d9822b7638feb01554a74f88bb6d369dc1c9e0f97c81db05fdeae5ea9efd579.png" alt="36 rectify 3d9822b7638feb01554a74f88bb6d369dc1c9e0f97c81db05fdeae5ea9efd579" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_37">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818181][tooth_id]" id="plan_plan_tooths_attributes_1818181_tooth_id" value="1818181" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818181][status]" id="plan_plan_tooths_attributes_1818181_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>37</span> <br/>
+            <span><img id="img_37" src="/assets/teeth/37-unselected-ba9e9ec60f8fff5afb039172aba609176d8143f435125f0ebcf7b78e80b5fd24.png" alt="37 unselected ba9e9ec60f8fff5afb039172aba609176d8143f435125f0ebcf7b78e80b5fd24" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="37" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/37-unselected-ba9e9ec60f8fff5afb039172aba609176d8143f435125f0ebcf7b78e80b5fd24.png" alt="37 unselected ba9e9ec60f8fff5afb039172aba609176d8143f435125f0ebcf7b78e80b5fd24" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="37" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/37-rectify-eb52f5cd9eed679705466f86b887910f83c823df20c87590b123382dd6ffcf71.png" alt="37 rectify eb52f5cd9eed679705466f86b887910f83c823df20c87590b123382dd6ffcf71" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+                    
+                      <div class="btn-group" id="tooth_38">
+        <input type="hidden" name="plan[plan_tooths_attributes][1818182][tooth_id]" id="plan_plan_tooths_attributes_1818182_tooth_id" value="1818182" />
+        <input type="hidden" name="plan[plan_tooths_attributes][1818182][status]" id="plan_plan_tooths_attributes_1818182_status" value="unselected" />
+
+        <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+            <span>38</span> <br/>
+            <span><img id="img_38" src="/assets/teeth/38-unselected-b1ca1543e35df8e6af28388cc45c23c66c1d21ce5914c922377b1af9910e42a6.png" alt="38 unselected b1ca1543e35df8e6af28388cc45c23c66c1d21ce5914c922377b1af9910e42a6" /></span>
+        </button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                
+                <a href="#" id="38" name="unselected" >
+                    <img height="25" width="12" src="/assets/teeth/38-unselected-b1ca1543e35df8e6af28388cc45c23c66c1d21ce5914c922377b1af9910e42a6.png" alt="38 unselected b1ca1543e35df8e6af28388cc45c23c66c1d21ce5914c922377b1af9910e42a6" /> &nbsp; Manter
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="#" id="38" name="rectify">
+                    <img height="25" width="12" src="/assets/teeth/38-rectify-ac761ecad1998597ea3f713e103a6041e91a15554d41c438f74434c1f7d1c692.png" alt="38 rectify ac761ecad1998597ea3f713e103a6041e91a15554d41c438f74434c1f7d1c692" /> &nbsp; Melhorar
+                </a>
+            </li>
+        </ul>
+    
+</div>
+              </div>
+            </div>
+            <!--section teeth end-->
+
+            <hr/>
+            <!-- .midline -->
+            <div class="row">
+              <div class="col-lg-12">
+                <label class="control-label">Linha média (correções maiores que 2mm, desgaste ou mudança do comp. do arco podem ser necessárias)</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-3">
+                <label class="control-label">Superior<span class="required">*</span></label>
+              </div>
+              <div class="form-group col-lg-2">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[midline_upper_action]" id="plan_midline_upper_action_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="move" name="plan[midline_upper_action]" id="plan_midline_upper_action_move" /> Mover</label>
+              </div>
+              <!-- disable if keep start -->
+              <div class="form-group col-lg-2">
+                <label class="radio-inline"><input required="required" type="radio" value="right" name="plan[midline_upper_local]" id="plan_midline_upper_local_right" /> D</label>
+                <label class="radio-inline"><input required="required" type="radio" value="left" name="plan[midline_upper_local]" id="plan_midline_upper_local_left" /> E</label>
+              </div>
+              <div class="form-group col-lg-5">
+                <label class="radio-inline"><input required="required" type="radio" value="less_than_2mm" name="plan[midline_upper_size]" id="plan_midline_upper_size_less_than_2mm" /> 1-2mm</label>
+                <label class="radio-inline"><input required="required" type="radio" value="greater_than_2mm" name="plan[midline_upper_size]" id="plan_midline_upper_size_greater_than_2mm" /> +2mm</label>
+              </div>
+              <!-- disable if keep end -->
+            </div>
+            <div class="row">
+              <div class="col-lg-3">
+                <label class="control-label">Inferior<span class="required">*</span></label>
+              </div>
+              <div class="form-group col-lg-2">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[midline_lower_action]" id="plan_midline_lower_action_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="move" name="plan[midline_lower_action]" id="plan_midline_lower_action_move" /> Mover</label>
+              </div>
+              <!-- disable if keep start -->
+              <div class="form-group col-lg-2">
+                <label class="radio-inline"><input required="required" type="radio" value="right" name="plan[midline_lower_local]" id="plan_midline_lower_local_right" /> D</label>
+                <label class="radio-inline"><input required="required" type="radio" value="left" name="plan[midline_lower_local]" id="plan_midline_lower_local_left" /> E</label>
+              </div>
+              <div class="form-group col-lg-5">
+                <label class="radio-inline"><input required="required" type="radio" value="less_than_2mm" name="plan[midline_lower_size]" id="plan_midline_lower_size_less_than_2mm" /> 1-2mm</label>
+                <label class="radio-inline"><input required="required" type="radio" value="greater_than_2mm" name="plan[midline_lower_size]" id="plan_midline_lower_size_greater_than_2mm" /> +2mm</label>
+              </div>
+              <!-- disable if keep end -->
+            </div>
+            <hr/>
+            <div class="row">
+              <!-- :sagittal_correction -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_sagittal_correction">Relação sagital</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[sagittal_correction]" id="plan_sagittal_correction_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="rectify_class_ii" name="plan[sagittal_correction]" id="plan_sagittal_correction_rectify_class_ii" /> Melhorar Classe II</label>
+                <label class="radio-inline"><input required="required" type="radio" value="rectify_class_iii" name="plan[sagittal_correction]" id="plan_sagittal_correction_rectify_class_iii" /> Melhorar Classe III</label>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <!-- :overbite -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_overbite">Sobremordida</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[overbite]" id="plan_overbite_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="rectify" name="plan[overbite]" id="plan_overbite_rectify" /> Melhorar</label>
+              </div>
+            </div>
+            <div class="row">
+              <!-- :overjet -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_overjet">Sobressaliência</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[overjet]" id="plan_overjet_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="rectify" name="plan[overjet]" id="plan_overjet_rectify" /> Melhorar</label>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <!-- :upper_space -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_upper_space">Espaço superior</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[upper_space]" id="plan_upper_space_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="close" name="plan[upper_space]" id="plan_upper_space_close" /> Fechar espaços possíveis</label>
+                <label class="radio-inline"><input required="required" type="radio" value="open" name="plan[upper_space]" id="plan_upper_space_open" /> Criar espaços possíveis</label>
+              </div>
+            </div>
+            <div class="row">
+              <!-- :lower_space -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_lower_space">Espaço inferior</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="keep" name="plan[lower_space]" id="plan_lower_space_keep" /> Manter</label>
+                <label class="radio-inline"><input required="required" type="radio" value="close" name="plan[lower_space]" id="plan_lower_space_close" /> Fechar espaços possíveis</label>
+                <label class="radio-inline"><input required="required" type="radio" value="open" name="plan[lower_space]" id="plan_lower_space_open" /> Criar espaços possíveis</label>
+              </div>
+            </div>
+            <hr/>
+            <!-- :attachments -->
+            <div class="row"><div class="col-lg-12">Attachments<span class="required">*</span></div></div>
+            <div class="row">
+              <!-- :previous_attachments -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_previous_attachments">Aceita attachments anteriores</label>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="yes" name="plan[previous_attachments]" id="plan_previous_attachments_yes" /> Sim</label>
+                <label class="radio-inline"><input required="required" type="radio" value="no" name="plan[previous_attachments]" id="plan_previous_attachments_no" /> Não</label>
+              </div>
+            </div>
+            <div class="row">
+              <!-- :next_attachments -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_next_attachments">Aceita attachments posteriores</label>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="yes" name="plan[next_attachments]" id="plan_next_attachments_yes" /> Sim</label>
+                <label class="radio-inline"><input required="required" type="radio" value="no" name="plan[next_attachments]" id="plan_next_attachments_no" /> Não</label>
+              </div>
+            </div>
+            <div class="row"><div class="col-lg-12"><small>*A não realização de attachments impedem a realização de certos movimentos</small></div></div>
+            <hr/>
+            <!-- :accessories -->
+            <div class="row"><div class="col-lg-12">Acessórios<span class="required">*</span></div></div>
+            <div class="row">
+              <div class="col-lg-5">
+                <label class="control-label" for="plan_accessories">Aceita botões ortodônticos e mecânica de elásticos (apenas se necessário)</label>
+              </div>
+              <div class="form-group col-lg-7">
+                <label class="radio-inline"><input required="required" type="radio" value="yes" name="plan[accessories]" id="plan_accessories_yes" /> Sim</label>
+                <label class="radio-inline"><input required="required" type="radio" value="no" name="plan[accessories]" id="plan_accessories_no" /> Não</label>
+              </div>
+            </div>
+            <div class="row"><div class="col-lg-12"><small>*A não realização dos mesmos impedem a realização de certos movimentos</small></div></div>
+            <hr/>
+            <div class="row">
+              <!-- :case_type -->
+              <div class="col-lg-3">
+                <label class="control-label" for="plan_case_type">Tipo do caso</label><span class="required">*</span>
+              </div>
+              <div class="form-group col-lg-9">
+                <label class="radio-inline"><input required="required" type="radio" value="conventional" name="plan[case_type]" id="plan_case_type_conventional" /> Convencional</label>
+                <label class="radio-inline"><input required="required" type="radio" value="periodontal" name="plan[case_type]" id="plan_case_type_periodontal" /> Periodontal</label>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <div class="col-lg-12">
+                <label class="control-label" for="plan_observations">Observações</label>
+                <textarea class="form-control" maxlength="500" name="plan[observations]" id="plan_observations">
+</textarea>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="pull-right">
+              <button type="button" class="btn btn-primary" id="btn-submit">Salvar</button>
+              <a class="btn btn-default" href="javascript:history.back()">Cancelar</a>
+            </div>
+          </div>
+        </div>
+
+</form>    </div>
+  </div>
+</div>
+
+
+                  <!-- page end-->
+              </section>
+        </section>
+        <!--main content end-->
+
+        <img id="loading" style="display: none;" src="/assets/loading-ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84.gif" alt="Loading ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84" />
+
+        <script src="/assets/application-7db5a4176af39c077e6284cdf2e1c8b6e9f9a787506c744cfc07bebdf489a339.js"></script>
+        <!-- Internationalization (i18n) select2 de acordo com linguagem configurada -->
+        <script src="/assets/select2_locale_pt-BR-2135e6bb2c56910a3de8eef3600d6922464e0be56eb07cb3e732633dc6b52a8f.js"></script>
+        <script src="/assets/planning_forms-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+          <script src="/assets/jquery-plugins/validate/jquery.validate.min-d4549477f07a7dc5a5f0c4fe58805d12f8829c99c990c4164ea506e0ea7ea0c6.js"></script>
+  <script src="/assets/jquery-plugins/validate/locales/jquery.validate.pt-BR-b340e7fa4c470ad0ec5128e9849faa6040a31c56f49a8e3c821d96d2c2590ed5.js"></script>
+  <script src="/assets/planning_forms.form-2e729dc771a3dfbbb42e5819ed501496d6d9f5e96eca6a34de9f1e593ad2e917.js"></script>
+
+    </body>
+</html>

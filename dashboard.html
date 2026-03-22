@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Esthetic Aligner</title>
+
+        <link rel="stylesheet" media="all" href="/assets/application-72503499d40b4d04c500b7ea29d8042a81baef2a73ee5d712a5b4ae69901a767.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-1d11c381cadf47545566e2cf5e375205858d827abe8a0a87a02d74ba4606dbd7.css" />
+        <link rel="stylesheet" media="all" href="/assets/style-responsive-b95ed120c3b5e8f4ae81473e6a89779a8e425443238e7439f523f664c95c33a5.css" />
+        <link rel="stylesheet" media="all" href="/assets/dentists-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css" /> 
+        
+
+        <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="4fvPXYssViKEyfYaC0iBXHfgS7VmlpdpFhMp4Yk3H6Ox/iMm3EaftoRAAdSU2xZccxfkhdUB/wnt+l3rp/433A==" />
+    </head>
+    <body>
+        <script type="text/javascript">
+//<![CDATA[
+window.gon={};gon.locale="pt-BR";gon.placeholder={"dentists":"Selecione um dentista","patients":"Selecione um paciente"};gon.alertify={"buttonOk":"Confirmar","buttonCancel":"Cancelar","alerts_to_open_orders_awaiting_approval_for_production":"Tem certeza que quer sair dessa página? Ainda existem casos para serem aprovados.","errorSyncTotvs":"Não foi possível sincronizar com a base de dados do sistema Totvs"};gon.confirmMessage={"syncTotvs":"Tem certeza que deseja sincronizar?"};
+//]]>
+</script>
+
+        <!--header start-->
+        <header class="header dark-bg">
+    <div class="toggle-nav">
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+
+    <!--logo start-->
+    <a class="logo" href="/pt-BR">
+      <span class="lite">Esthetic Aligner</span>
+</a>    <!--logo end-->
+
+    <!--  search form start -->
+      <div class="nav search-row" id="top_menu">
+          <ul class="nav top-menu">                    
+              <li>
+                  <form class="navbar-form">
+                      <input type="hidden" name="search" id="search" placeholder="Buscar paciente" class="form-control" />
+                  </form>
+              </li>                    
+          </ul>
+      </div>
+      <!--  search form end -->                
+
+      <div class="top-nav notification-row">                
+          <!-- notificatoin dropdown start-->
+          <ul class="nav pull-right top-menu">
+              <!-- user login dropdown start-->
+              <li class="dropdown">
+                  <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                      <span class="profile-ava">
+                            <img src="https://ortholab.s3.sa-east-1.amazonaws.com/uploads/user/avatar/370/EA_redondo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAJHRPL3ES7WKXJEZQ%2F20260322%2Fsa-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20260322T014311Z&amp;X-Amz-Expires=900&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=f0206869fa6dc574b19c84f780df58868658b72b8159149f15d41cfcd0095c20" alt="Ea redondo" />
+                      </span>
+                      <span class="username">Esthetic Aligner</span>
+                      <b class="caret"></b>
+                  </a>
+                  <ul class="dropdown-menu extended logout">
+                      <div class="log-arrow-up"></div>
+                      <li class="eborder-top">
+                          <a href="/pt-BR/users/edit">
+                            <i class="fa fa-user"></i> Perfil
+</a>                      </li>
+                      <li>
+                          <a href="/pt-BR/users/sign_out">
+                            <i class="fa fa-sign-out"></i> Sair
+</a>                      </li>
+                  </ul>
+              </li>
+              <!-- user login dropdown end -->
+          </ul>
+          <!-- notificatoin dropdown end-->
+      </div>
+</header>
+        <!--header end-->
+
+        <!--sidebar start-->
+          <aside>
+    <div id="sidebar"  class="nav-collapse ">
+        <!-- sidebar menu start-->
+        <ul class="sidebar-menu">
+            <li class="">
+                <a href="/pt-BR/dentists">
+                  <i class="fa fa-user-md"></i><span>Dentista</span>
+</a>            </li>
+            <li class="">
+                <a href="/pt-BR/patients">
+                  <i class="fa fa-user"></i><span>Paciente</span>
+</a>            </li>
+              <li class="sub-menu">
+                <a href="#" class="">
+                  <i class="fa fa-code-fork"></i>
+                  <span>Workflow</span>
+                  <span class="menu-arrow fa fa-angle-right"></span>
+                </a>
+                <ul class="sub">
+                  <li>
+                    <a href="/pt-BR/workflow_control/planning_center">
+                      Planning center
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print">
+                      Impressão 3D (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pt">
+                      Impressão 3D (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_co">
+                      Impressão 3D (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_mx">
+                      Impressão 3D (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/print_pe">
+                      Impressão 3D (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/financial">
+                      Financeiro
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory">
+                      Laboratório (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pt">
+                      Laboratório (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_co">
+                      Laboratório (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_mx">
+                      Laboratório (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/laboratory_pe">
+                      Laboratório (pe)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition">
+                      Expedição (br)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pt">
+                      Expedição (pt)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_co">
+                      Expedição (co)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_mx">
+                      Expedição (mx)
+</a>                  </li>
+                  <li>
+                    <a href="/pt-BR/workflow_control/expedition_pe">
+                      Expedição (pe)
+</a>                  </li>
+                </ul>
+              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-file-text-o"></i>
+                      <span>Fichas</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                          <a href="/pt-BR/planning_forms">
+                            Planejamento
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/completion_forms">
+                              Finalização
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/other_services_forms">
+                              Outros serviços
+</a>                        </li>
+                  </ul>
+              </li>
+              <li class="">
+                  <a href="/pt-BR/clinical_records">
+                    <i class="fa fa-medkit"></i><span>Ficha Clínica</span>
+</a>              </li>
+              <li class="sub-menu">
+                  <a href="#" class="">
+                      <i class="fa fa-cogs"></i>
+                      <span>Configurações</span>
+                      <span class="menu-arrow fa fa-angle-right"></span>
+                  </a>
+                  <ul class="sub">
+                        <li>
+                            <a href="/pt-BR/configurations/permissions">
+                              <i class="fa fa-ban"></i>
+                              Permissões
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profiles">
+                              <i class="fa fa-users"></i>
+                              Perfil usuário
+</a>                        </li>
+                        <li>
+                            <a href="/pt-BR/configurations/profile_dentist">
+                              <i class="fa fa-link"></i>
+                              Usuário / Dentista
+</a>                        </li>
+                  </ul>
+              </li>
+        </ul>
+        <!-- sidebar menu end-->
+    </div>
+</aside>
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section class="wrapper">
+              <section id="main-content">
+                  <div id="flash-messages">
+            <div class="alert alert-info alert-dismissable fade in">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                Logado com sucesso.
+            </div>
+       <!-- usado para o flash nao aparecer duas vezes -->
+
+    <!-- Mensagens de alerta sobre casos em aberto aguardando aprovação do dentista para produção -->
+</div>
+
+                  <div class="row">
+    <div class="col-lg-12">
+        <h3 class="page-header">
+            <i class="fa fa-user-md"></i> Dentista
+        </h3>
+    </div>
+</div>
+
+                  <!-- page start-->
+                    <div class="pull-right">
+    <h3>
+      <button name="sync_totvs_dentists" type="button" id="syncTotvsDentists" class="btn btn-default">
+        <i class="fa fa-refresh fa-2x"></i>
+        <br/>Sincronizar Totvs
+</button>    </h3>
+  </div>
+
+
+<input type="text" name="dentists-search" id="dentists-search" class="form-control" placeholder="Digite ao menos 2 caracteres, ou ** para listar tudo..." />
+
+<ul id="dentists-list" class="list-group"></ul>
+
+
+                  <!-- page end-->
+              </section>
+        </section>
+        <!--main content end-->
+
+        <img id="loading" style="display: none;" src="/assets/loading-ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84.gif" alt="Loading ffcfa46e06c8c319a1fd5f5141c040f6c97bd26f1d0a7ea3caa4428451800e84" />
+
+        <script src="/assets/application-7db5a4176af39c077e6284cdf2e1c8b6e9f9a787506c744cfc07bebdf489a339.js"></script>
+        <!-- Internationalization (i18n) select2 de acordo com linguagem configurada -->
+        <script src="/assets/select2_locale_pt-BR-2135e6bb2c56910a3de8eef3600d6922464e0be56eb07cb3e732633dc6b52a8f.js"></script>
+        <script src="/assets/dentists-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+          <script src="/assets/dentists.index-63f4ddea4228505d9e67e90d1213a8f16aa4af34d799d32019086434e2274c37.js"></script>
+  <script src="/assets/dentists.list-1268101d2e16c3a56d92dc573e3e6fe91f6289083cc565824c4d583006046421.js"></script>
+
+    </body>
+</html>
