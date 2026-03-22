@@ -186,7 +186,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                   </div>
 
                   <div className="space-y-3">
-                    {isAdmin && (
+                    {isAdmin && caseData?.status === 'APPROVED' && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-gray-50">
                           <p className="text-sm font-semibold text-gray-700">Faturamento</p>

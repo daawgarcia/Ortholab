@@ -57,9 +57,15 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     const stageName = WORKFLOW_STAGES.find(s => s.stage === nextStage)?.name || ''
 
     const stageToStatus: Record<number, string> = {
-      1: 'SUBMITTED', 2: 'IN_PLANNING', 3: 'IN_PLANNING',
-      4: 'WAITING_APPROVAL', 5: 'APPROVED', 6: 'APPROVED',
-      7: 'PRINTING_3D', 8: 'LABORATORY', 9: 'EXPEDITION',
+      1: 'IN_PLANNING',
+      2: 'IN_PLANNING',
+      3: 'IN_MOVEMENT',
+      4: 'LAB_APPROVAL',
+      5: 'WAITING_APPROVAL',
+      6: 'APPROVED',
+      7: 'PRINTING_3D',
+      8: 'LABORATORY',
+      9: 'EXPEDITION',
     }
     const newStatus = stageToStatus[nextStage]
 

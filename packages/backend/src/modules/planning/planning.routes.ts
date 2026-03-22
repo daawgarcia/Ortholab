@@ -42,7 +42,7 @@ export async function planningRoutes(fastify: FastifyInstance) {
     }
 
     await fastify.prisma.planning.update({ where: { id }, data: { setupUrl, setupFileName } })
-    await fastify.prisma.case.update({ where: { id: planning.caseId }, data: { status: CaseStatus.WAITING_APPROVAL } })
+    await fastify.prisma.case.update({ where: { id: planning.caseId }, data: { status: CaseStatus.IN_MOVEMENT } })
     await fastify.prisma.caseActivity.create({
       data: { caseId: planning.caseId, userId: (request.user as JwtPayload).id, action: 'SETUP_READY', description: 'Setup enviado para aprovação do dentista' },
     })

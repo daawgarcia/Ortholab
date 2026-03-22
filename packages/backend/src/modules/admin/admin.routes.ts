@@ -111,4 +111,36 @@ export async function adminRoutes(fastify: FastifyInstance) {
     })
     return { dentists }
   })
+
+  fastify.get('/coupons', { preHandler: requireRole(Role.ADMIN) }, async () => {
+    const coupons = await fastify.prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } })
+    return { coupons }
+  })
+
+  fastify.post('/coupons', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
+    const { code, description, type, value, active } = request.body as any
+    if (!code || !type || value === undefined) return reply.status(400).send({ error: 'code, type e value são obrigatórios' })
+
+    const existing = await fastify.prisma.coupon.findUnique({ where: { code } })
+    if (existing) return reply.status(400).send({ error: 'Cupom já existe' })
+
+    const coupon = await fastify.prisma.coupon.create({ data: { code, description, type, value: Number(value), active: active ?? true } })
+    return reply.status(201).send({ coupon })
+  })
+
+  fastify.patch('/coupons/:id', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
+    const { id } = request.params as { id: string }
+    const { code, description, type, value, active } = request.body as any
+    const coupon = await fastify.prisma.coupon.update({
+      where: { id },
+      data: { code, description, type, value: value !== undefined ? Number(value) : undefined, active },
+    })
+    return { coupon }
+  })
+
+  fastify.delete('/coupons/:id', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
+    const { id } = request.params as { id: string }
+    await fastify.prisma.coupon.delete({ where: { id } })
+    return { ok: true }
+  })
 }

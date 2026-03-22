@@ -7,10 +7,10 @@ import { FileDown } from 'lucide-react'
 
 const TABS = [
   { key: 'IN_PLANNING', label: 'Casos a preparar' },
+  { key: 'IN_MOVEMENT', label: 'Casos a movimentar' },
+  { key: 'LAB_APPROVAL', label: 'Casos a aprovar resp. lab.' },
   { key: 'WAITING_APPROVAL', label: 'Aguardando aprovação' },
   { key: 'REVISION_REQUESTED', label: 'Casos a alterar (Solicitação dentista)' },
-  { key: 'APPROVED', label: 'Casos a movimentar' },
-  { key: 'SUBMITTED', label: 'Casos a aprovar resp. lab.' },
 ]
 
 function formatDate(d: string) {
