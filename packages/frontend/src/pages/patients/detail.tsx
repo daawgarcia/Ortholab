@@ -32,6 +32,20 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const [notes, setNotes] = useState('')
   const [billingForm, setBillingForm] = useState<any>({})
 
+  const canStartWorkflow = user?.role !== 'DENTIST'
+
+  const startWorkflowMutation = useMutation({
+    mutationFn: () => api.post(`/patients/${patientId}/open-workflow`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['patient', patientId] })
+      toast({ title: 'Fluxo iniciado', description: 'Recebimento dos modelos registrado com sucesso.' })
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || 'Não foi possível iniciar o fluxo'
+      toast({ variant: 'destructive', title: 'Erro', description: message })
+    },
+  })
+
   const { data: workflowData } = useQuery({
     queryKey: ['workflow', selectedCase],
     queryFn: () => api.get(`/workflow/case/${selectedCase}`).then(r => r.data),
@@ -100,7 +114,21 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
       ) : (
         <>
           {openCases.length === 0 ? (
-            <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">Nenhum fluxo em aberto. Registre o recebimento dos modelos para iniciar o processo.</div>
+            <div className="p-6 space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg text-blue-700 p-4">Nenhum fluxo em aberto. Registre o recebimento dos modelos para iniciar o processo.</div>
+              {canStartWorkflow ? (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => startWorkflowMutation.mutate()}
+                  disabled={startWorkflowMutation.isLoading}
+                >
+                  {startWorkflowMutation.isLoading ? 'Registrando...' : 'Registrar recebimento e iniciar fluxo'}
+                </Button>
+              ) : (
+                <div className="text-sm text-gray-500">Apenas administradores/funcionários podem iniciar o fluxo.</div>
+              )}
+            </div>
           ) : (
             <>
               {openCases.length > 1 && (

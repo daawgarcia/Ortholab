@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
-import { Role } from '@prisma/client'
+import { Role, CaseStatus } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
 
 const patientSchema = z.object({
@@ -67,6 +67,49 @@ export async function patientRoutes(fastify: FastifyInstance) {
       return reply.status(403).send({ error: 'Acesso negado' })
 
     return patient
+  })
+
+  fastify.post('/:id/open-workflow', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { id } = request.params as { id: string }
+
+    const patient = await fastify.prisma.patient.findUnique({ where: { id } })
+    if (!patient) return reply.status(404).send({ error: 'Paciente não encontrado' })
+    if (user.role === Role.DENTIST && patient.dentistId !== user.id)
+      return reply.status(403).send({ error: 'Acesso negado' })
+
+    const existingOpen = await fastify.prisma.case.findFirst({
+      where: { patientId: id, status: { not: 'COMPLETED' } },
+    })
+    if (existingOpen) return reply.status(400).send({ error: 'Já existe um caso em aberto para este paciente' })
+
+    const newCase = await fastify.prisma.case.create({
+      data: {
+        dentistId: patient.dentistId,
+        patientId: id,
+        patientName: patient.name,
+        patientDob: patient.dob ?? undefined,
+        gender: patient.gender ?? undefined,
+        status: CaseStatus.SUBMITTED,
+      },
+    })
+
+    const caseWithTotvs = await fastify.prisma.case.update({
+      where: { id: newCase.id },
+      data: { totvsOrderId: `CAIXA-${newCase.caseNumber}` },
+    })
+
+    await fastify.prisma.workflowEvent.create({
+      data: {
+        caseId: caseWithTotvs.id,
+        stage: 1,
+        stageName: 'Recebimento dos modelos',
+        performedBy: user.id,
+        notes: 'Recebimento inicial registrado via painel do paciente',
+      },
+    })
+
+    return reply.status(201).send({ case: caseWithTotvs })
   })
 
   fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
