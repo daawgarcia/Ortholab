@@ -8,3 +8,23 @@ build/
 coverage/
 .nyc_output/
 prisma/migrations/*.sql.bak
+
+# temp scraping files
+cookies*.txt
+page_*.html
+dashboard.html
+login*.html
+patient_1.html
+patient_edit.html
+dentist_edit.html
+stl_upper.html
+workflow_detail.html
+post_response*.html
+*_headers.txt
+*_list_js.js
+patients_*.json
+patients_*.txt
+list_*.json
+list_*.txt
+response_*.txt
+
