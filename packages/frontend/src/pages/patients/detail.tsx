@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
@@ -8,7 +8,7 @@ import { ChevronLeft, Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { StatusBadge } from '@/components/status-badge'
 
-const TABS = ['Workflow', 'Fotos', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica']
+const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica']
 
 const WORKFLOW_STAGES = [
   { n: 1, label: 'Recebimento dos modelos' },
@@ -25,19 +25,33 @@ const WORKFLOW_STAGES = [
 function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) {
   const { user } = useAuthStore()
   const qc = useQueryClient()
-  const [selectedCase, setSelectedCase] = useState<string>(cases[0]?.id || '')
+  const [workflowTab, setWorkflowTab] = useState<'Em Aberto' | 'Concluídos'>('Em Aberto')
+  const openCases = cases.filter(c => c.status !== 'COMPLETED')
+  const completedCases = cases.filter(c => c.status === 'COMPLETED')
+  const [selectedCase, setSelectedCase] = useState<string>(openCases[0]?.id || '')
   const [notes, setNotes] = useState('')
   const [billingForm, setBillingForm] = useState<any>({})
 
   const { data: workflowData } = useQuery({
     queryKey: ['workflow', selectedCase],
     queryFn: () => api.get(`/workflow/case/${selectedCase}`).then(r => r.data),
-    enabled: !!selectedCase,
+    enabled: workflowTab === 'Em Aberto' && !!selectedCase,
   })
+
+  // keep selected in sync with open cases list
+  useEffect(() => {
+    if (workflowTab === 'Em Aberto' && openCases.length && !openCases.some(c => c.id === selectedCase)) {
+      setSelectedCase(openCases[0].id)
+    }
+  }, [workflowTab, openCases, selectedCase])
 
   const advanceMutation = useMutation({
     mutationFn: () => api.post(`/workflow/case/${selectedCase}/advance`, { notes }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['workflow', selectedCase] }); setNotes('') },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workflow', selectedCase] })
+      setNotes('')
+      toast({ title: 'Etapa salva com sucesso', description: 'O caso foi avançado no fluxo.' })
+    },
   })
 
   const billingMutation = useMutation({
@@ -52,129 +66,159 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
 
   return (
     <div className="space-y-4">
-      {cases.length > 1 && (
-        <div className="flex gap-2 flex-wrap">
-          {cases.map((c: any) => (
-            <button key={c.id}
-              onClick={() => setSelectedCase(c.id)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                selectedCase === c.id ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:border-primary/50'
-              }`}>
-              #{c.caseNumber} — {c.productType || c.service?.name || 'Caso'}
-            </button>
-          ))}
+      <div className="flex gap-2">
+        {['Em Aberto', 'Concluídos'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setWorkflowTab(tab as 'Em Aberto' | 'Concluídos')}
+            className={`px-4 py-2 text-sm rounded-lg font-medium border transition ${workflowTab === tab ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {workflowTab === 'Concluídos' ? (
+        <div className="space-y-3">
+          {completedCases.length === 0 ? (
+            <div className="p-6 text-center bg-yellow-50 border border-yellow-200 rounded-lg">Nenhum fluxo concluído ainda.</div>
+          ) : (
+            completedCases.map((c: any) => (
+              <div key={c.id} className="border rounded-lg bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="text-sm font-semibold">Caso #{c.caseNumber} - {c.productType || c.service?.name || 'Caso'}</div>
+                    <div className="text-xs text-gray-500">Concluído em {new Date(c.updatedAt).toLocaleDateString('pt-BR')}</div>
+                  </div>
+                  <StatusBadge status={c.status} />
+                </div>
+                <p className="text-xs text-gray-600">Último evento: {c.workflowEvents?.[0]?.stage} - {c.workflowEvents?.[0]?.notes || 'Sem notas'}</p>
+              </div>
+            ))
+          )}
         </div>
-      )}
+      ) : (
+        <>
+          {openCases.length === 0 ? (
+            <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">Nenhum fluxo em aberto. Registre o recebimento dos modelos para iniciar o processo.</div>
+          ) : (
+            <>
+              {openCases.length > 1 && (
+                <div className="flex gap-2 flex-wrap">
+                  {openCases.map((c: any) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedCase(c.id)}
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${selectedCase === c.id ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:border-primary/50'}`}
+                    >
+                      #{c.caseNumber} — {c.productType || c.service?.name || 'Caso'}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-      {caseData && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-            <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-700">Pipeline — Caso #{caseData.caseNumber}</p>
-              <StatusBadge status={caseData.status} />
-            </div>
-            <div className="divide-y">
-              {WORKFLOW_STAGES.map(s => {
-                const event = events.find((e: any) => e.stage === s.n)
-                const done = !!event
-                const current = currentStage + 1 === s.n
-                return (
-                  <div key={s.n} className={`flex items-center gap-3 px-4 py-2.5 ${done ? 'bg-green-50' : current ? 'bg-blue-50' : ''}`}>
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      done ? 'bg-green-500 text-white' : current ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'
-                    }`}>{s.n}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${done ? 'text-green-700' : current ? 'text-primary' : 'text-gray-400'}`}>{s.label}</p>
-                      {event && <p className="text-xs text-gray-400">{event.performer?.name} · {new Date(event.createdAt).toLocaleDateString('pt-BR')}</p>}
+              {caseData && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                    <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-700">Pipeline — Caso #{caseData.caseNumber}</p>
+                      <StatusBadge status={caseData.status} />
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-            {isAdmin && currentStage < 9 && (
-              <div className="p-4 space-y-2 border-t bg-gray-50">
-                <textarea
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  className="w-full border rounded text-xs px-3 py-2 resize-none"
-                  rows={2}
-                  placeholder="Observações (opcional)"
-                />
-                <Button size="sm" className="w-full" onClick={() => advanceMutation.mutate()} disabled={advanceMutation.isPending}>
-                  {advanceMutation.isPending ? 'Avançando...' : `Avançar → Etapa ${currentStage + 1}`}
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {isAdmin && (
-              <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
-                  <p className="text-sm font-semibold text-gray-700">Faturamento</p>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Tipo *</label>
-                    <div className="flex gap-3">
-                      {['Unidade', 'MID', 'FULL'].map(t => (
-                        <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm">
-                          <input type="radio" checked={billingForm.billingType === t}
-                            onChange={() => setBillingForm((f: any) => ({ ...f, billingType: t }))} className="accent-primary" />
-                          {t}
-                        </label>
-                      ))}
+                    <div className="divide-y">
+                      {WORKFLOW_STAGES.map(s => {
+                        const event = events.find((e: any) => e.stage === s.n)
+                        const done = !!event
+                        const current = currentStage + 1 === s.n
+                        return (
+                          <div key={s.n} className={`flex items-center gap-3 px-4 py-2.5 ${done ? 'bg-green-50' : current ? 'bg-blue-50' : ''}`}>
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${done ? 'bg-green-500 text-white' : current ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}>{s.n}</div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-medium ${done ? 'text-green-700' : current ? 'text-primary' : 'text-gray-400'}`}>{s.label}</p>
+                              {event && <p className="text-xs text-gray-400">{event.performer?.name} · {new Date(event.createdAt).toLocaleDateString('pt-BR')}</p>}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Parcelas</label>
-                    <select className="w-full border rounded px-2 py-1.5 text-sm"
-                      value={billingForm.installmentOption || ''}
-                      onChange={e => setBillingForm((f: any) => ({ ...f, installmentOption: e.target.value }))}>
-                      <option value="">Selecione</option>
-                      {['1x', '2x', '3x', '4x', '5x', '6x', '10x', '12x', '18x', '24x'].map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-                      <input type="checkbox" checked={!!billingForm.dropoutInsurance}
-                        onChange={e => setBillingForm((f: any) => ({ ...f, dropoutInsurance: e.target.checked }))} className="accent-primary" />
-                      Seguro de Abandono
-                    </label>
-                    <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-                      <input type="checkbox" checked={!!billingForm.packActive}
-                        onChange={e => setBillingForm((f: any) => ({ ...f, packActive: e.target.checked }))} className="accent-primary" />
-                      Pack Ativo
-                    </label>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Cupom de Desconto</label>
-                    <input className="w-full border rounded px-2 py-1.5 text-sm"
-                      value={billingForm.discountCoupon || ''}
-                      onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value }))}
-                      placeholder="CUPOM" />
-                  </div>
-                  <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()}>Salvar Faturamento</Button>
-                </div>
-              </div>
-            )}
 
-            {caseData.planningFormData && (
-              <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
-                  <p className="text-sm font-semibold text-gray-700">Ficha de Planejamento</p>
+                    {isAdmin && currentStage < WORKFLOW_STAGES.length && (
+                      <div className="p-4 space-y-2 border-t bg-gray-50">
+                        <textarea
+                          value={notes}
+                          onChange={e => setNotes(e.target.value)}
+                          className="w-full border rounded text-xs px-3 py-2 resize-none"
+                          rows={2}
+                          placeholder="Observações (opcional)"
+                        />
+                        <Button size="sm" className="w-full" onClick={() => advanceMutation.mutate()} disabled={advanceMutation.isPending}>
+                          {advanceMutation.isPending ? 'Avançando...' : `Avançar: ${WORKFLOW_STAGES.find(s => s.n === currentStage + 1)?.label || 'Próxima Etapa'}`}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {isAdmin && (
+                      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+                        <div className="px-4 py-3 border-b bg-gray-50">
+                          <p className="text-sm font-semibold text-gray-700">Faturamento</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Tipo *</label>
+                            <div className="flex gap-3">
+                              {['Unidade', 'MID', 'FULL'].map(t => (
+                                <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                                  <input type="radio" checked={billingForm.billingType === t} onChange={() => setBillingForm((f: any) => ({ ...f, billingType: t }))} className="accent-primary" />
+                                  {t}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Parcelas</label>
+                            <select className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.installmentOption || ''} onChange={e => setBillingForm((f: any) => ({ ...f, installmentOption: e.target.value }))}>
+                              <option value="">Selecione</option>
+                              {['1x', '2x', '3x', '4x', '5x', '6x', '10x', '12x', '18x', '24x'].map(p => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                              <input type="checkbox" checked={!!billingForm.dropoutInsurance} onChange={e => setBillingForm((f: any) => ({ ...f, dropoutInsurance: e.target.checked }))} className="accent-primary" />
+                              Seguro de Abandono
+                            </label>
+                            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                              <input type="checkbox" checked={!!billingForm.packActive} onChange={e => setBillingForm((f: any) => ({ ...f, packActive: e.target.checked }))} className="accent-primary" />
+                              Pack Ativo
+                            </label>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Cupom de Desconto</label>
+                            <input className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.discountCoupon || ''} onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value }))} placeholder="CUPOM" />
+                          </div>
+                          <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()}>Salvar Faturamento</Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {caseData?.planningFormData && (
+                      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+                        <div className="px-4 py-3 border-b bg-gray-50">
+                          <p className="text-sm font-semibold text-gray-700">Ficha de Planejamento</p>
+                        </div>
+                        <div className="p-4">
+                          <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono">{JSON.stringify(caseData.planningFormData, null, 2)}</pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="p-4">
-                  <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono">
-                    {JSON.stringify(caseData.planningFormData, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   )
@@ -369,7 +413,7 @@ export default function PatientDetailPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Workflow')
   const { user } = useAuthStore()
-  const isAdmin = user?.role !== 'DENTIST'
+  const isAdminOrSupport = user?.role !== 'DENTIST'
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ['patient', id],
@@ -379,7 +423,14 @@ export default function PatientDetailPage() {
   if (isLoading) return <div className="p-6 text-gray-400">Carregando...</div>
   if (!patient) return <div className="p-6 text-red-500">Paciente não encontrado</div>
 
-  const tabs = isAdmin ? TABS : ['Workflow', 'Fotos', 'Fichas', 'Ficha Clínica']
+  const isCreatorDentist = user?.role === 'DENTIST' && patient.dentistId === user.id
+  const tabs = isAdminOrSupport
+    ? TABS
+    : isCreatorDentist
+      ? ['Workflow', 'Fotos', 'Modelos Digitais', 'Fichas', 'Ficha Clínica']
+      : ['Workflow', 'Fotos', 'Fichas', 'Ficha Clínica']
+
+  const activeCase = patient.cases?.find(c => c.totvsOrderId)
 
   return (
     <div className="p-6 space-y-5 max-w-6xl mx-auto">
@@ -390,6 +441,7 @@ export default function PatientDetailPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">{patient.name}</h1>
           <p className="text-sm text-gray-400">{patient.dentist?.name}{patient.dentist?.clinic ? ` · ${patient.dentist.clinic}` : ''}</p>
+          {activeCase?.totvsOrderId && <p className="text-sm text-blue-600 font-medium">Nº de Caixa: {activeCase.totvsOrderId}</p>}
         </div>
         <Button size="sm" variant="outline" className="ml-auto" onClick={() => navigate(`/patients/${id}/edit`)}>Editar</Button>
       </div>

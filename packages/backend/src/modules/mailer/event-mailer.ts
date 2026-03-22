@@ -48,7 +48,24 @@ export class EventMailer {
     }).catch(console.error)
   }
 
-  async onCaseSubmitted(caseData: any) {
+  async onPatientCreated(patientData: any) {
+    const adminEmails = await this.getAdminEmails()
+    const labEmails = await this.getLabEmails()
+    const recipients = [...new Set([...adminEmails, ...labEmails])]
+    if (!recipients.length) return
+
+    const subject = `Novo paciente cadastrado - ${patientData.name}`
+    const html = this.mailer.getTemplate(
+      'Novo paciente cadastrado',
+      `<p>Um novo paciente foi cadastrado pelo Dr(a). <strong>${patientData.dentist?.name}</strong>.</p>
+       <p><strong>Paciente:</strong> ${patientData.name}<br/>
+       <strong>Clínica:</strong> ${patientData.dentist?.clinic || '-'}<br/>
+       <strong>Data de nascimento:</strong> ${patientData.dob ? new Date(patientData.dob).toLocaleDateString('pt-BR') : '-'}</p>`,
+      `${process.env.APP_URL}/patients/${patientData.id}`, 'Ver Paciente'
+    )
+    await this.mailer.send({ to: recipients, subject, html })
+    await this.logEmail('PATIENT_CREATED', recipients, subject)
+  }
     const adminEmails = await this.getAdminEmails()
     const labEmails = await this.getLabEmails()
     const sellerEmails = await this.getSellerEmailsForDentist(caseData.dentistId)

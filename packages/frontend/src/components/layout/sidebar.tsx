@@ -9,7 +9,7 @@ import {
   Users, Settings, Package, Bell, Wrench, Grid3X3,
   Briefcase, ExternalLink, ChevronRight, ChevronDown,
   FlaskConical, Printer, Beaker, Send, UserCircle,
-  CreditCard, BookOpen, Radio, PlaySquare, FileText, Video
+  CreditCard, BookOpen, Radio, PlaySquare, FileText, Video, MessageCircle
 } from 'lucide-react'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
@@ -32,6 +32,7 @@ const dentistItems = [
 
 const adminNav = [
   { label: 'Usuários', href: '/admin/users', icon: Users },
+  { label: 'Gestão de Carteira', href: '/admin/seller-clients', icon: Briefcase },
   { label: 'Serviços e Preços', href: '/admin/services', icon: Package },
   { label: 'Conteúdo', href: '/admin/content', icon: FileText },
   { label: 'Vídeos', href: '/admin/videos', icon: PlaySquare },
@@ -88,6 +89,10 @@ export function Sidebar() {
 
         {['LAB_TECH', 'FINANCIAL'].includes(user?.role || '') && (
           <NavItem href="/cases" icon={FolderOpen} label="Casos" active={isActive('/cases')} />
+        )}
+
+        {(isSeller || isDentist || isAdmin || isFinancial) && (
+          <NavItem href="/chat" icon={MessageCircle} label="Chat" active={isActive('/chat')} />
         )}
 
         {isSeller && (

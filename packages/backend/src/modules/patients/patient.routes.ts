@@ -82,7 +82,11 @@ export async function patientRoutes(fastify: FastifyInstance) {
         active: data.active ?? true,
         teethData: data.teethData,
       },
+      include: { dentist: { select: { name: true, clinic: true } } },
     })
+
+    // Send notification email
+    fastify.eventMailer.onPatientCreated(patient).catch(console.error)
 
     return reply.status(201).send(patient)
   })

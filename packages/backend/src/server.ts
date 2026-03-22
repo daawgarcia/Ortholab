@@ -3,17 +3,20 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import multipart from '@fastify/multipart'
+import websocket from '@fastify/websocket'
 import { prismaPlugin } from './plugins/prisma'
 import { s3Plugin } from './plugins/s3'
 import { mailerPlugin } from './plugins/mailer'
 import { authRoutes } from './modules/auth/auth.routes'
 import { userRoutes } from './modules/users/user.routes'
 import { caseRoutes } from './modules/cases/case.routes'
+import { chatRoutes } from './modules/chat/chat.routes'
 import { documentRoutes } from './modules/documents/document.routes'
 import { planningRoutes } from './modules/planning/planning.routes'
 import { financialRoutes } from './modules/financial/financial.routes'
 import { paymentRoutes } from './modules/payments/payment.routes'
 import { sellerRoutes } from './modules/seller/seller.routes'
+import { sellerClientRoutes } from './modules/seller/seller-client.routes'
 import { pushRoutes } from './modules/push/push.routes'
 import { serviceRoutes } from './modules/services/service.routes'
 import { appModuleRoutes } from './modules/app-modules/app-module.routes'
@@ -56,9 +59,12 @@ const start = async () => {
     limits: { fileSize: 200 * 1024 * 1024 },
   })
 
+  const wsClients = new Map<string, any>()
+
   await app.register(prismaPlugin)
   await app.register(s3Plugin)
   await app.register(mailerPlugin)
+  await app.register(websocket)
 
   await app.register(authRoutes, { prefix: '/api/auth' })
   await app.register(userRoutes, { prefix: '/api/users' })
@@ -68,7 +74,59 @@ const start = async () => {
   await app.register(financialRoutes, { prefix: '/api/financial' })
   await app.register(paymentRoutes, { prefix: '/api/payments' })
   await app.register(sellerRoutes, { prefix: '/api/seller' })
+  await app.register(sellerClientRoutes, { prefix: '/api/seller-clients' })
   await app.register(pushRoutes, { prefix: '/api/push' })
+  await app.register(chatRoutes, { prefix: '/api/chat', wsClients })
+
+  app.get('/api/chat/ws', { websocket: true }, (connection, request) => {
+    const url = new URL(request.url!, `http://${request.headers.host}`)
+    const token = url.searchParams.get('token') || (request.headers.authorization?.split(' ')[1] ?? '')
+
+    try {
+      const user = app.jwt.verify(token as string) as any
+      const userId = user.id
+      wsClients.set(userId, connection.socket)
+
+      connection.socket.on('message', async (data) => {
+        try {
+          const payload = JSON.parse(data.toString())
+          if (payload.type === 'message') {
+            const message = await app.prisma.chatMessage.create({
+              data: {
+                senderId: userId,
+                receiverId: payload.to,
+                content: payload.content,
+              },
+            })
+
+            const messagePayload = JSON.stringify({
+              type: 'message',
+              message,
+            })
+
+            const peerSocket = wsClients.get(payload.to)
+            if (peerSocket && peerSocket.readyState === 1) {
+              peerSocket.send(messagePayload)
+            }
+            if (connection.socket.readyState === 1) {
+              connection.socket.send(messagePayload)
+            }
+          }
+        } catch (err) {
+          console.error('WS message parse error', err)
+        }
+      })
+
+      connection.socket.on('close', () => {
+        wsClients.delete(userId)
+      })
+
+    } catch (err) {
+      connection.socket.send(JSON.stringify({ error: 'Unauthorized' }))
+      connection.socket.close()
+    }
+  })
+
   await app.register(serviceRoutes, { prefix: '/api/services' })
   await app.register(appModuleRoutes, { prefix: '/api/modules' })
   await app.register(exportRoutes, { prefix: '/api/export' })

@@ -18,6 +18,7 @@ import SellerPage from '@/pages/seller'
 import AdminUsersPage from '@/pages/admin/users'
 import AdminServicesPage from '@/pages/admin/services'
 import AdminPushPage from '@/pages/admin/push'
+import AdminSellerClientsPage from '@/pages/admin/seller-clients'
 import AdminModulesPage from '@/pages/admin/modules'
 import AdminSettingsPage from '@/pages/admin/settings'
 import ProfilePage from '@/pages/profile'
@@ -35,6 +36,7 @@ import DentistFinancialPage from '@/pages/dentist-financial'
 import PricesRulesPage from '@/pages/prices-rules'
 import VideoAulasPage from '@/pages/videos'
 import WebinarsPage from '@/pages/webinars'
+import ChatPage from '@/pages/chat'
 import AdminVideosPage from '@/pages/admin/videos'
 import AdminContentPage from '@/pages/admin/content'
 
@@ -88,8 +90,10 @@ export default function App() {
 
           <Route path="financial" element={<ProtectedRoute roles={['FINANCIAL','ADMIN']}><FinancialPage /></ProtectedRoute>} />
           <Route path="seller" element={<ProtectedRoute roles={['SELLER']}><SellerPage /></ProtectedRoute>} />
+          <Route path="chat" element={<ProtectedRoute roles={['SELLER','DENTIST','ADMIN','FINANCIAL']}><ChatPage /></ProtectedRoute>} />
 
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="admin/seller-clients" element={<ProtectedRoute roles={['ADMIN']}><AdminSellerClientsPage /></ProtectedRoute>} />
           <Route path="admin/services" element={<ProtectedRoute roles={['ADMIN']}><AdminServicesPage /></ProtectedRoute>} />
           <Route path="admin/content" element={<ProtectedRoute roles={['ADMIN']}><AdminContentPage /></ProtectedRoute>} />
           <Route path="admin/videos" element={<ProtectedRoute roles={['ADMIN']}><AdminVideosPage /></ProtectedRoute>} />

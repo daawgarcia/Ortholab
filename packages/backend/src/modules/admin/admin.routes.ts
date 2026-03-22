@@ -22,7 +22,17 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const { role, status, search, page = '1', limit = '20' } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const where: any = {}
-    if (role) where.role = role
+    
+    // Support multiple roles separated by comma
+    if (role) {
+      const roles = role.split(',').map((r: string) => r.trim())
+      if (roles.length > 1) {
+        where.role = { in: roles }
+      } else {
+        where.role = roles[0]
+      }
+    }
+    
     if (status) where.status = status
     if (search) where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { email: { contains: search, mode: 'insensitive' } }]
 
