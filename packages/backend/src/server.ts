@@ -25,7 +25,9 @@ import { dentistRoutes } from './modules/dentists/dentist.routes'
 import { workflowEventRoutes } from './modules/workflow/workflow.routes'
 import { clinicalRecordRoutes } from './modules/clinical-records/clinical-record.routes'
 import { formsRoutes } from './modules/forms/forms.routes'
-import { exportRoutes } from './modules/export/export.routes'
+import { videoRoutes } from './modules/videos/video.routes'
+import { contentRoutes } from './modules/content/content.routes'
+import { dentistFinancialRoutes } from './modules/dentist-financial/dentist-financial.routes'
 
 const app = Fastify({ logger: true })
 
@@ -77,6 +79,9 @@ const start = async () => {
   await app.register(workflowEventRoutes, { prefix: '/api/workflow' })
   await app.register(clinicalRecordRoutes, { prefix: '/api/clinical-records' })
   await app.register(formsRoutes, { prefix: '/api/forms' })
+  await app.register(videoRoutes, { prefix: '/api/videos' })
+  await app.register(contentRoutes, { prefix: '/api/content' })
+  await app.register(dentistFinancialRoutes, { prefix: '/api/dentist-financial' })
   await app.register(exportRoutes, { prefix: '/api/export' })
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
