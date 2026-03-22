@@ -132,6 +132,8 @@ model User {
   emailLogs           EmailLog[]
   sellerClients       SellerClient[] @relation("SellerRelation")
   clientSellers       SellerClient[] @relation("ClientRelation")
+  sentMessages        ChatMessage[]  @relation("ChatSent")
+  receivedMessages    ChatMessage[]  @relation("ChatReceived")
   financials          Financial[]    @relation("BilledBy")
   planningForms       PlanningForm[] @relation("DentistPlanningForms")
   completionForms     CompletionForm[] @relation("DentistCompletionForms")
@@ -571,6 +573,18 @@ model DentistInvoice {
   updatedAt     DateTime @updatedAt
 
   dentist       User     @relation("DentistInvoices", fields: [dentistId], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("ChatSent", fields: [senderId], references: [id])
+  receiver   User     @relation("ChatReceived", fields: [receiverId], references: [id])
 }
 
 model InvoicePayment {

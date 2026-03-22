@@ -63,13 +63,19 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     }
     const newStatus = stageToStatus[nextStage]
 
+    const updateData: any = { status: newStatus as any }
+    if (nextStage === 1 && !caseData.totvsOrderId) {
+      // Generate TOTVS order ID when workflow starts
+      updateData.totvsOrderId = `CAIXA-${caseData.caseNumber}`
+    }
+
     await fastify.prisma.$transaction([
       fastify.prisma.workflowEvent.create({
         data: { caseId, stage: nextStage, stageName, performedBy: user.id, notes },
       }),
       fastify.prisma.case.update({
         where: { id: caseId },
-        data: { status: newStatus as any },
+        data: updateData,
       }),
     ])
 
