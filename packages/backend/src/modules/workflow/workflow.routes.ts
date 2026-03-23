@@ -103,7 +103,6 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
   fastify.patch('/case/:caseId/billing', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
-    if (user.role === Role.DENTIST) return reply.status(403).send({ error: 'Acesso negado' })
 
     const { caseId } = request.params as { caseId: string }
     const { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive } = request.body as any
@@ -114,6 +113,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     })
 
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
+    if (user.role === Role.DENTIST && caseData.dentistId !== user.id) return reply.status(403).send({ error: 'Acesso negado' })
     if (!caseData.service) return reply.status(400).send({ error: 'Caso sem serviço vinculado' })
 
     const normalizedInstallment = normalizeInstallmentOption(installmentOption)
