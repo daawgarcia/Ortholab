@@ -44,7 +44,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     if (user.role === Role.DENTIST) return reply.status(403).send({ error: 'Acesso negado' })
 
     const { caseId } = request.params as { caseId: string }
-    const { notes } = request.body as { notes?: string }
+    const { notes } = ((request.body as any) || {}) as { notes?: string }
 
     const caseData = await fastify.prisma.case.findUnique({
       where: { id: caseId },
@@ -78,7 +78,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     const caseLabel = `Caso #${String(caseData.caseNumber).padStart(6, '0')} — ${caseData.patientName}`
 
-    const ops: any[] = [
+    await fastify.prisma.$transaction([
       fastify.prisma.workflowEvent.create({
         data: { caseId, stage: nextStage, stageName, performedBy: user.id, notes },
       }),
@@ -86,17 +86,17 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
         where: { id: caseId },
         data: updateData,
       }),
-      fastify.prisma.notification.create({
-        data: {
-          userId: caseData.dentistId,
-          title: `${caseLabel}`,
-          message: `Etapa avançada: ${stageName}`,
-          link: `/cases/${caseId}`,
-        },
-      }),
-    ]
+    ])
 
-    await fastify.prisma.$transaction(ops)
+    // Notification outside transaction — failure here does not block the advance
+    fastify.prisma.notification.create({
+      data: {
+        userId: caseData.dentistId,
+        title: caseLabel,
+        message: `Etapa avançada: ${stageName}`,
+        link: `/cases/${caseId}`,
+      },
+    }).catch(() => { /* non-critical */ })
 
     return { ok: true, stage: nextStage, stageName, newStatus }
   })
