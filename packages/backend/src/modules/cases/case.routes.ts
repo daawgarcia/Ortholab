@@ -55,7 +55,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
       where: { id },
       include: {
         dentist: { select: { id: true, name: true, clinic: true, email: true, phone: true } },
-        service: true,
+        service: { include: { prices: { orderBy: { validFrom: 'desc' } } } },
         documents: { orderBy: { uploadedAt: 'desc' } },
         plannings: {
           include: {

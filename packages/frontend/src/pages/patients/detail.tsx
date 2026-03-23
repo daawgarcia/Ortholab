@@ -221,10 +221,11 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                   </div>
 
                   <div className="space-y-3">
-                    {isAdmin && caseData?.status === 'APPROVED' && (
+                    {caseData?.status === 'APPROVED' && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-gray-50">
                           <p className="text-sm font-semibold text-gray-700">Faturamento</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Opcional — pode ser preenchido pelo dentista ou pelo time interno</p>
                         </div>
                         <div className="p-4 space-y-3">
                           <div>

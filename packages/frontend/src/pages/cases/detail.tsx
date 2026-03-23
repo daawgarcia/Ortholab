@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
@@ -7,9 +7,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/status-badge'
 import { formatDate, formatDateTime } from '@/lib/utils'
-import { ArrowLeft, Upload, CheckCircle, RefreshCw, Send, FileText, Image, X, Loader2 } from 'lucide-react'
+import { ArrowLeft, Upload, CheckCircle, RefreshCw, Send, FileText, X, Loader2 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useDropzone } from 'react-dropzone'
+
+function isAlignerType(serviceType?: string) {
+  return ['FULL', 'MID', 'AIR', 'EXPRESS', 'REFINEMENT'].includes(serviceType || '')
+}
+
+function getAllowedInstallments(service?: any): string[] {
+  if (!service) return ['1x']
+  const available = new Set<string>(['1x'])
+  for (const price of service.prices || []) {
+    if (!price.groupId || price.groupId === 'CASH') available.add('1x')
+    if (price.groupId === 'INSTALLMENT_2') available.add('2x')
+    if (price.groupId === 'INSTALLMENT_6') available.add('6x')
+    if (price.groupId === 'INSTALLMENT_12') available.add('12x')
+    if (price.groupId === 'INSTALLMENT_21') available.add('21x')
+  }
+  if (service.type === 'AIR') return ['1x', '2x'].filter(i => available.has(i))
+  if (service.type === 'FULL') return ['1x', '6x', '12x', '21x'].filter(i => available.has(i))
+  return ['1x', '6x', '12x'].filter(i => available.has(i))
+}
 
 function DocUploader({ caseId, type, label, onDone }: any) {
   const [uploading, setUploading] = useState(false)
@@ -53,10 +72,31 @@ export default function CaseDetailPage() {
   const qc = useQueryClient()
   const [revisionNotes, setRevisionNotes] = useState('')
   const [showRevision, setShowRevision] = useState(false)
+  const [billingForm, setBillingForm] = useState<any>({})
 
   const { data, isLoading } = useQuery({
     queryKey: ['case', id],
     queryFn: () => api.get(`/cases/${id}`).then(r => r.data.case),
+  })
+
+  const allowedInstallments = useMemo(() => getAllowedInstallments(data?.service), [data?.service])
+  const couponAllowed = isAlignerType(data?.service?.type)
+
+  useEffect(() => {
+    if (!data) return
+    setBillingForm({
+      billingType: data.billingType || '',
+      installmentOption: allowedInstallments.includes(data.installmentOption || '') ? data.installmentOption : (allowedInstallments[0] || '1x'),
+      dropoutInsurance: !!data.dropoutInsurance,
+      discountCoupon: couponAllowed ? (data.discountCoupon || '') : '',
+      packActive: !!data.packActive,
+    })
+  }, [data, allowedInstallments, couponAllowed])
+
+  const billingMutation = useMutation({
+    mutationFn: () => api.patch(`/workflow/case/${id}/billing`, billingForm),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['case', id] }); toast({ title: 'Faturamento salvo!' }) },
+    onError: (err: any) => toast({ variant: 'destructive', title: 'Erro', description: err?.response?.data?.error || 'Falha ao salvar faturamento' }),
   })
 
   const submitMutation = useMutation({
@@ -203,6 +243,59 @@ export default function CaseDetailPage() {
         </div>
 
         <div className="space-y-5">
+          {c.status === 'APPROVED' && (
+            <Card className="border-blue-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-blue-700">Faturamento</CardTitle>
+                <p className="text-xs text-blue-500">Opcional — pode ser preenchido pelo dentista ou pelo nosso time</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Tipo</label>
+                  <div className="flex gap-3">
+                    {['Unidade', 'MID', 'FULL'].map(t => (
+                      <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                        <input type="radio" checked={billingForm.billingType === t} onChange={() => setBillingForm((f: any) => ({ ...f, billingType: t }))} className="accent-primary" />
+                        {t}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Parcelas</label>
+                  <select className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.installmentOption || ''} onChange={e => setBillingForm((f: any) => ({ ...f, installmentOption: e.target.value }))}>
+                    {allowedInstallments.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input type="checkbox" checked={!!billingForm.dropoutInsurance} onChange={e => setBillingForm((f: any) => ({ ...f, dropoutInsurance: e.target.checked }))} className="accent-primary" />
+                    Seguro de Abandono
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input type="checkbox" checked={!!billingForm.packActive} onChange={e => setBillingForm((f: any) => ({ ...f, packActive: e.target.checked }))} className="accent-primary" />
+                    Pack Ativo
+                  </label>
+                </div>
+                {couponAllowed && (
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Cupom de Desconto</label>
+                    <input
+                      className="w-full border rounded px-2 py-1.5 text-sm"
+                      value={billingForm.discountCoupon || ''}
+                      onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value.toUpperCase() }))}
+                      placeholder="CUPOM"
+                    />
+                  </div>
+                )}
+                <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()} disabled={billingMutation.isPending}>
+                  {billingMutation.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                  Salvar Faturamento
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader><CardTitle className="text-base">Timeline</CardTitle></CardHeader>
             <CardContent>
