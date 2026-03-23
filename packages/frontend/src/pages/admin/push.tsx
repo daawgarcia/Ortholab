@@ -12,9 +12,9 @@ import { Plus, Bell, Loader2, X, Upload, CheckCircle, AlertCircle } from 'lucide
 export default function AdminPushPage() {
   const { user } = useAuthStore()
   const qc = useQueryClient()
-  const [show, setShow] = useState(false)
+  const [showPushModal, setShowPushModal] = useState(false)
   const [form, setForm] = useState({ title: '', body: '', link: '', level: 'INFO', targetType: 'ALL', targetId: '' })
-  const [showCsv, setShowCsv] = useState(false)
+  const [showCsvModal, setShowCsvModal] = useState(false)
   const [csvForm, setCsvForm] = useState({ title: '', body: '', link: '', level: 'INFO' })
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvResult, setCsvResult] = useState<{ matched: any[]; notFound: string[] } | null>(null)
