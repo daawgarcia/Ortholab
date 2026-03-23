@@ -1,8 +1,54 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
+import { Role } from '@prisma/client'
 
 export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Map<string, any> }) {
   const wsClients = opts.wsClients
+
+  // Returns contact list based on role, with online status
+  fastify.get('/contacts', { preHandler: authenticate }, async (request) => {
+    const user = request.user as JwtPayload
+
+    let contacts: any[] = []
+
+    if (user.role === Role.SELLER) {
+      // Seller sees their dentist clients
+      const sellerClients = await fastify.prisma.sellerClient.findMany({
+        where: { sellerId: user.id },
+        include: { client: { select: { id: true, name: true, email: true, role: true, clinic: true } } },
+      })
+      contacts = sellerClients.map(sc => sc.client)
+    } else if (user.role === Role.DENTIST) {
+      // Dentist sees their seller(s) + all financial users
+      const [sellerLinks, financials] = await Promise.all([
+        fastify.prisma.sellerClient.findMany({
+          where: { clientId: user.id },
+          include: { seller: { select: { id: true, name: true, email: true, role: true } } },
+        }),
+        fastify.prisma.user.findMany({
+          where: { role: Role.FINANCIAL },
+          select: { id: true, name: true, email: true, role: true },
+        }),
+      ])
+      contacts = [...sellerLinks.map(sl => sl.seller), ...financials]
+    } else {
+      // Admin/Financial/others see all active users except themselves
+      contacts = await fastify.prisma.user.findMany({
+        where: { id: { not: user.id } },
+        select: { id: true, name: true, email: true, role: true },
+        orderBy: { name: 'asc' },
+        take: 100,
+      })
+    }
+
+    // Attach online status
+    return {
+      contacts: contacts.map(c => ({
+        ...c,
+        online: wsClients.has(c.id),
+      })),
+    }
+  })
 
   fastify.get('/conversations', { preHandler: authenticate }, async (request) => {
     const user = request.user as JwtPayload
