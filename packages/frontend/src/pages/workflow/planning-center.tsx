@@ -62,7 +62,7 @@ export default function PlanningCenterPage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Planning Center</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Centro de Planejamento</h1>
         <Button variant="outline" size="sm" onClick={exportExcel} className="gap-2">
           <FileDown className="w-4 h-4" />
           Exportar Excel
@@ -91,7 +91,7 @@ export default function PlanningCenterPage() {
                         <span className="text-sm text-primary font-medium">{new Date(c.createdAt).toLocaleDateString('pt-BR')} | {c.patientName} : {String(c.caseNumber).padStart(6, '0')}</span>
                         <span className="text-xs text-gray-500 ml-auto">{c.dentist?.name} {c.dentist?.clinic ? `• ${c.dentist?.clinic}` : ''}</span>
                       </div>
-                      <p className="text-xs text-gray-400">Status: {c.status}</p>
+
                     </button>
                     {user && user.role !== 'DENTIST' && (
                       <div className="flex gap-2">
