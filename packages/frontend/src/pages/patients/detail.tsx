@@ -230,8 +230,8 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         <div className="p-4 space-y-3">
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Tipo *</label>
-                            <div className="flex gap-3">
-                              {['Unidade', 'MID', 'FULL'].map(t => (
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                              {['Unidade', 'MID', 'FULL', 'EA AIR²', 'Finalização (Contenção)', 'Placa Miorrelaxante'].map(t => (
                                 <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm">
                                   <input type="radio" checked={billingForm.billingType === t} onChange={() => setBillingForm((f: any) => ({ ...f, billingType: t }))} className="accent-primary" />
                                   {t}
