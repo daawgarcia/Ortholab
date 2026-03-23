@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
@@ -7,6 +7,25 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { StatusBadge } from '@/components/status-badge'
+
+function isAlignerType(serviceType?: string) {
+  return ['FULL', 'MID', 'AIR', 'EXPRESS', 'REFINEMENT'].includes(serviceType || '')
+}
+
+function getAllowedInstallments(service?: any) {
+  if (!service) return ['1x']
+  const available = new Set<string>(['1x'])
+  for (const price of service.prices || []) {
+    if (!price.groupId || price.groupId === 'CASH') available.add('1x')
+    if (price.groupId === 'INSTALLMENT_2') available.add('2x')
+    if (price.groupId === 'INSTALLMENT_6') available.add('6x')
+    if (price.groupId === 'INSTALLMENT_12') available.add('12x')
+    if (price.groupId === 'INSTALLMENT_21') available.add('21x')
+  }
+  if (service.type === 'AIR') return ['1x', '2x'].filter((item) => available.has(item))
+  if (service.type === 'FULL') return ['1x', '6x', '12x', '21x'].filter((item) => available.has(item))
+  return ['1x', '6x', '12x'].filter((item) => available.has(item))
+}
 
 const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica']
 
@@ -71,12 +90,28 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const billingMutation = useMutation({
     mutationFn: () => api.patch(`/workflow/case/${selectedCase}/billing`, billingForm),
     onSuccess: () => toast({ title: 'Faturamento atualizado' }),
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro', description: error?.response?.data?.error || 'Falha ao atualizar faturamento' })
+    },
   })
 
   const caseData = workflowData?.case
   const events = caseData?.workflowEvents || []
   const currentStage = events[events.length - 1]?.stage || 0
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL'
+  const allowedInstallments = useMemo(() => getAllowedInstallments(caseData?.service), [caseData?.service])
+  const couponAllowed = isAlignerType(caseData?.service?.type)
+
+  useEffect(() => {
+    if (!caseData) return
+    setBillingForm({
+      billingType: caseData.billingType || '',
+      installmentOption: allowedInstallments.includes(caseData.installmentOption || '') ? caseData.installmentOption : (allowedInstallments[0] || '1x'),
+      dropoutInsurance: !!caseData.dropoutInsurance,
+      discountCoupon: couponAllowed ? (caseData.discountCoupon || '') : '',
+      packActive: !!caseData.packActive,
+    })
+  }, [caseData, allowedInstallments, couponAllowed])
 
   return (
     <div className="space-y-4">
@@ -206,9 +241,8 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Parcelas</label>
                             <select className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.installmentOption || ''} onChange={e => setBillingForm((f: any) => ({ ...f, installmentOption: e.target.value }))}>
-                              <option value="">Selecione</option>
-                              {['1x', '2x', '3x', '4x', '5x', '6x', '10x', '12x', '18x', '24x'].map(p => (
-                                <option key={p} value={p}>{p}</option>
+                              {allowedInstallments.map(option => (
+                                <option key={option} value={option}>{option}</option>
                               ))}
                             </select>
                           </div>
@@ -224,7 +258,14 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                           </div>
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Cupom de Desconto</label>
-                            <input className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.discountCoupon || ''} onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value }))} placeholder="CUPOM" />
+                            <input
+                              className="w-full border rounded px-2 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                              value={billingForm.discountCoupon || ''}
+                              onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value.toUpperCase() }))}
+                              placeholder={couponAllowed ? 'CUPOM' : 'Disponível apenas para alinhadores'}
+                              disabled={!couponAllowed}
+                            />
+                            {!couponAllowed && <p className="text-xs text-gray-400 mt-1">Cupons não podem ser aplicados em placas e outros serviços não alinhadores.</p>}
                           </div>
                           <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()}>Salvar Faturamento</Button>
                         </div>

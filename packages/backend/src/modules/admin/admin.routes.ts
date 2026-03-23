@@ -136,21 +136,23 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
   fastify.post('/coupons', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
     const { code, description, type, value, active } = request.body as any
-    if (!code || !type || value === undefined) return reply.status(400).send({ error: 'code, type e value são obrigatórios' })
+    const normalizedCode = String(code || '').trim().toUpperCase()
+    if (!normalizedCode || !type || value === undefined) return reply.status(400).send({ error: 'code, type e value são obrigatórios' })
 
-    const existing = await fastify.prisma.coupon.findUnique({ where: { code } })
+    const existing = await fastify.prisma.coupon.findUnique({ where: { code: normalizedCode } })
     if (existing) return reply.status(400).send({ error: 'Cupom já existe' })
 
-    const coupon = await fastify.prisma.coupon.create({ data: { code, description, type, value: Number(value), active: active ?? true } })
+    const coupon = await fastify.prisma.coupon.create({ data: { code: normalizedCode, description, type, value: Number(value), active: active ?? true } })
     return reply.status(201).send({ coupon })
   })
 
   fastify.patch('/coupons/:id', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
     const { id } = request.params as { id: string }
     const { code, description, type, value, active } = request.body as any
+    const normalizedCode = code !== undefined ? String(code).trim().toUpperCase() : undefined
     const coupon = await fastify.prisma.coupon.update({
       where: { id },
-      data: { code, description, type, value: value !== undefined ? Number(value) : undefined, active },
+      data: { code: normalizedCode, description, type, value: value !== undefined ? Number(value) : undefined, active },
     })
     return { coupon }
   })

@@ -2,14 +2,10 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
+import { applyCouponDiscount, getChargeAmountForCase, normalizeInstallmentOption } from '../services/pricing.utils'
 
 export async function paymentRoutes(fastify: FastifyInstance) {
   const mailer = new EventMailer(fastify)
-
-  const getCashPrice = (prices: Array<{ price: any; groupId: string | null }> = []) => {
-    const cash = prices.find((entry) => !entry.groupId || entry.groupId === 'CASH')
-    return Number(cash?.price || 0)
-  }
 
   fastify.post('/create', { preHandler: authenticate }, async (request, reply) => {
     const { caseId, provider } = request.body as { caseId: string; provider: 'REDE' | 'SAUDE_SERVICE' }
@@ -19,12 +15,39 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       include: { dentist: true, service: { include: { prices: { orderBy: { validFrom: 'desc' } } } } },
     })
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
+    if (!caseData.service) return reply.status(400).send({ error: 'Caso sem serviço vinculado' })
 
-    const price = getCashPrice(caseData.service?.prices)
+    const installmentOption = normalizeInstallmentOption(caseData.installmentOption)
+    const baseAmount = getChargeAmountForCase(caseData.service, installmentOption)
+
+    let finalAmount = baseAmount
+    let couponMeta: { code: string; discount: number } | undefined
+
+    if (caseData.discountCoupon) {
+      const coupon = await fastify.prisma.coupon.findUnique({ where: { code: caseData.discountCoupon.toUpperCase() } })
+      if (!coupon || !coupon.active) {
+        return reply.status(400).send({ error: 'Cupom de desconto inválido ou inativo' })
+      }
+      finalAmount = applyCouponDiscount(baseAmount, coupon)
+      couponMeta = { code: coupon.code, discount: Number((baseAmount - finalAmount).toFixed(2)) }
+    }
+
     const payment = await fastify.prisma.payment.upsert({
       where: { caseId },
-      update: { provider, amount: price, status: 'PENDING' },
-      create: { caseId, dentistId: (request.user as JwtPayload).id, provider, amount: price, status: 'PENDING' },
+      update: {
+        provider,
+        amount: finalAmount,
+        status: 'PENDING',
+        metadata: { installmentOption, baseAmount, finalAmount, coupon: couponMeta },
+      },
+      create: {
+        caseId,
+        dentistId: (request.user as JwtPayload).id,
+        provider,
+        amount: finalAmount,
+        status: 'PENDING',
+        metadata: { installmentOption, baseAmount, finalAmount, coupon: couponMeta },
+      },
     })
 
     return { payment, message: 'Pagamento iniciado. Integração com gateway em configuração.' }
