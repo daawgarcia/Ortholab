@@ -146,24 +146,39 @@ export async function caseRoutes(fastify: FastifyInstance) {
     
     const caseData = await fastify.prisma.case.findUnique({
       where: { id },
-      include: { dentist: true, service: true, plannings: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      include: {
+        dentist: true,
+        service: true,
+        plannings: { orderBy: { createdAt: 'desc' }, take: 1 },
+        workflowEvents: { orderBy: { stage: 'desc' }, take: 1 },
+      },
     })
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
     if (caseData.dentistId !== (request.user as JwtPayload).id) return reply.status(403).send({ error: 'Acesso negado' })
     if (caseData.status !== CaseStatus.WAITING_APPROVAL) return reply.status(400).send({ error: 'Caso não está aguardando aprovação' })
 
-    const updated = await fastify.prisma.case.update({
-      where: { id },
-      data: { status: CaseStatus.APPROVED },
-    })
+    const lastStage = (caseData as any).workflowEvents[0]?.stage || 5
 
-    await fastify.prisma.caseActivity.create({
-      data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'APPROVED', description: 'Planejamento aprovado pelo dentista' },
-    })
+    // Auto-advance past billing stage (6) directly into PRINTING_3D (7)
+    await fastify.prisma.$transaction([
+      fastify.prisma.workflowEvent.create({
+        data: { caseId: id, stage: lastStage + 1, stageName: 'Tipo de faturamento', performedBy: (request.user as JwtPayload).id },
+      }),
+      fastify.prisma.workflowEvent.create({
+        data: { caseId: id, stage: lastStage + 2, stageName: 'Impressão 3D', performedBy: (request.user as JwtPayload).id },
+      }),
+      fastify.prisma.case.update({
+        where: { id },
+        data: { status: CaseStatus.PRINTING_3D },
+      }),
+      fastify.prisma.caseActivity.create({
+        data: { caseId: id, userId: (request.user as JwtPayload).id, action: 'APPROVED', description: 'Planejamento aprovado pelo dentista — enviado para Impressão 3D' },
+      }),
+    ])
 
     await mailer.onCaseApproved(caseData)
 
-    return { case: updated }
+    return { ok: true }
   })
 
   fastify.post('/:id/request-revision', { preHandler: requireRole(Role.DENTIST) }, async (request, reply) => {
