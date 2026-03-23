@@ -50,11 +50,11 @@ export default function PlanningCenterPage() {
   });
 
   const exportExcel = async () => {
-    const res = await api.get(`/export/cases?status=ALL`, { responseType: 'blob' });
+    const res = await api.get(`/export/cases`, { responseType: 'blob' });
     const url = URL.createObjectURL(res.data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `planning-center-TODOS.xlsx`;
+    a.download = `planning-center-todos.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -62,7 +62,7 @@ export default function PlanningCenterPage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Centro de Planejamento</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Planning Center</h1>
         <Button variant="outline" size="sm" onClick={exportExcel} className="gap-2">
           <FileDown className="w-4 h-4" />
           Exportar Excel
