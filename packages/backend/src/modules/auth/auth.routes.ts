@@ -73,6 +73,7 @@ export async function authRoutes(fastify: FastifyInstance) {
             { targetType: 'ALL' },
             { targetType: 'ROLE', targetId: user.role },
             { targetType: 'USER', targetId: user.id },
+            { targetType: 'SELLER_PORTFOLIO', createdBy: { sellerClients: { some: { clientId: user.id } } } },
           ]},
           { reads: { none: { userId: user.id } } },
           { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },

@@ -2,7 +2,31 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 
+async function getPendingPushes(fastify: FastifyInstance, user: JwtPayload) {
+  return fastify.prisma.pushNotification.findMany({
+    where: {
+      AND: [
+        { OR: [
+          { targetType: 'ALL' },
+          { targetType: 'ROLE', targetId: user.role },
+          { targetType: 'USER', targetId: user.id },
+          { targetType: 'SELLER_PORTFOLIO', createdBy: { sellerClients: { some: { clientId: user.id } } } },
+        ]},
+        { reads: { none: { userId: user.id } } },
+        { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+      ]
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
 export async function pushRoutes(fastify: FastifyInstance) {
+  fastify.get('/pending', { preHandler: authenticate }, async (request) => {
+    const user = request.user as JwtPayload
+    const pushes = await getPendingPushes(fastify, user)
+    return { pendingPushes: pushes }
+  })
+
   fastify.post('/', { preHandler: requireRole(Role.ADMIN, Role.SELLER) }, async (request, reply) => {
     const { title, body, link, level, targetType, targetId, expiresAt } = request.body as any
 
