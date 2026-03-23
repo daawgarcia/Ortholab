@@ -3,6 +3,8 @@ import { useAuthStore } from '@/store/auth'
 import { useTokenRefresh } from '@/hooks/use-token-refresh'
 import { Toaster } from '@/components/ui/toaster'
 import { PushModal } from '@/components/push-modal'
+import { useEffect } from 'react'
+import api from '@/lib/api'
 
 import LoginPage from '@/pages/auth/login'
 import RegisterPage from '@/pages/auth/register'
@@ -52,8 +54,24 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
 }
 
 export default function App() {
-  const { user, pendingPushes, clearPushes } = useAuthStore()
-  useTokenRefresh() // Auto-refresh token a cada 14 min
+  const { user, pendingPushes, clearPushes, setAuth, accessToken, refreshToken } = useAuthStore()
+  useTokenRefresh()
+
+  // Poll for new pushes every 60s while logged in
+  useEffect(() => {
+    if (!user) return
+    const poll = async () => {
+      try {
+        const res = await api.get('/push/pending')
+        if (res.data.pendingPushes?.length > 0) {
+          setAuth(user, accessToken!, refreshToken!, res.data.pendingPushes)
+        }
+      } catch { /* silent */ }
+    }
+    poll()
+    const interval = setInterval(poll, 60000)
+    return () => clearInterval(interval)
+  }, [user?.id])
 
   return (
     <BrowserRouter>
