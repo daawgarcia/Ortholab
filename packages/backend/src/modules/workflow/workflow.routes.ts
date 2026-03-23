@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
+import { getAllowedInstallmentOptions, isAlignerService, normalizeInstallmentOption } from '../services/pricing.utils'
 
 const WORKFLOW_STAGES = [
   { stage: 1, name: 'Recebimento dos modelos' },
@@ -28,6 +29,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
         },
         dentist: { select: { name: true, clinic: true } },
         patient: { select: { name: true } },
+        service: { include: { prices: { orderBy: { validFrom: 'desc' } } } },
       },
     })
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
@@ -106,9 +108,41 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     const { caseId } = request.params as { caseId: string }
     const { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive } = request.body as any
 
+    const caseData = await fastify.prisma.case.findUnique({
+      where: { id: caseId },
+      include: { service: { include: { prices: { orderBy: { validFrom: 'desc' } } } } },
+    })
+
+    if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
+    if (!caseData.service) return reply.status(400).send({ error: 'Caso sem serviço vinculado' })
+
+    const normalizedInstallment = normalizeInstallmentOption(installmentOption)
+    const allowedInstallments = getAllowedInstallmentOptions(caseData.service)
+    if (normalizedInstallment && !allowedInstallments.includes(normalizedInstallment)) {
+      return reply.status(400).send({ error: 'Parcelamento não permitido para este serviço' })
+    }
+
+    const normalizedCoupon = String(discountCoupon || '').trim().toUpperCase()
+    if (normalizedCoupon) {
+      if (!isAlignerService(caseData.service.type)) {
+        return reply.status(400).send({ error: 'Cupom só pode ser aplicado em casos de alinhadores' })
+      }
+
+      const coupon = await fastify.prisma.coupon.findUnique({ where: { code: normalizedCoupon } })
+      if (!coupon || !coupon.active) {
+        return reply.status(400).send({ error: 'Cupom inválido ou inativo' })
+      }
+    }
+
     const updated = await fastify.prisma.case.update({
       where: { id: caseId },
-      data: { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive },
+      data: {
+        billingType,
+        installmentOption: normalizedInstallment || null,
+        dropoutInsurance,
+        discountCoupon: normalizedCoupon || null,
+        packActive,
+      },
     })
     return updated
   })

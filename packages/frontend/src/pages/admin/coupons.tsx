@@ -17,7 +17,7 @@ export default function AdminCouponsPage() {
   const createCoupon = useMutation({
     mutationFn: () => api.post('/admin/coupons', form),
     onSuccess: () => {
-      qc.invalidateQueries(['admin-coupons'])
+      qc.invalidateQueries({ queryKey: ['admin-coupons'] })
       setForm({ code: '', description: '', type: 'PERCENT', value: 0, active: true })
       toast({ title: 'Cupom criado', description: 'Cupom cadastrado com sucesso.' })
     },
@@ -29,7 +29,7 @@ export default function AdminCouponsPage() {
   const updateCoupon = useMutation({
     mutationFn: (payload: any) => api.patch(`/admin/coupons/${payload.id}`, payload),
     onSuccess: () => {
-      qc.invalidateQueries(['admin-coupons'])
+      qc.invalidateQueries({ queryKey: ['admin-coupons'] })
       toast({ title: 'Cupom atualizado', description: 'Dados do cupom atualizados.' })
     },
     onError: (error: any) => {
@@ -40,7 +40,7 @@ export default function AdminCouponsPage() {
   const deleteCoupon = useMutation({
     mutationFn: (id: string) => api.delete(`/admin/coupons/${id}`),
     onSuccess: () => {
-      qc.invalidateQueries(['admin-coupons'])
+      qc.invalidateQueries({ queryKey: ['admin-coupons'] })
       toast({ title: 'Cupom removido', description: 'Cupom apagado com sucesso.' })
     },
     onError: (error: any) => {
@@ -51,6 +51,10 @@ export default function AdminCouponsPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">Admin - Cupons</h1>
+
+      <div className="rounded-lg border bg-blue-50 p-4 text-sm text-blue-900">
+        O cupom é aplicado sobre o valor final da condição de pagamento escolhida e só pode ser usado em casos de alinhadores.
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="border rounded-lg bg-white p-4 space-y-3">
@@ -68,7 +72,7 @@ export default function AdminCouponsPage() {
             <input type="checkbox" checked={form.active} onChange={e => setForm(s => ({ ...s, active: e.target.checked }))} className="accent-primary" />
             Ativo
           </label>
-          <Button onClick={() => createCoupon.mutate()} disabled={createCoupon.isLoading}>Criar cupom</Button>
+          <Button onClick={() => createCoupon.mutate()} disabled={createCoupon.isPending}>Criar cupom</Button>
         </div>
 
         <div className="border rounded-lg bg-white p-4">
