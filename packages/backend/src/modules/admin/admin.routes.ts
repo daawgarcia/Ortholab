@@ -85,12 +85,29 @@ export async function adminRoutes(fastify: FastifyInstance) {
     return { accessToken, user: payload, impersonated: true }
   })
 
-  fastify.get('/stats', { preHandler: requireRole(Role.ADMIN) }, async () => {
+  fastify.get('/stats', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
+    const { period } = request.query as { period?: string }
+
+    let dateFilter: any = undefined
+    const now = new Date()
+    if (period === 'day') {
+      const start = new Date(now); start.setHours(0, 0, 0, 0)
+      dateFilter = { gte: start }
+    } else if (period === 'week') {
+      const start = new Date(now); start.setDate(now.getDate() - 7); start.setHours(0, 0, 0, 0)
+      dateFilter = { gte: start }
+    } else if (period === 'month') {
+      const start = new Date(now); start.setDate(1); start.setHours(0, 0, 0, 0)
+      dateFilter = { gte: start }
+    }
+
+    const caseWhere: any = dateFilter ? { createdAt: dateFilter } : {}
+
     const [totalCases, totalUsers, pendingUsers, casesByStatus] = await Promise.all([
-      fastify.prisma.case.count(),
+      fastify.prisma.case.count({ where: caseWhere }),
       fastify.prisma.user.count({ where: { status: UserStatus.ACTIVE } }),
       fastify.prisma.user.count({ where: { status: UserStatus.PENDING } }),
-      fastify.prisma.case.groupBy({ by: ['status'], _count: { _all: true } }),
+      fastify.prisma.case.groupBy({ by: ['status'], where: caseWhere, _count: { _all: true } }),
     ])
     return { totalCases, totalUsers, pendingUsers, casesByStatus }
   })

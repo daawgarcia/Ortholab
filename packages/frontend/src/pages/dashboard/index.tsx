@@ -8,8 +8,15 @@ import { Input } from '@/components/ui/input'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '@/lib/api'
 import { formatDate } from '@/lib/utils'
-import { Plus, FolderOpen, Clock, CheckCircle, TrendingUp, AlertCircle, Search, UserCog } from 'lucide-react'
+import { Plus, FolderOpen, Clock, CheckCircle, TrendingUp, AlertCircle, Search, UserCog, Package, Printer, Scissors, Send } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
+
+const PERIOD_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'day', label: 'Hoje' },
+  { value: 'week', label: 'Esta semana' },
+  { value: 'month', label: 'Este mês' },
+]
 
 export default function DashboardPage() {
   const { user, setAuth } = useAuthStore()
@@ -17,6 +24,7 @@ export default function DashboardPage() {
   const [dentistSearch, setDentistSearch] = useState('')
   const [caseSearch, setCaseSearch] = useState('')
   const [showImpersonate, setShowImpersonate] = useState(false)
+  const [period, setPeriod] = useState('all')
 
   const { data: casesData } = useQuery({
     queryKey: ['cases-summary'],
@@ -24,8 +32,8 @@ export default function DashboardPage() {
   })
 
   const { data: adminStats } = useQuery({
-    queryKey: ['admin-stats'],
-    queryFn: () => api.get('/admin/stats').then(r => r.data),
+    queryKey: ['admin-stats', period],
+    queryFn: () => api.get(`/admin/stats${period !== 'all' ? `?period=${period}` : ''}`).then(r => r.data),
     enabled: user?.role === 'ADMIN',
   })
 
@@ -56,11 +64,17 @@ export default function DashboardPage() {
   const cases = casesData?.cases || []
   const total = casesData?.total || 0
 
+  const statusCount = (key: string) =>
+    adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0
+
   const stats = [
-    { label: 'Total de Casos', value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Em Planejamento', value: adminStats?.casesByStatus?.find((s: any) => s.status === 'IN_PLANNING')?._count?._all || 0, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { label: 'Aguard. Aprovação', value: adminStats?.casesByStatus?.find((s: any) => s.status === 'WAITING_APPROVAL')?._count?._all || 0, icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: user?.role === 'ADMIN' ? 'Cadastros Pendentes' : 'Concluídos', value: user?.role === 'ADMIN' ? (adminStats?.pendingUsers || 0) : 0, icon: user?.role === 'ADMIN' ? AlertCircle : CheckCircle, color: user?.role === 'ADMIN' ? 'text-red-600' : 'text-green-600', bg: user?.role === 'ADMIN' ? 'bg-red-50' : 'bg-green-50' },
+    { label: 'Total de Casos',           value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
+    { label: 'A Preparar',               value: statusCount('IN_PLANNING'),       icon: Clock,       color: 'text-yellow-600', bg: 'bg-yellow-50' },
+    { label: 'A Movimentar',             value: statusCount('IN_MOVEMENT'),        icon: Package,     color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Aguardando Aprovação',     value: statusCount('WAITING_APPROVAL'),   icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Em Impressão',             value: statusCount('PRINTING_3D'),        icon: Printer,     color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Em Recorte',               value: statusCount('LABORATORY'),         icon: Scissors,    color: 'text-pink-600',   bg: 'bg-pink-50' },
+    { label: 'Em Postagem',              value: statusCount('EXPEDITION'),         icon: Send,        color: 'text-green-600',  bg: 'bg-green-50' },
   ]
 
   return (
@@ -118,18 +132,32 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        {PERIOD_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setPeriod(opt.value)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              period === opt.value
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
         {stats.map(s => (
           <Card key={s.label}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-bold mt-1">{s.value}</p>
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-2">
+                <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center`}>
+                  <s.icon className={`w-5 h-5 ${s.color}`} />
                 </div>
-                <div className={`w-12 h-12 ${s.bg} rounded-xl flex items-center justify-center`}>
-                  <s.icon className={`w-6 h-6 ${s.color}`} />
-                </div>
+                <p className="text-2xl font-bold">{s.value}</p>
+                <p className="text-xs text-muted-foreground leading-tight">{s.label}</p>
               </div>
             </CardContent>
           </Card>
