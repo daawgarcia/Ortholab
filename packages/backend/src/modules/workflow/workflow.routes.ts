@@ -71,11 +71,12 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     const updateData: any = { status: newStatus as any }
     if (nextStage === 1 && !caseData.totvsOrderId) {
-      // Generate TOTVS order ID when workflow starts
       updateData.totvsOrderId = `CAIXA-${caseData.caseNumber}`
     }
 
-    await fastify.prisma.$transaction([
+    const caseLabel = `Caso #${String(caseData.caseNumber).padStart(6, '0')} — ${caseData.patientName}`
+
+    const ops: any[] = [
       fastify.prisma.workflowEvent.create({
         data: { caseId, stage: nextStage, stageName, performedBy: user.id, notes },
       }),
@@ -83,7 +84,17 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
         where: { id: caseId },
         data: updateData,
       }),
-    ])
+      fastify.prisma.notification.create({
+        data: {
+          userId: caseData.dentistId,
+          title: `${caseLabel}`,
+          message: `Etapa avançada: ${stageName}`,
+          link: `/cases/${caseId}`,
+        },
+      }),
+    ]
+
+    await fastify.prisma.$transaction(ops)
 
     return { ok: true, stage: nextStage, stageName, newStatus }
   })
@@ -119,10 +130,23 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     if (user.role !== Role.DENTIST) return reply.status(403).send({ error: 'Apenas dentistas podem solicitar alteração' })
 
-    await fastify.prisma.case.update({ where: { id: caseId }, data: { status: 'REVISION_REQUESTED' as any } })
-    await fastify.prisma.workflowEvent.create({
-      data: { caseId, stage: 0, stageName: 'Solicitação de alteração pelo dentista', performedBy: user.id, notes },
-    })
+    const revCase = await fastify.prisma.case.findUnique({ where: { id: caseId } })
+    if (!revCase) return reply.status(404).send({ error: 'Caso não encontrado' })
+
+    await fastify.prisma.$transaction([
+      fastify.prisma.case.update({ where: { id: caseId }, data: { status: 'REVISION_REQUESTED' as any } }),
+      fastify.prisma.workflowEvent.create({
+        data: { caseId, stage: 0, stageName: 'Solicitação de alteração pelo dentista', performedBy: user.id, notes },
+      }),
+      fastify.prisma.notification.create({
+        data: {
+          userId: revCase.dentistId,
+          title: `Alteração solicitada — Caso #${String(revCase.caseNumber).padStart(6, '0')}`,
+          message: notes || 'O dentista solicitou alteração neste caso.',
+          link: `/cases/${caseId}`,
+        },
+      }),
+    ])
     return { ok: true }
   })
 }
