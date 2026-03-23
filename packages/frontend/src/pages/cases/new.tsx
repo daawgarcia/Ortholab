@@ -10,6 +10,16 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 
+function getServiceCashPrice(service: any) {
+  if (service?.latestPrices?.cash !== undefined && service?.latestPrices?.cash !== null) {
+    return Number(service.latestPrices.cash)
+  }
+  if (service?.prices?.[0]?.price !== undefined && service?.prices?.[0]?.price !== null) {
+    return Number(service.prices[0].price)
+  }
+  return undefined
+}
+
 export default function NewCasePage() {
   const navigate = useNavigate()
   const { register, handleSubmit, formState: { errors } } = useForm()
@@ -64,7 +74,7 @@ export default function NewCasePage() {
               <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...register('serviceId')}>
                 <option value="">Selecione um serviço</option>
                 {servicesData?.map((s: any) => (
-                  <option key={s.id} value={s.id}>{s.name} {s.prices?.[0] ? `— R$ ${s.prices[0].price}` : ''}</option>
+                  <option key={s.id} value={s.id}>{s.name} {getServiceCashPrice(s) !== undefined ? `— R$ ${getServiceCashPrice(s)}` : ''}</option>
                 ))}
               </select>
             </div>
