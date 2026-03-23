@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import api from '@/lib/api'
@@ -7,13 +7,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { Plus, Bell, Loader2, X } from 'lucide-react'
+import { Plus, Bell, Loader2, X, Upload, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function AdminPushPage() {
   const { user } = useAuthStore()
   const qc = useQueryClient()
   const [show, setShow] = useState(false)
   const [form, setForm] = useState({ title: '', body: '', link: '', level: 'INFO', targetType: 'ALL', targetId: '' })
+  const [showCsv, setShowCsv] = useState(false)
+  const [csvForm, setCsvForm] = useState({ title: '', body: '', link: '', level: 'INFO' })
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [csvResult, setCsvResult] = useState<{ matched: any[]; notFound: string[] } | null>(null)
+  const [csvLoading, setCsvLoading] = useState(false)
+  const csvFileRef = useRef<HTMLInputElement | null>(null)
 
   const { data } = useQuery({ queryKey: ['pushes'], queryFn: () => api.get('/push').then(r => r.data) })
   const [userSearch, setUserSearch] = useState('')
@@ -35,12 +41,36 @@ export default function AdminPushPage() {
   })
 
   const pushes = data?.pushes || []
+  const sendCsvPush = async () => {
+    if (!csvFile || !csvForm.title || !csvForm.body) return
+    setCsvLoading(true)
+    setCsvResult(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', csvFile)
+      const params = new URLSearchParams({ title: csvForm.title, body: csvForm.body, level: csvForm.level })
+      if (csvForm.link) params.set('link', csvForm.link)
+      const res = await api.post(`/push/send-csv?${params.toString()}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setCsvResult(res.data)
+      qc.invalidateQueries({ queryKey: ['pushes'] })
+      toast({ title: `Push enviado para ${res.data.matched.length} usuário(s)` })
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err?.response?.data?.error || 'Falha ao processar planilha', variant: 'destructive' })
+    } finally {
+      setCsvLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Push Notifications</h1>
-        <Button onClick={() => setShow(true)} className="gap-2"><Plus className="w-4 h-4" /> Criar Push</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setShowCsv(true); setCsvResult(null) }} className="gap-2"><Upload className="w-4 h-4" /> Enviar por Planilha</Button>
+          <Button onClick={() => setShow(true)} className="gap-2"><Plus className="w-4 h-4" /> Criar Push</Button>
+        </div>
       </div>
       <div className="space-y-3">
         {pushes.length === 0 && <Card><CardContent className="py-10 text-center text-muted-foreground text-sm">Nenhum push criado</CardContent></Card>}
@@ -69,7 +99,7 @@ export default function AdminPushPage() {
 
       {show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-lg mx-4">
+          <Card className="w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <CardHeader><CardTitle>Criar Push Notification</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1"><label className="text-xs font-medium">Título *</label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
@@ -154,6 +184,58 @@ export default function AdminPushPage() {
                 <Button variant="outline" onClick={() => setShow(false)}>Cancelar</Button>
                 <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !form.title || !form.body}>
                   {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Enviar Push
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+      {showCsv && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>Enviar Push por Planilha (CSV)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">Faça upload de um arquivo CSV com coluna <strong>email</strong>. Os usuários encontrados receberão a notificação.</p>
+              <div className="space-y-1"><label className="text-xs font-medium">Título *</label><Input value={csvForm.title} onChange={e => setCsvForm(f => ({ ...f, title: e.target.value }))} /></div>
+              <div className="space-y-1"><label className="text-xs font-medium">Mensagem *</label><textarea className="w-full min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" value={csvForm.body} onChange={e => setCsvForm(f => ({ ...f, body: e.target.value }))} /></div>
+              <div className="space-y-1"><label className="text-xs font-medium">Link (opcional)</label><Input placeholder="https://..." value={csvForm.link} onChange={e => setCsvForm(f => ({ ...f, link: e.target.value }))} /></div>
+              <div className="space-y-1"><label className="text-xs font-medium">Nível</label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={csvForm.level} onChange={e => setCsvForm(f => ({ ...f, level: e.target.value }))}>
+                  <option value="INFO">Informação</option><option value="WARNING">Aviso</option><option value="URGENT">Urgente</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Arquivo CSV *</label>
+                <input ref={csvFileRef} type="file" accept=".csv,.txt" className="hidden" onChange={e => setCsvFile(e.target.files?.[0] || null)} />
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" onClick={() => csvFileRef.current?.click()} className="gap-2">
+                    <Upload className="w-4 h-4" /> {csvFile ? csvFile.name : 'Selecionar arquivo'}
+                  </Button>
+                  {csvFile && <button type="button" onClick={() => setCsvFile(null)}><X className="w-4 h-4 text-muted-foreground" /></button>}
+                </div>
+              </div>
+
+              {csvResult && (
+                <div className="space-y-2 rounded-md border p-3 bg-gray-50 text-sm">
+                  <div className="flex items-center gap-2 text-green-700"><CheckCircle className="w-4 h-4" /><span><strong>{csvResult.matched.length}</strong> usuário(s) encontrado(s) e notificado(s)</span></div>
+                  {csvResult.matched.length > 0 && (
+                    <div className="text-xs text-muted-foreground pl-6">{csvResult.matched.map((u: any) => u.name || u.email).join(', ')}</div>
+                  )}
+                  {csvResult.notFound.length > 0 && (
+                    <div className="flex items-start gap-2 text-yellow-700"><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span><strong>{csvResult.notFound.length}</strong> email(s) não encontrado(s): {csvResult.notFound.join(', ')}</span></div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => { setShowCsv(false); setCsvFile(null); setCsvResult(null) }}>Fechar</Button>
+                <Button onClick={sendCsvPush} disabled={csvLoading || !csvFile || !csvForm.title || !csvForm.body} className="gap-2">
+                  {csvLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Enviar
                 </Button>
               </div>
             </CardContent>
