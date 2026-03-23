@@ -147,6 +147,53 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     return updated
   })
 
+  fastify.post('/case/:caseId/ship', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    if (user.role === Role.DENTIST) return reply.status(403).send({ error: 'Acesso negado' })
+
+    const { caseId } = request.params as { caseId: string }
+    const { trackingCode, carrier } = ((request.body as any) || {}) as { trackingCode?: string; carrier?: string }
+
+    if (!trackingCode?.trim()) return reply.status(400).send({ error: 'Código de rastreio obrigatório' })
+
+    const caseData = await fastify.prisma.case.findUnique({
+      where: { id: caseId },
+      include: { dentist: true },
+    })
+    if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
+    if (caseData.status !== 'EXPEDITION' as any) return reply.status(400).send({ error: 'Caso não está em Expedição' })
+
+    await fastify.prisma.$transaction([
+      fastify.prisma.production.upsert({
+        where: { caseId },
+        update: { trackingCode: trackingCode.trim(), carrier: carrier?.trim() || null, shippedAt: new Date() },
+        create: { caseId, trackingCode: trackingCode.trim(), carrier: carrier?.trim() || null, shippedAt: new Date() },
+      }),
+      fastify.prisma.workflowEvent.create({
+        data: { caseId, stage: 9, stageName: 'Postagem dos alinhadores', performedBy: user.id, notes: `Rastreio: ${trackingCode.trim()}` },
+      }),
+      fastify.prisma.case.update({
+        where: { id: caseId },
+        data: { status: 'SHIPPED' as any },
+      }),
+      fastify.prisma.caseActivity.create({
+        data: { caseId, userId: user.id, action: 'SHIPPED', description: `Caso postado — rastreio: ${trackingCode.trim()}` },
+      }),
+    ])
+
+    // Notify dentist (non-critical)
+    fastify.prisma.notification.create({
+      data: {
+        userId: caseData.dentistId,
+        title: `Caso #${String(caseData.caseNumber).padStart(6, '0')} postado!`,
+        message: `Seu case foi enviado. Rastreio: ${trackingCode.trim()}`,
+        link: `/cases/${caseId}`,
+      },
+    }).catch(() => { /* non-critical */ })
+
+    return { ok: true }
+  })
+
   fastify.post('/case/:caseId/approve', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const { caseId } = request.params as { caseId: string }
