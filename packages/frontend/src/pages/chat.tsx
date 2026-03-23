@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { Paperclip, Loader2 } from 'lucide-react'
 
 function buildWsUrl(accessToken: string | null) {
   if (!accessToken) return ''
@@ -37,8 +38,10 @@ export default function ChatPage() {
   const [selectedPeer, setSelectedPeer] = useState<any>(null)
   const [messageText, setMessageText] = useState('')
   const [messages, setMessages] = useState<any[]>([])
+  const [uploadingImage, setUploadingImage] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const queryClient = useQueryClient()
 
   const { data: contactsData } = useQuery({
@@ -102,6 +105,26 @@ export default function ChatPage() {
 
     return () => { ws.close() }
   }, [user, accessToken, selectedPeer])
+
+  const sendImage = async (file: File) => {
+    if (!selectedPeer) return
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await api.post('/chat/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const url: string = res.data.url
+      await api.post(`/chat/messages/${selectedPeer.id}`, { content: `[img]${url}` })
+      await fetchMessages(selectedPeer.id)
+      refetchConversations()
+    } catch {
+      /* silent */
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   const sendMessage = async () => {
     if (!messageText.trim() || !selectedPeer) return
@@ -234,7 +257,16 @@ export default function ChatPage() {
                 return (
                   <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] px-3 py-2 rounded-2xl text-sm ${isMine ? 'bg-primary text-white rounded-br-sm' : 'bg-white border text-gray-800 rounded-bl-sm shadow-sm'}`}>
-                      <p>{msg.content}</p>
+                      {msg.content?.startsWith('[img]') ? (
+                        <img
+                          src={msg.content.slice(5)}
+                          alt="imagem"
+                          className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer"
+                          onClick={() => window.open(msg.content.slice(5), '_blank')}
+                        />
+                      ) : (
+                        <p>{msg.content}</p>
+                      )}
                       <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70 text-right' : 'text-muted-foreground'}`}>
                         {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true, locale: ptBR })}
                       </p>
@@ -253,6 +285,23 @@ export default function ChatPage() {
                 placeholder="Escreva uma mensagem..."
                 className="flex-1"
               />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) sendImage(f); e.target.value = '' }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={uploadingImage || !selectedPeer}
+                onClick={() => fileInputRef.current?.click()}
+                title="Enviar imagem"
+              >
+                {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+              </Button>
               <Button onClick={sendMessage} disabled={!messageText.trim()}>Enviar</Button>
             </div>
           </>

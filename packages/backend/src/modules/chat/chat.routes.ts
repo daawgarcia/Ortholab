@@ -12,12 +12,18 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
     let contacts: any[] = []
 
     if (user.role === Role.SELLER) {
-      // Seller sees their dentist clients
-      const sellerClients = await fastify.prisma.sellerClient.findMany({
-        where: { sellerId: user.id },
-        include: { client: { select: { id: true, name: true, email: true, role: true, clinic: true } } },
-      })
-      contacts = sellerClients.map(sc => sc.client)
+      // Seller sees their dentist clients + all FINANCIAL users
+      const [sellerClients, financials] = await Promise.all([
+        fastify.prisma.sellerClient.findMany({
+          where: { sellerId: user.id },
+          include: { client: { select: { id: true, name: true, email: true, role: true, clinic: true } } },
+        }),
+        fastify.prisma.user.findMany({
+          where: { role: Role.FINANCIAL },
+          select: { id: true, name: true, email: true, role: true },
+        }),
+      ])
+      contacts = [...sellerClients.map(sc => sc.client), ...financials]
     } else if (user.role === Role.DENTIST) {
       // Dentist sees their seller(s) + all financial users
       const [sellerLinks, financials] = await Promise.all([
@@ -110,12 +116,30 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
     return { messages }
   })
 
+  fastify.post('/upload', { preHandler: authenticate }, async (request, reply) => {
+    const data = await request.file()
+    if (!data) return reply.status(400).send({ error: 'Nenhum arquivo enviado' })
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(data.mimetype)) {
+      return reply.status(400).send({ error: 'Tipo de arquivo não permitido' })
+    }
+
+    const buffer = await data.toBuffer()
+    if (buffer.length > 10 * 1024 * 1024) {
+      return reply.status(400).send({ error: 'Arquivo muito grande (máx. 10MB)' })
+    }
+
+    const { url } = await fastify.s3.upload(buffer, data.filename, data.mimetype, 'chat')
+    return { url }
+  })
+
   fastify.post('/messages/:peerId', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const { peerId } = request.params as { peerId: string }
     const { content } = request.body as { content: string }
 
-    if (!content || !content.trim()) {
+    if (!content || (!content.trim() && !content.startsWith('[img]'))) {
       return reply.status(400).send({ error: 'Conteúdo da mensagem não pode ser vazio' })
     }
 

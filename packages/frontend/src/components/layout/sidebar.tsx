@@ -61,6 +61,7 @@ export function Sidebar() {
   const isAdmin = user?.role === 'ADMIN'
   const isDentist = user?.role === 'DENTIST'
   const isSeller = user?.role === 'SELLER'
+  const isFinancial = user?.role === 'FINANCIAL'
   const showWorkflow = WORKFLOW_ROLES.includes(user?.role || '')
   const showPatients = PATIENT_ROLES.includes(user?.role || '')
 
