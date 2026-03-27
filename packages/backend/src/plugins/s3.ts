@@ -13,18 +13,30 @@ declare module 'fastify' {
 class S3Service {
   private client: S3Client
   private bucket: string
+  private region: string
+  private isAWS: boolean
 
   constructor() {
-    this.client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT,
-      region: process.env.S3_REGION || 'us-east-1',
+    const endpoint = process.env.S3_ENDPOINT || ''
+    this.region = process.env.S3_REGION || 'us-east-1'
+    this.bucket = process.env.S3_BUCKET || 'ortholab-files'
+    this.isAWS = endpoint.includes('amazonaws.com')
+
+    const clientConfig: Record<string, unknown> = {
+      region: this.region,
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY || '',
         secretAccessKey: process.env.S3_SECRET_KEY || '',
       },
-      forcePathStyle: true,
-    })
-    this.bucket = process.env.S3_BUCKET || 'ortholab-files'
+    }
+
+    if (!this.isAWS && endpoint) {
+      // MinIO or S3-compatible (local dev)
+      clientConfig.endpoint = endpoint
+      clientConfig.forcePathStyle = true
+    }
+
+    this.client = new S3Client(clientConfig as any)
   }
 
   async upload(buffer: Buffer, originalName: string, mimeType: string, folder: string = 'uploads'): Promise<{ key: string; url: string }> {
@@ -36,9 +48,13 @@ class S3Service {
       Key: key,
       Body: buffer,
       ContentType: mimeType,
+      ACL: 'public-read',
     }))
 
-    const url = `${process.env.S3_ENDPOINT}/${this.bucket}/${key}`
+    const url = this.isAWS
+      ? `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`
+      : `${process.env.S3_ENDPOINT}/${this.bucket}/${key}`
+
     return { key, url }
   }
 
