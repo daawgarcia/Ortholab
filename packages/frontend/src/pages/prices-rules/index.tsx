@@ -2,6 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { FileText, Download, ExternalLink } from 'lucide-react'
 
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}`
+  : 'http://localhost:3001'
+
 const SLUGS = [
   { slug: 'precos', label: 'Tabela de Preços' },
   { slug: 'regras', label: 'Regras e Políticas' },
@@ -34,7 +38,7 @@ function ContentCard({ slug, label }: { slug: string; label: string }) {
               </div>
             )}
             {data.fileUrl && (
-              <a href={data.fileUrl} target="_blank" rel="noreferrer"
+              <a href={`${API_BASE}${data.fileUrl}`} target="_blank" rel="noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium">
                 <Download className="w-4 h-4" />
                 {data.fileName || 'Baixar arquivo'}
