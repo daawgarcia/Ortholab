@@ -7,6 +7,7 @@ import websocket from '@fastify/websocket'
 import { prismaPlugin } from './plugins/prisma'
 import { s3Plugin } from './plugins/s3'
 import { mailerPlugin } from './plugins/mailer'
+import { redePlugin } from './plugins/rede'
 import { authRoutes } from './modules/auth/auth.routes'
 import { userRoutes } from './modules/users/user.routes'
 import { caseRoutes } from './modules/cases/case.routes'
@@ -64,6 +65,7 @@ const start = async () => {
   await app.register(prismaPlugin)
   await app.register(s3Plugin)
   await app.register(mailerPlugin)
+  await app.register(redePlugin)
   await app.register(websocket)
 
   await app.register(authRoutes, { prefix: '/api/auth' })
