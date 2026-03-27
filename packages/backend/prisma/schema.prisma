@@ -566,6 +566,8 @@ model ContentPage {
   body        String?
   fileUrl     String?
   fileName    String?
+  fileMime    String?
+  fileData    Bytes?
   updatedAt   DateTime @updatedAt
   updatedById String?
 }

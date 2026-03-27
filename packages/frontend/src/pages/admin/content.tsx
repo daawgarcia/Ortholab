@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { Save, Upload, FileText, Loader2 } from 'lucide-react'
 
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}`
+  : 'http://localhost:3001'
+
 const PAGES = [
   { slug: 'precos', label: 'Tabela de Preços', hint: 'Informe os preços dos serviços ou faça upload de um PDF/arquivo.' },
   { slug: 'regras', label: 'Regras e Políticas', hint: 'Defina as regras de utilização, prazo de entrega, políticas de revisão, etc.' },
@@ -73,7 +77,7 @@ function ContentEditor({ slug, label, hint }: { slug: string; label: string; hin
           <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 border rounded-lg px-3 py-2">
             <FileText className="w-4 h-4 text-primary shrink-0" />
             <span className="truncate">{data.fileName || 'Arquivo atual'}</span>
-            <a href={data.fileUrl} target="_blank" rel="noreferrer"
+            <a href={`${API_BASE}${data.fileUrl}`} target="_blank" rel="noreferrer"
               className="ml-auto text-xs text-primary hover:underline shrink-0">Visualizar</a>
           </div>
         )}

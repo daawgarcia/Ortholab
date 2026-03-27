@@ -10,9 +10,27 @@ export async function contentRoutes(fastify: FastifyInstance) {
 
   fastify.get('/:slug', async (request, reply) => {
     const { slug } = request.params as { slug: string }
-    const page = await fastify.prisma.contentPage.findUnique({ where: { slug } })
+    const page = await fastify.prisma.contentPage.findUnique({
+      where: { slug },
+      select: { id: true, slug: true, title: true, body: true, fileUrl: true, fileName: true, fileMime: true, updatedAt: true, updatedById: true },
+    })
     if (!page) return reply.status(404).send({ error: 'Página não encontrada' })
     return { page }
+  })
+
+  // Serve o arquivo armazenado no banco
+  fastify.get('/:slug/file', async (request, reply) => {
+    const { slug } = request.params as { slug: string }
+    const page = await fastify.prisma.contentPage.findUnique({
+      where: { slug },
+      select: { fileData: true, fileName: true, fileMime: true },
+    })
+    if (!page || !page.fileData) return reply.status(404).send({ error: 'Arquivo não encontrado' })
+
+    reply
+      .header('Content-Type', page.fileMime || 'application/octet-stream')
+      .header('Content-Disposition', `inline; filename="${page.fileName || 'arquivo'}"`)
+      .send(page.fileData)
   })
 
   fastify.put('/:slug', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
@@ -33,33 +51,34 @@ export async function contentRoutes(fastify: FastifyInstance) {
     const user = (request as any).user
 
     const parts = request.parts()
-    let fileUrl = ''
+    let fileData: Buffer | null = null
     let fileName = ''
+    let fileMime = ''
     let title = slug
 
     for await (const part of parts) {
       if (part.type === 'file') {
         const chunks: Buffer[] = []
         for await (const chunk of part.file) chunks.push(chunk as Buffer)
-        const buffer = Buffer.concat(chunks)
+        fileData = Buffer.concat(chunks)
         fileName = part.filename
-        try {
-          const result = await fastify.s3.upload(buffer, fileName, part.mimetype, `content/${slug}`)
-          fileUrl = result.url
-        } catch (err) {
-          request.log.error(err, 'Erro no upload S3')
-          return reply.status(500).send({ error: 'Erro ao fazer upload do arquivo. Verifique a configuração do S3.' })
-        }
+        fileMime = part.mimetype
       } else if (part.fieldname === 'title') {
         title = (part as any).value
       }
     }
 
+    if (!fileData) {
+      return reply.status(400).send({ error: 'Nenhum arquivo enviado' })
+    }
+
+    const fileUrl = `/api/content/${slug}/file`
+
     const page = await fastify.prisma.contentPage.upsert({
       where: { slug },
-      update: { fileUrl, fileName, updatedById: user.id },
-      create: { slug, title, fileUrl, fileName, updatedById: user.id },
+      update: { fileUrl, fileName, fileMime, fileData, updatedById: user.id },
+      create: { slug, title, fileUrl, fileName, fileMime, fileData, updatedById: user.id },
     })
-    return { page }
+    return { page: { id: page.id, slug: page.slug, title: page.title, body: page.body, fileUrl: page.fileUrl, fileName: page.fileName, fileMime: page.fileMime, updatedAt: page.updatedAt } }
   })
 }
