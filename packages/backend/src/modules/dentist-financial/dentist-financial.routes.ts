@@ -76,10 +76,44 @@ export async function dentistFinancialRoutes(fastify: FastifyInstance) {
       },
     })
 
-    if (method === 'CREDIT_CARD') {
+    // Cobrar via Rede se for cartão de crédito
+    if (method === 'CREDIT_CARD' && cardData && fastify.rede.isConfigured) {
+      const [expMonth, expYear] = cardData.expiry.replace(/\s/g, '').split('/')
+      const fullYear = expYear.length === 2 ? `20${expYear}` : expYear
+
+      try {
+        const redeResult = await fastify.rede.createTransaction({
+          amount: totalAmount,
+          installments: 1,
+          cardNumber: cardData.number,
+          cardHolder: cardData.holder,
+          expirationMonth: expMonth,
+          expirationYear: fullYear,
+          securityCode: cardData.cvv,
+          reference: payment.id,
+          capture: true,
+        })
+
+        await fastify.prisma.invoicePayment.update({
+          where: { id: payment.id },
+          data: { status: 'PAID', paidAt: new Date(), transactionId: redeResult.tid },
+        })
+        await fastify.prisma.dentistInvoice.updateMany({
+          where: { id: { in: invoiceIds } },
+          data: { status: 'PAID', paidAt: new Date() },
+        })
+      } catch (err: any) {
+        await fastify.prisma.invoicePayment.update({
+          where: { id: payment.id },
+          data: { status: 'FAILED' },
+        })
+        return reply.status(402).send({ error: err.message })
+      }
+    } else if (method === 'CREDIT_CARD') {
+      // Fallback se Rede não configurada
       await fastify.prisma.invoicePayment.update({
         where: { id: payment.id },
-        data: { status: 'PAID', paidAt: new Date(), transactionId: `TXN-${Date.now()}` },
+        data: { status: 'PAID', paidAt: new Date(), transactionId: `LOCAL-${Date.now()}` },
       })
       await fastify.prisma.dentistInvoice.updateMany({
         where: { id: { in: invoiceIds } },
