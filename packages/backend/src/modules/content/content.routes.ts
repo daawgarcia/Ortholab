@@ -44,8 +44,10 @@ export async function contentRoutes(fastify: FastifyInstance) {
         const buffer = Buffer.concat(chunks)
         fileName = part.filename
         try {
-          fileUrl = await (fastify as any).s3Upload(`content/${slug}/${Date.now()}_${fileName}`, buffer, part.mimetype)
-        } catch {
+          const result = await fastify.s3.upload(buffer, fileName, part.mimetype, `content/${slug}`)
+          fileUrl = result.url
+        } catch (err) {
+          request.log.error(err, 'Erro no upload S3')
           fileUrl = ''
         }
       } else if (part.fieldname === 'title') {
