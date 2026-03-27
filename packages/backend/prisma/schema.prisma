@@ -575,7 +575,8 @@ model ContentPage {
 model DentistInvoice {
   id            String   @id @default(uuid())
   dentistId     String
-  totvsId       String?
+  caseId        String?
+  totvsId       String?  @unique
   invoiceNumber String
   description   String
   amount        Decimal  @db.Decimal(10, 2)

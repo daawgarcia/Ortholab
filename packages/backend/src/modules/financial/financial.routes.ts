@@ -31,13 +31,49 @@ export async function financialRoutes(fastify: FastifyInstance) {
 
   fastify.post('/:caseId/bill', { preHandler: requireRole(Role.FINANCIAL, Role.ADMIN) }, async (request, reply) => {
     const { caseId } = request.params as { caseId: string }
-    const { invoiceNumber, amount, notes } = request.body as any
+    const { invoiceNumber, amount, notes, dueDate } = request.body as any
+
+    // Buscar dados do caso para criar o título do dentista
+    const caseData = await fastify.prisma.case.findUnique({
+      where: { id: caseId },
+      include: { service: true, dentist: { select: { id: true, name: true } } },
+    })
+    if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
 
     const financial = await fastify.prisma.financial.upsert({
       where: { caseId },
       update: { invoiceNumber, amount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
       create: { caseId, invoiceNumber, amount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
     })
+
+    // Criar título no painel financeiro do dentista
+    const existingInvoice = await fastify.prisma.dentistInvoice.findFirst({
+      where: { caseId, dentistId: caseData.dentistId },
+    })
+
+    const invoiceAmount = amount || 0
+    const invoiceDueDate = dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    const serviceName = caseData.service?.name || caseData.productType || 'Serviço'
+    const description = `Caso #${caseData.caseNumber} - ${caseData.patientName} - ${serviceName}`
+
+    if (existingInvoice) {
+      await fastify.prisma.dentistInvoice.update({
+        where: { id: existingInvoice.id },
+        data: { invoiceNumber: invoiceNumber || existingInvoice.invoiceNumber, amount: invoiceAmount, description },
+      })
+    } else {
+      await fastify.prisma.dentistInvoice.create({
+        data: {
+          dentistId: caseData.dentistId,
+          caseId,
+          invoiceNumber: invoiceNumber || `NF-${caseData.caseNumber}`,
+          description,
+          amount: invoiceAmount,
+          dueDate: invoiceDueDate,
+        },
+      })
+    }
+
     return { financial }
   })
 }
