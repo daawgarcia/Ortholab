@@ -48,7 +48,7 @@ export async function contentRoutes(fastify: FastifyInstance) {
           fileUrl = result.url
         } catch (err) {
           request.log.error(err, 'Erro no upload S3')
-          fileUrl = ''
+          return reply.status(500).send({ error: 'Erro ao fazer upload do arquivo. Verifique a configuração do S3.' })
         }
       } else if (part.fieldname === 'title') {
         title = (part as any).value

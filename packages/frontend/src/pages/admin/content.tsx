@@ -40,9 +40,10 @@ function ContentEditor({ slug, label, hint }: { slug: string; label: string; hin
       fd.append('title', label)
       await api.post(`/content/${slug}/upload`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       qc.invalidateQueries({ queryKey: ['content', slug] })
-      toast({ title: 'Arquivo enviado!' })
-    } catch {
-      toast({ title: 'Erro no upload', variant: 'destructive' })
+      toast({ title: 'Arquivo enviado com sucesso!' })
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'Erro no upload'
+      toast({ title: msg, variant: 'destructive' })
     } finally {
       setUploading(false)
     }
