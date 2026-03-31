@@ -37,7 +37,15 @@ export async function dentistFinancialRoutes(fastify: FastifyInstance) {
     const { invoiceIds, method, cardData } = request.body as {
       invoiceIds: string[]
       method: 'PIX' | 'CREDIT_CARD'
+      installments?: number
       cardData?: { number: string; holder: string; expiry: string; cvv: string }
+    }
+
+    const parsedInstallments = Number((request.body as any).installments ?? 1)
+    const installments = Number.isInteger(parsedInstallments) ? parsedInstallments : 1
+
+    if (method === 'CREDIT_CARD' && (installments < 1 || installments > 12)) {
+      return reply.status(400).send({ error: 'Parcelamento inválido. Use de 1x a 12x.' })
     }
 
     if (!invoiceIds?.length) return reply.status(400).send({ error: 'Selecione ao menos um título' })
@@ -84,7 +92,7 @@ export async function dentistFinancialRoutes(fastify: FastifyInstance) {
       try {
         const redeResult = await fastify.rede.createTransaction({
           amount: totalAmount,
-          installments: 1,
+          installments,
           cardNumber: cardData.number,
           cardHolder: cardData.holder,
           expirationMonth: expMonth,
