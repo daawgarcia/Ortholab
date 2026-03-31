@@ -39,7 +39,7 @@ export default function FinancialPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Financeiro</h1>
-          <p className="text-sm text-muted-foreground">{data?.total || 0} casos para faturamento</p>
+          <p className="text-sm text-muted-foreground">{data?.total || 0} casos no workflow financeiro</p>
         </div>
         <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="w-4 h-4" /> Exportar Excel</Button>
       </div>
@@ -101,12 +101,13 @@ export default function FinancialPage() {
           <Card className="w-full max-w-md mx-4">
             <CardHeader><CardTitle>Faturar Caso #{billModal.caseNumber}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1"><label className="text-xs font-medium">Número da NF</label><Input placeholder="NF-12345" value={billForm.invoiceNumber} onChange={e => setBillForm(f => ({ ...f, invoiceNumber: e.target.value }))} /></div>
+              <div className="space-y-1"><label className="text-xs font-medium">Número da NF (opcional)</label><Input placeholder="NF-12345" value={billForm.invoiceNumber} onChange={e => setBillForm(f => ({ ...f, invoiceNumber: e.target.value }))} /></div>
               <div className="space-y-1"><label className="text-xs font-medium">Valor (R$)</label><Input type="number" placeholder="0.00" value={billForm.amount} onChange={e => setBillForm(f => ({ ...f, amount: e.target.value }))} /></div>
               <div className="space-y-1"><label className="text-xs font-medium">Observações</label><Input value={billForm.notes} onChange={e => setBillForm(f => ({ ...f, notes: e.target.value }))} /></div>
+              <p className="text-xs text-muted-foreground">Use este fluxo para lançar valor manual (ex.: 21x e UNIDADE) e liberar para pagamento do cliente.</p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setBillModal(null)}>Cancelar</Button>
-                <Button onClick={() => billMutation.mutate(billModal.id)} disabled={billMutation.isPending || !billForm.invoiceNumber}>
+                <Button onClick={() => billMutation.mutate(billModal.id)} disabled={billMutation.isPending || !(parseFloat(billForm.amount) > 0)}>
                   {billMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar Faturamento
                 </Button>
               </div>
