@@ -3,9 +3,25 @@ type ServiceLike = { type: string; prices?: PriceEntry[] }
 type CouponLike = { type: string; value: number }
 
 const ALIGNER_TYPES = new Set(['FULL', 'MID', 'AIR', 'EXPRESS', 'REFINEMENT'])
+const PRODUCT_SERVICE_TYPES_MAP: Record<string, string[]> = {
+  ALINHADORES: ['FULL', 'MID', 'EXPRESS', 'REFINEMENT'],
+  FINALIZACAO: ['RETAINER'],
+  PLACA_MIORRELAXANTE: ['OTHER'],
+  EA_AIR2: ['AIR'],
+}
 
 export function isAlignerService(serviceType?: string | null) {
   return !!serviceType && ALIGNER_TYPES.has(serviceType)
+}
+
+export function getAllowedServiceTypesForProduct(productType?: string | null) {
+  return productType ? PRODUCT_SERVICE_TYPES_MAP[productType] || null : null
+}
+
+export function serviceMatchesProductType(productType?: string | null, serviceType?: string | null) {
+  const allowedTypes = getAllowedServiceTypesForProduct(productType)
+  if (!allowedTypes || !serviceType) return true
+  return allowedTypes.includes(serviceType)
 }
 
 export function normalizeInstallmentOption(option?: string | null) {
@@ -29,6 +45,7 @@ export function getAllowedInstallmentOptions(service: ServiceLike) {
 
   if (service.type === 'AIR') return ['1x', '2x'].filter((item) => available.has(item))
   if (service.type === 'FULL') return ['1x', '6x', '12x', '21x'].filter((item) => available.has(item))
+  if (service.type === 'MID') return ['1x', '6x', '12x'].filter((item) => available.has(item))
   return ['1x', '6x', '12x'].filter((item) => available.has(item))
 }
 
