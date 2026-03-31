@@ -6,9 +6,23 @@ export async function financialRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: requireRole(Role.FINANCIAL, Role.ADMIN) }, async (request) => {
     const { billed, page = '1', limit = '20', search } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
-    const where: any = { status: { in: ['APPROVED', 'IN_PRODUCTION', 'SHIPPED', 'COMPLETED'] } }
-    if (billed === 'true') where.financial = { invoiceNumber: { not: null } }
-    if (billed === 'false') where.financial = { is: null }
+    const where: any = {
+      status: {
+        notIn: ['DRAFT', 'SUBMITTED'],
+      },
+    }
+
+    if (billed === 'true') {
+      where.financial = { invoiceNumber: { not: null } }
+    }
+
+    if (billed === 'false') {
+      where.OR = [
+        { financial: { is: null } },
+        { financial: { invoiceNumber: null } },
+      ]
+    }
+
     if (search) where.patientName = { contains: search, mode: 'insensitive' }
 
     const [cases, total] = await Promise.all([
@@ -33,6 +47,11 @@ export async function financialRoutes(fastify: FastifyInstance) {
     const { caseId } = request.params as { caseId: string }
     const { invoiceNumber, amount, notes, dueDate } = request.body as any
 
+    const numericAmount = Number(amount)
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return reply.status(400).send({ error: 'Informe um valor válido para liberar cobrança ao cliente' })
+    }
+
     // Buscar dados do caso para criar o título do dentista
     const caseData = await fastify.prisma.case.findUnique({
       where: { id: caseId },
@@ -42,8 +61,8 @@ export async function financialRoutes(fastify: FastifyInstance) {
 
     const financial = await fastify.prisma.financial.upsert({
       where: { caseId },
-      update: { invoiceNumber, amount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
-      create: { caseId, invoiceNumber, amount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
+      update: { invoiceNumber, amount: numericAmount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
+      create: { caseId, invoiceNumber, amount: numericAmount, billedAt: new Date(), billedById: (request.user as JwtPayload).id, notes },
     })
 
     // Criar título no painel financeiro do dentista
@@ -51,7 +70,7 @@ export async function financialRoutes(fastify: FastifyInstance) {
       where: { caseId, dentistId: caseData.dentistId },
     })
 
-    const invoiceAmount = amount || 0
+    const invoiceAmount = numericAmount
     const invoiceDueDate = dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     const serviceName = caseData.service?.name || caseData.productType || 'Serviço'
     const description = `Caso #${caseData.caseNumber} - ${caseData.patientName} - ${serviceName}`
