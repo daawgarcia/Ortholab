@@ -425,16 +425,6 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     return { ok: true }
   })
 
-  fastify.post('/case/:caseId/approve', { preHandler: authenticate }, async (request, reply) => {
-    const user = request.user as JwtPayload
-    const { caseId } = request.params as { caseId: string }
-
-    if (user.role !== Role.DENTIST) return reply.status(403).send({ error: 'Apenas dentistas podem aprovar' })
-
-    await fastify.prisma.case.update({ where: { id: caseId }, data: { status: 'APPROVED' as any } })
-    return { ok: true }
-  })
-
   fastify.post('/case/:caseId/request-revision', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const { caseId } = request.params as { caseId: string }
