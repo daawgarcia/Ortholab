@@ -4,7 +4,7 @@ const statusMap: Record<string, { label: string; variant: any }> = {
   DRAFT:              { label: 'Rascunho',           variant: 'secondary' },
   SUBMITTED:          { label: 'Submetido',           variant: 'info' },
   IN_PLANNING:        { label: 'Preparo de modelos',  variant: 'info' },
-  IN_MOVEMENT:        { label: 'Movimento',           variant: 'info' },
+  IN_MOVEMENT:        { label: 'A movimentar',        variant: 'info' },
   LAB_APPROVAL:       { label: 'Aprovação do lab',    variant: 'warning' },
   WAITING_APPROVAL:   { label: 'Aprovação do dentista', variant: 'warning' },
   REVISION_REQUESTED: { label: 'Revisão Solicitada',  variant: 'destructive' },

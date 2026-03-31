@@ -8,13 +8,47 @@ import { ChevronLeft, Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { StatusBadge } from '@/components/status-badge'
 
-function isAlignerType(serviceType?: string) {
-  return ['FULL', 'MID', 'AIR', 'EXPRESS', 'REFINEMENT'].includes(serviceType || '')
+function normalizeText(value?: string) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase()
+}
+
+function normalizeServiceKind(service?: any) {
+  const type = normalizeText(service?.type)
+  const name = normalizeText(service?.name)
+  const source = `${type} ${name}`
+
+  if (source.includes('FULL')) return 'FULL'
+  if (source.includes('MID')) return 'MID'
+  if (source.includes('UNIDADE') || source.includes('EXPRESS')) return 'UNIDADE'
+  if (source.includes('AIR')) return 'AIR'
+  if (source.includes('REFIN')) return 'REFINEMENT'
+  if (source.includes('CONTEN') || source.includes('RETEN') || source.includes('FINALIZ')) return 'RETAINER'
+  if (source.includes('MIORRELAX') || source.includes('PLACA')) return 'OTHER'
+
+  return type
+}
+
+function isAlignerType(service?: any) {
+  return ['FULL', 'MID', 'UNIDADE', 'REFINEMENT'].includes(normalizeServiceKind(service))
+}
+
+const SERVICE_KIND_ORDER: Record<string, number> = {
+  UNIDADE: 1,
+  MID: 2,
+  FULL: 3,
+  REFINEMENT: 4,
+  AIR: 5,
+  RETAINER: 6,
+  OTHER: 7,
 }
 
 function getAllowedServiceTypesForProduct(productType?: string) {
   const map: Record<string, string[]> = {
-    ALINHADORES: ['FULL', 'MID', 'EXPRESS', 'REFINEMENT'],
+    ALINHADORES: ['FULL', 'MID', 'UNIDADE', 'REFINEMENT'],
     FINALIZACAO: ['RETAINER'],
     PLACA_MIORRELAXANTE: ['OTHER'],
     EA_AIR2: ['AIR'],
@@ -25,22 +59,32 @@ function getAllowedServiceTypesForProduct(productType?: string) {
 function filterServicesForProduct(services: any[], productType?: string) {
   const allowedTypes = getAllowedServiceTypesForProduct(productType)
   if (!allowedTypes) return services
-  return services.filter((service: any) => allowedTypes.includes(service.type))
+  return services.filter((service: any) => allowedTypes.includes(normalizeServiceKind(service)))
 }
 
 function getAllowedInstallments(service?: any) {
   if (!service) return ['1x']
+  const serviceKind = normalizeServiceKind(service)
   const available = new Set<string>(['1x'])
   for (const price of service.prices || []) {
     if (!price.groupId || price.groupId === 'CASH') available.add('1x')
     if (price.groupId === 'INSTALLMENT_2') available.add('2x')
     if (price.groupId === 'INSTALLMENT_6') available.add('6x')
     if (price.groupId === 'INSTALLMENT_12') available.add('12x')
+    if (price.groupId === 'INSTALLMENT_13') available.add('13x')
     if (price.groupId === 'INSTALLMENT_21') available.add('21x')
   }
-  if (service.type === 'AIR') return ['1x', '2x'].filter((item) => available.has(item))
-  if (service.type === 'FULL') return ['1x', '6x', '12x', '21x'].filter((item) => available.has(item))
-  return ['1x', '6x', '12x'].filter((item) => available.has(item))
+  if (serviceKind === 'UNIDADE') return ['1x']
+  if (serviceKind === 'MID') {
+    const options = ['1x', '6x', '12x'].filter((item) => available.has(item))
+    return options.length ? options : ['1x']
+  }
+  if (serviceKind === 'FULL') {
+    const options = ['1x', '6x', '12x', '21x'].filter((item) => available.has(item))
+    return options.length ? options : ['1x']
+  }
+  if (serviceKind === 'AIR') return ['1x', '2x'].filter((item) => available.has(item))
+  return ['1x']
 }
 
 const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica']
@@ -164,23 +208,31 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL'
   const availableServices = servicesData?.services || []
   const filteredServices = useMemo(() => filterServicesForProduct(availableServices, caseData?.productType), [availableServices, caseData?.productType])
+  const orderedServices = useMemo(() => {
+    return [...filteredServices].sort((a: any, b: any) => {
+      const aRank = SERVICE_KIND_ORDER[normalizeServiceKind(a)] || 999
+      const bRank = SERVICE_KIND_ORDER[normalizeServiceKind(b)] || 999
+      if (aRank !== bRank) return aRank - bRank
+      return String(a?.name || '').localeCompare(String(b?.name || ''), 'pt-BR')
+    })
+  }, [filteredServices])
   const selectedService = useMemo(() => {
-    return filteredServices.find((service: any) => service.id === billingForm.serviceId)
-      || filteredServices.find((service: any) => service.id === caseData?.service?.id)
+    return orderedServices.find((service: any) => service.id === billingForm.serviceId)
+      || orderedServices.find((service: any) => service.id === caseData?.service?.id)
       || availableServices.find((service: any) => service.id === billingForm.serviceId)
       || availableServices.find((service: any) => service.id === caseData?.service?.id)
       || caseData?.service
-  }, [filteredServices, availableServices, billingForm.serviceId, caseData?.service])
+  }, [orderedServices, availableServices, billingForm.serviceId, caseData?.service])
   const allowedInstallments = useMemo(() => getAllowedInstallments(selectedService), [selectedService])
-  const couponAllowed = isAlignerType(selectedService?.type)
+  const couponAllowed = isAlignerType(selectedService)
   const showBillingSection = ['WAITING_APPROVAL', 'APPROVED', 'PRINTING_3D', 'LABORATORY', 'EXPEDITION', 'SHIPPED', 'COMPLETED'].includes(caseData?.status)
 
   useEffect(() => {
     if (!caseData) return
     const currentServiceId = caseData.service?.id || ''
-    const currentServiceAllowed = !currentServiceId || filteredServices.some((service: any) => service.id === currentServiceId)
-    const fallbackServiceId = currentServiceAllowed ? currentServiceId : (filteredServices[0]?.id || '')
-    const fallbackService = filteredServices.find((service: any) => service.id === fallbackServiceId) || caseData.service
+    const currentServiceAllowed = !currentServiceId || orderedServices.some((service: any) => service.id === currentServiceId)
+    const fallbackServiceId = currentServiceAllowed ? currentServiceId : (orderedServices[0]?.id || '')
+    const fallbackService = orderedServices.find((service: any) => service.id === fallbackServiceId) || caseData.service
     setBillingForm({
       serviceId: fallbackServiceId,
       billingType: caseData.billingType || fallbackService?.name || '',
@@ -189,7 +241,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
       discountCoupon: couponAllowed ? (caseData.discountCoupon || '') : '',
       packActive: !!caseData.packActive,
     })
-  }, [caseData, filteredServices, allowedInstallments, couponAllowed])
+  }, [caseData, orderedServices, allowedInstallments, couponAllowed])
 
   return (
     <div className="space-y-4">
@@ -365,23 +417,24 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                               className="w-full border rounded px-2 py-1.5 text-sm"
                               value={billingForm.serviceId || ''}
                               onChange={e => {
-                                const nextService = availableServices.find((service: any) => service.id === e.target.value)
+                                const nextService = orderedServices.find((service: any) => service.id === e.target.value)
+                                  || availableServices.find((service: any) => service.id === e.target.value)
                                 const nextInstallments = getAllowedInstallments(nextService)
                                 setBillingForm((f: any) => ({
                                   ...f,
                                   serviceId: e.target.value,
                                   billingType: nextService?.name || '',
                                   installmentOption: nextInstallments[0] || '1x',
-                                  discountCoupon: isAlignerType(nextService?.type) ? f.discountCoupon : '',
+                                  discountCoupon: isAlignerType(nextService) ? f.discountCoupon : '',
                                 }))
                               }}
                             >
                               <option value="">Selecione o produto/pacote</option>
-                              {filteredServices.map((service: any) => (
+                              {orderedServices.map((service: any) => (
                                 <option key={service.id} value={service.id}>{service.name}</option>
                               ))}
                             </select>
-                            {filteredServices.length === 0 && (
+                            {orderedServices.length === 0 && (
                               <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
                             )}
                           </div>
@@ -422,16 +475,6 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                       </div>
                     )}
 
-                    {caseData?.planningFormData && (
-                      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
-                        <div className="px-4 py-3 border-b bg-gray-50">
-                          <p className="text-sm font-semibold text-gray-700">Ficha de Planejamento</p>
-                        </div>
-                        <div className="p-4">
-                          <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono">{JSON.stringify(caseData.planningFormData, null, 2)}</pre>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
