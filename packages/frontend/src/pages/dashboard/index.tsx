@@ -28,7 +28,7 @@ export default function DashboardPage() {
 
   const { data: casesData } = useQuery({
     queryKey: ['cases-summary'],
-    queryFn: () => api.get('/cases?limit=5').then(r => r.data),
+    queryFn: () => api.get('/cases?limit=200').then(r => r.data),
   })
 
   const { data: adminStats } = useQuery({
@@ -62,10 +62,13 @@ export default function DashboardPage() {
   })
 
   const cases = casesData?.cases || []
+  const recentCases = cases.slice(0, 5)
   const total = casesData?.total || 0
 
   const statusCount = (key: string) =>
-    adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0
+    user?.role === 'ADMIN'
+      ? adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0
+      : cases.filter((item: any) => item.status === key).length
 
   const stats = [
     { label: 'Total de Pacientes',        value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
@@ -204,7 +207,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="divide-y">
-            {cases.length === 0 && (
+            {recentCases.length === 0 && (
               <div className="py-10 text-center text-muted-foreground">
                 <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">Nenhum paciente encontrado</p>
@@ -215,7 +218,7 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
-            {cases.map((c: any) => (
+            {recentCases.map((c: any) => (
               <Link key={c.id} to={`/patients/${c.patientId}`} className="flex items-center gap-4 py-3.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors">
                 <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
                   #{c.caseNumber}

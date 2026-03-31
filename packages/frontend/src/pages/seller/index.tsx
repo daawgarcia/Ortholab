@@ -48,7 +48,7 @@ export default function SellerPage() {
         <CardContent className="divide-y p-0">
           {cases.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">Nenhum caso encontrado</p>}
           {cases.map((c: any) => (
-            <Link key={c.id} to={`/cases/${c.id}`} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+            <Link key={c.id} to={c.patientId ? `/patients/${c.patientId}` : `/cases/${c.id}`} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary text-xs font-bold">#{c.caseNumber}</div>
               <div className="flex-1">
                 <p className="text-sm font-medium">{c.patientName}</p>

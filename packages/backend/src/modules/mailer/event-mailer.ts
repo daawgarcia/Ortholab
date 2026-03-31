@@ -10,6 +10,18 @@ export class EventMailer {
     return `${process.env.APP_URL}/cases/${caseId}`
   }
 
+  private patientLink(patientId: string) {
+    return `${process.env.APP_URL}/patients/${patientId}`
+  }
+
+  private async getInternalRecipientsForDentist(dentistId: string, includeFinancial = false): Promise<string[]> {
+    const adminEmails = await this.getAdminEmails()
+    const labEmails = await this.getLabEmails()
+    const sellerEmails = await this.getSellerEmailsForDentist(dentistId)
+    const financialEmails = includeFinancial ? await this.getFinancialEmails() : []
+    return [...new Set([...adminEmails, ...labEmails, ...sellerEmails, ...financialEmails])]
+  }
+
   private async getAdminEmails(): Promise<string[]> {
     const admins = await this.prisma.user.findMany({
       where: { role: 'ADMIN', status: 'ACTIVE' },
@@ -49,9 +61,7 @@ export class EventMailer {
   }
 
   async onPatientCreated(patientData: any) {
-    const adminEmails = await this.getAdminEmails()
-    const labEmails = await this.getLabEmails()
-    const recipients = [...new Set([...adminEmails, ...labEmails])]
+    const recipients = await this.getInternalRecipientsForDentist(patientData.dentistId)
     if (!recipients.length) return
 
     const subject = `Novo paciente cadastrado - ${patientData.name}`
@@ -65,6 +75,65 @@ export class EventMailer {
     )
     await this.mailer.send({ to: recipients, subject, html })
     await this.logEmail('PATIENT_CREATED', recipients, subject)
+  }
+
+  async onPatientPhotosUploaded(patientData: any, totalFiles: number, isPrivate: boolean) {
+    const recipients = await this.getInternalRecipientsForDentist(patientData.dentistId)
+    if (!recipients.length) return
+
+    const subject = `${isPrivate ? 'Fotos restritas' : 'Fotos'} adicionadas - ${patientData.name}`
+    const html = this.mailer.getTemplate(
+      'Atualização de anexos do paciente',
+      `<p>Foram adicionad${totalFiles > 1 ? 'as' : 'a'} <strong>${totalFiles}</strong> ${isPrivate ? 'foto(s) restrita(s)' : 'foto(s)'} ao paciente <strong>${patientData.name}</strong>.</p>`,
+      this.patientLink(patientData.id), 'Ver Paciente'
+    )
+    await this.mailer.send({ to: recipients, subject, html })
+    await this.logEmail('PATIENT_PHOTOS_UPLOADED', recipients, subject)
+  }
+
+  async onDigitalModelsUploaded(patientData: any, filename: string, kind?: string) {
+    const recipients = await this.getInternalRecipientsForDentist(patientData.dentistId)
+    if (!recipients.length) return
+
+    const subject = `Arquivo enviado para ${patientData.name}`
+    const html = this.mailer.getTemplate(
+      'Novo arquivo do paciente',
+      `<p>Um novo arquivo foi enviado para o paciente <strong>${patientData.name}</strong>.</p>
+       <p><strong>Arquivo:</strong> ${filename}<br/>
+       <strong>Tipo:</strong> ${kind || 'arquivo de trabalho'}</p>`,
+      this.patientLink(patientData.id), 'Ver Paciente'
+    )
+    await this.mailer.send({ to: recipients, subject, html })
+    await this.logEmail('PATIENT_FILE_UPLOADED', recipients, subject)
+  }
+
+  async onPatientFormSubmitted(patientData: any, formLabel: string) {
+    const recipients = await this.getInternalRecipientsForDentist(patientData.dentistId)
+    if (!recipients.length) return
+
+    const subject = `${formLabel} preenchida - ${patientData.name}`
+    const html = this.mailer.getTemplate(
+      'Nova ficha preenchida',
+      `<p>Uma nova ficha foi preenchida para o paciente <strong>${patientData.name}</strong>.</p>
+       <p><strong>Ficha:</strong> ${formLabel}</p>`,
+      this.patientLink(patientData.id), 'Ver Paciente'
+    )
+    await this.mailer.send({ to: recipients, subject, html })
+    await this.logEmail('PATIENT_FORM_SUBMITTED', recipients, subject)
+  }
+
+  async onWorkflowAdvanced(caseData: any, stageName: string) {
+    if (!caseData?.dentist?.email) return
+
+    const subject = `Workflow atualizado - ${caseData.patientName}`
+    const html = this.mailer.getTemplate(
+      'Etapa do workflow atualizada',
+      `<p>Olá Dr(a). <strong>${caseData.dentist?.name}</strong>,</p>
+       <p>O caso do paciente <strong>${caseData.patientName}</strong> avançou para a etapa <strong>${stageName}</strong>.</p>`,
+      caseData.patientId ? this.patientLink(caseData.patientId) : this.caseLink(caseData.id), 'Acompanhar Paciente'
+    )
+    await this.mailer.send({ to: caseData.dentist.email, subject, html })
+    await this.logEmail('WORKFLOW_ADVANCED', [caseData.dentist.email], subject, caseData.id)
   }
 
   async onCaseSubmitted(caseData: any) {
@@ -128,10 +197,7 @@ export class EventMailer {
   }
 
   async onCaseApproved(caseData: any) {
-    const labEmails = await this.getLabEmails()
-    const adminEmails = await this.getAdminEmails()
-    const financialEmails = await this.getFinancialEmails()
-    const recipients = [...new Set([...labEmails, ...adminEmails, ...financialEmails])]
+    const recipients = await this.getInternalRecipientsForDentist(caseData.dentistId, true)
 
     const subject = `Caso aprovado pelo dentista - ${caseData.patientName}`
     const html = this.mailer.getTemplate(

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
-const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
+const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
 
 const workflowItems = [
   { label: 'Planning Center', href: '/workflow/planning-center', icon: FlaskConical },

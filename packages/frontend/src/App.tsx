@@ -44,7 +44,7 @@ import AdminContentPage from '@/pages/admin/content'
 import AdminCouponsPage from '@/pages/admin/coupons'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
-const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL']
+const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user } = useAuthStore()

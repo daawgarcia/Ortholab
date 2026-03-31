@@ -203,17 +203,10 @@ export default function NewPatientPage() {
         ...formData,
         teethData: toothChart,
         dentistId: user?.role === 'DENTIST' ? user.id : formData.dentistId,
+        productType: selectedProduct || undefined,
+        planningFormData: selectedProduct === 'ALINHADORES' ? planningForm : undefined,
       })
 
-      if (selectedProduct) {
-        await api.post('/cases', {
-          patientName: formData.name,
-          patientId: patient.data.id,
-          productType: selectedProduct,
-          planningFormData: selectedProduct === 'ALINHADORES' ? planningForm : {},
-          status: 'DRAFT',
-        })
-      }
       return patient.data
     },
     onSuccess: (patient) => {
