@@ -12,6 +12,22 @@ function isAlignerType(serviceType?: string) {
   return ['FULL', 'MID', 'AIR', 'EXPRESS', 'REFINEMENT'].includes(serviceType || '')
 }
 
+function getAllowedServiceTypesForProduct(productType?: string) {
+  const map: Record<string, string[]> = {
+    ALINHADORES: ['FULL', 'MID', 'EXPRESS', 'REFINEMENT'],
+    FINALIZACAO: ['RETAINER'],
+    PLACA_MIORRELAXANTE: ['OTHER'],
+    EA_AIR2: ['AIR'],
+  }
+  return productType ? map[productType] || null : null
+}
+
+function filterServicesForProduct(services: any[], productType?: string) {
+  const allowedTypes = getAllowedServiceTypesForProduct(productType)
+  if (!allowedTypes) return services
+  return services.filter((service: any) => allowedTypes.includes(service.type))
+}
+
 function getAllowedInstallments(service?: any) {
   if (!service) return ['1x']
   const available = new Set<string>(['1x'])
@@ -147,26 +163,33 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const currentStage = events[events.length - 1]?.stage || 0
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL'
   const availableServices = servicesData?.services || []
+  const filteredServices = useMemo(() => filterServicesForProduct(availableServices, caseData?.productType), [availableServices, caseData?.productType])
   const selectedService = useMemo(() => {
-    return availableServices.find((service: any) => service.id === billingForm.serviceId)
+    return filteredServices.find((service: any) => service.id === billingForm.serviceId)
+      || filteredServices.find((service: any) => service.id === caseData?.service?.id)
+      || availableServices.find((service: any) => service.id === billingForm.serviceId)
       || availableServices.find((service: any) => service.id === caseData?.service?.id)
       || caseData?.service
-  }, [availableServices, billingForm.serviceId, caseData?.service])
+  }, [filteredServices, availableServices, billingForm.serviceId, caseData?.service])
   const allowedInstallments = useMemo(() => getAllowedInstallments(selectedService), [selectedService])
   const couponAllowed = isAlignerType(selectedService?.type)
   const showBillingSection = ['WAITING_APPROVAL', 'APPROVED', 'PRINTING_3D', 'LABORATORY', 'EXPEDITION', 'SHIPPED', 'COMPLETED'].includes(caseData?.status)
 
   useEffect(() => {
     if (!caseData) return
+    const currentServiceId = caseData.service?.id || ''
+    const currentServiceAllowed = !currentServiceId || filteredServices.some((service: any) => service.id === currentServiceId)
+    const fallbackServiceId = currentServiceAllowed ? currentServiceId : (filteredServices[0]?.id || '')
+    const fallbackService = filteredServices.find((service: any) => service.id === fallbackServiceId) || caseData.service
     setBillingForm({
-      serviceId: caseData.service?.id || '',
-      billingType: caseData.billingType || caseData.service?.name || '',
+      serviceId: fallbackServiceId,
+      billingType: caseData.billingType || fallbackService?.name || '',
       installmentOption: allowedInstallments.includes(caseData.installmentOption || '') ? caseData.installmentOption : (allowedInstallments[0] || '1x'),
       dropoutInsurance: !!caseData.dropoutInsurance,
       discountCoupon: couponAllowed ? (caseData.discountCoupon || '') : '',
       packActive: !!caseData.packActive,
     })
-  }, [caseData, allowedInstallments, couponAllowed])
+  }, [caseData, filteredServices, allowedInstallments, couponAllowed])
 
   return (
     <div className="space-y-4">
@@ -354,10 +377,13 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                               }}
                             >
                               <option value="">Selecione o produto/pacote</option>
-                              {availableServices.map((service: any) => (
+                              {filteredServices.map((service: any) => (
                                 <option key={service.id} value={service.id}>{service.name}</option>
                               ))}
                             </select>
+                            {filteredServices.length === 0 && (
+                              <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
+                            )}
                           </div>
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Parcelas</label>

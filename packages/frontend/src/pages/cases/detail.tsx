@@ -15,6 +15,22 @@ function isAlignerType(serviceType?: string) {
   return ['FULL', 'MID', 'AIR', 'EXPRESS', 'REFINEMENT'].includes(serviceType || '')
 }
 
+function getAllowedServiceTypesForProduct(productType?: string) {
+  const map: Record<string, string[]> = {
+    ALINHADORES: ['FULL', 'MID', 'EXPRESS', 'REFINEMENT'],
+    FINALIZACAO: ['RETAINER'],
+    PLACA_MIORRELAXANTE: ['OTHER'],
+    EA_AIR2: ['AIR'],
+  }
+  return productType ? map[productType] || null : null
+}
+
+function filterServicesForProduct(services: any[], productType?: string) {
+  const allowedTypes = getAllowedServiceTypesForProduct(productType)
+  if (!allowedTypes) return services
+  return services.filter((service: any) => allowedTypes.includes(service.type))
+}
+
 function getAllowedInstallments(service?: any): string[] {
   if (!service) return ['1x']
   const available = new Set<string>(['1x'])
@@ -85,26 +101,33 @@ export default function CaseDetailPage() {
   })
 
   const availableServices = servicesData?.services || []
+  const filteredServices = useMemo(() => filterServicesForProduct(availableServices, data?.productType), [availableServices, data?.productType])
   const selectedService = useMemo(() => {
-    return availableServices.find((service: any) => service.id === billingForm.serviceId)
+    return filteredServices.find((service: any) => service.id === billingForm.serviceId)
+      || filteredServices.find((service: any) => service.id === data?.service?.id)
+      || availableServices.find((service: any) => service.id === billingForm.serviceId)
       || availableServices.find((service: any) => service.id === data?.service?.id)
       || data?.service
-  }, [availableServices, billingForm.serviceId, data?.service])
+  }, [filteredServices, availableServices, billingForm.serviceId, data?.service])
   const allowedInstallments = useMemo(() => getAllowedInstallments(selectedService), [selectedService])
   const couponAllowed = isAlignerType(selectedService?.type)
   const showBillingSection = ['WAITING_APPROVAL', 'APPROVED', 'PRINTING_3D', 'LABORATORY', 'EXPEDITION', 'SHIPPED', 'COMPLETED'].includes(data?.status)
 
   useEffect(() => {
     if (!data) return
+    const currentServiceId = data.service?.id || ''
+    const currentServiceAllowed = !currentServiceId || filteredServices.some((service: any) => service.id === currentServiceId)
+    const fallbackServiceId = currentServiceAllowed ? currentServiceId : (filteredServices[0]?.id || '')
+    const fallbackService = filteredServices.find((service: any) => service.id === fallbackServiceId) || data.service
     setBillingForm({
-      serviceId: data.service?.id || '',
-      billingType: data.billingType || data.service?.name || '',
+      serviceId: fallbackServiceId,
+      billingType: data.billingType || fallbackService?.name || '',
       installmentOption: allowedInstallments.includes(data.installmentOption || '') ? data.installmentOption : (allowedInstallments[0] || '1x'),
       dropoutInsurance: !!data.dropoutInsurance,
       discountCoupon: couponAllowed ? (data.discountCoupon || '') : '',
       packActive: !!data.packActive,
     })
-  }, [data, allowedInstallments, couponAllowed])
+  }, [data, filteredServices, allowedInstallments, couponAllowed])
 
   const billingMutation = useMutation({
     mutationFn: () => api.patch(`/workflow/case/${id}/billing`, billingForm),
@@ -292,10 +315,13 @@ export default function CaseDetailPage() {
                     }}
                   >
                     <option value="">Selecione o produto/pacote</option>
-                    {availableServices.map((service: any) => (
+                              {filteredServices.map((service: any) => (
                       <option key={service.id} value={service.id}>{service.name}</option>
                     ))}
                   </select>
+                            {filteredServices.length === 0 && (
+                              <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
+                            )}
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Parcelas</label>

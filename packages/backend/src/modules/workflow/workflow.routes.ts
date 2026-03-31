@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
-import { applyCouponDiscount, getAllowedInstallmentOptions, getChargeAmountForCase, isAlignerService, normalizeInstallmentOption } from '../services/pricing.utils'
+import { applyCouponDiscount, getAllowedInstallmentOptions, getChargeAmountForCase, isAlignerService, normalizeInstallmentOption, serviceMatchesProductType } from '../services/pricing.utils'
 
 const WORKFLOW_STAGES = [
   { stage: 1, name: 'Recebimento dos modelos' },
@@ -118,6 +118,10 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     if (wantsPricing && !service) {
       throw new Error('Selecione um tipo de produto/pacote válido antes de salvar o faturamento')
+    }
+
+    if (service && !serviceMatchesProductType(caseData.productType, service.type)) {
+      throw new Error('Este produto/pacote não é compatível com o tipo de tratamento do paciente')
     }
 
     const normalizedInstallment = service ? normalizeInstallmentOption(installmentOption) : null
