@@ -13,7 +13,13 @@ export function normalizeServiceKind(service?: any) {
 
   if (source.includes('FULL')) return 'FULL'
   if (source.includes('MID')) return 'MID'
-  if (source.includes('UNIDADE') || source.includes('EXPRESS')) return 'UNIDADE'
+  if (
+    source.includes('UNIDADE') ||
+    source.includes('UNID') ||
+    source.includes('UNIT') ||
+    source.includes('EXPRESS') ||
+    source.includes('EXPRES')
+  ) return 'UNIDADE'
   if (source.includes('AIR')) return 'AIR'
   if (source.includes('REFIN')) return 'REFINEMENT'
   if (source.includes('CONTEN') || source.includes('RETEN') || source.includes('FINALIZ')) return 'RETAINER'

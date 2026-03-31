@@ -43,7 +43,7 @@ const TYPE_OPTIONS = [
   { value: 'FULL', label: 'FULL' },
   { value: 'MID', label: 'MID' },
   { value: 'AIR', label: 'EA AIR²' },
-  { value: 'EXPRESS', label: 'EXPRESS' },
+  { value: 'EXPRESS', label: 'UNIDADE' },
   { value: 'REFINEMENT', label: 'REFINAMENTO' },
   { value: 'RETAINER', label: 'PLACA / CONTENÇÃO' },
   { value: 'OTHER', label: 'OUTRO' },

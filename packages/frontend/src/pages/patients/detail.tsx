@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import api from '@/lib/api'
-import { ensureSelectedServiceInList, filterServicesForProduct, getAllowedInstallments, getServiceDisplayName, inferProductType, isAlignerType, sortBillingServices } from '@/lib/billing'
+import { ensureSelectedServiceInList, filterServicesForProduct, getAllowedInstallments, getServiceDisplayName, inferProductType, isAlignerType, normalizeServiceKind, sortBillingServices } from '@/lib/billing'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
@@ -143,6 +143,10 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
       || availableServices.find((service: any) => service.id === caseData?.service?.id)
       || caseData?.service
   }, [serviceOptions, availableServices, billingForm.serviceId, caseData?.service])
+  const hasUnidadeOption = useMemo(
+    () => serviceOptions.some((service: any) => normalizeServiceKind(service) === 'UNIDADE'),
+    [serviceOptions],
+  )
   const allowedInstallments = useMemo(() => getAllowedInstallments(selectedService), [selectedService])
   const couponAllowed = isAlignerType(selectedService)
   const showBillingSection = ['WAITING_APPROVAL', 'APPROVED', 'PRINTING_3D', 'LABORATORY', 'EXPEDITION', 'SHIPPED', 'COMPLETED'].includes(caseData?.status)
@@ -356,6 +360,9 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                             </select>
                             {serviceOptions.length === 0 && (
                               <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
+                            )}
+                            {effectiveProductType === 'ALINHADORES' && !hasUnidadeOption && (
+                              <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo. Cadastre um serviço com tipo UNIDADE ou EXPRESS em Admin &gt; Serviços.</p>
                             )}
                           </div>
                           <div>

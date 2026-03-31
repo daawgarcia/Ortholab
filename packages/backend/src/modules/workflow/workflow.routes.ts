@@ -21,7 +21,8 @@ const BILLING_SERVICE_MAP: Record<string, string> = {
   MID: 'MID',
   'EA AIR2': 'AIR',
   'EA AIR²': 'AIR',
-  UNIDADE: 'EXPRESS',
+  UNIDADE: 'UNIDADE',
+  EXPRESS: 'EXPRESS',
   'FINALIZACAO (CONTENCAO)': 'RETAINER',
   'FINALIZAÇÃO (CONTENÇÃO)': 'RETAINER',
   'PLACA MIORRELAXANTE': 'OTHER',
@@ -62,11 +63,19 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     const serviceType = BILLING_SERVICE_MAP[billingKey]
     if (!serviceType && !billingKey) return null
 
+    const serviceTypeConditions = serviceType
+      ? serviceType === 'UNIDADE'
+        ? [{ type: 'UNIDADE' }, { type: 'EXPRESS' }]
+        : serviceType === 'EXPRESS'
+          ? [{ type: 'EXPRESS' }, { type: 'UNIDADE' }]
+          : [{ type: serviceType }]
+      : []
+
     return fastify.prisma.service.findFirst({
       where: {
         active: true,
         OR: [
-          serviceType ? { type: serviceType } : undefined,
+          ...serviceTypeConditions,
           billingType ? { name: { equals: billingType, mode: 'insensitive' } } : undefined,
         ].filter(Boolean) as any,
       },
