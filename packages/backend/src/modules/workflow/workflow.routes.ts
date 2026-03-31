@@ -173,13 +173,23 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     })
 
     if (updated.service) {
-      const baseAmount = getChargeAmountForCase(updated.service, updated.installmentOption)
-      const finalAmount = coupon ? applyCouponDiscount(baseAmount, coupon) : baseAmount
-      await syncDentistInvoice(updated, finalAmount)
-      return { updated, baseAmount, finalAmount }
+      try {
+        const baseAmount = getChargeAmountForCase(updated.service, updated.installmentOption)
+        const finalAmount = coupon ? applyCouponDiscount(baseAmount, coupon) : baseAmount
+        await syncDentistInvoice(updated, finalAmount)
+        return { updated, baseAmount, finalAmount, requiresManualPricing: false }
+      } catch (error: any) {
+        const message = String(error?.message || '')
+        const isMissingPrice = message.includes('Preco nao configurado') || message.includes('Preco invalido')
+        if (!isMissingPrice) throw error
+
+        // When there is no configured table for this product yet, allow billing save
+        // and let financial team set the amount manually.
+        return { updated, baseAmount: null, finalAmount: null, requiresManualPricing: true }
+      }
     }
 
-    return { updated, baseAmount: null, finalAmount: null }
+    return { updated, baseAmount: null, finalAmount: null, requiresManualPricing: false }
   }
 
   fastify.get('/case/:caseId', { preHandler: authenticate }, async (request, reply) => {
@@ -289,7 +299,12 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     try {
       const billingResult = await persistBilling(caseData, request.body as any)
-      return { case: billingResult.updated, amount: billingResult.finalAmount, baseAmount: billingResult.baseAmount }
+      return {
+        case: billingResult.updated,
+        amount: billingResult.finalAmount,
+        baseAmount: billingResult.baseAmount,
+        requiresManualPricing: billingResult.requiresManualPricing,
+      }
     } catch (error: any) {
       return reply.status(400).send({ error: error.message || 'Falha ao atualizar faturamento' })
     }

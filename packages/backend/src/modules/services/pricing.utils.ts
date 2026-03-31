@@ -94,6 +94,7 @@ export function getChargeAmountForCase(service: ServiceLike, installmentOption?:
     '2x': 'INSTALLMENT_2',
     '6x': 'INSTALLMENT_6',
     '12x': 'INSTALLMENT_12',
+    '13x': 'INSTALLMENT_13',
     '21x': 'INSTALLMENT_21',
   }
 
@@ -112,7 +113,15 @@ export function getChargeAmountForCase(service: ServiceLike, installmentOption?:
     throw new Error('Preco nao configurado para a condicao de pagamento escolhida')
   }
 
-  return Number(selected.price)
+  const perInstallmentAmount = Number(selected.price)
+  const installments = Number((normalized.match(/^(\d+)x$/)?.[1] || '1'))
+  if (!Number.isFinite(perInstallmentAmount) || perInstallmentAmount <= 0) {
+    throw new Error('Preco invalido para a condicao de pagamento escolhida')
+  }
+
+  // Price entries for installment groups are stored as value per installment.
+  // Convert to total charge amount for invoices and financial panel.
+  return Number((perInstallmentAmount * Math.max(1, installments)).toFixed(2))
 }
 
 export function applyCouponDiscount(amount: number, coupon: CouponLike) {
