@@ -45,6 +45,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
         include: {
           dentist: { select: { name: true, clinic: true, email: true } },
           service: true,
+          workflowEvents: { orderBy: { stage: 'desc' }, take: 1 },
           payment: { select: { status: true, amount: true } },
           financial: { select: { invoiceNumber: true, billedAt: true } },
           _count: { select: { documents: true } },
