@@ -91,19 +91,43 @@ export default function CaseDetailPage() {
 
   useEffect(() => {
     if (!data) return
-    const currentServiceId = data.service?.id || ''
-    const currentServiceAllowed = !currentServiceId || serviceOptions.some((service: any) => service.id === currentServiceId)
-    const fallbackServiceId = currentServiceAllowed ? currentServiceId : (serviceOptions[0]?.id || '')
-    const fallbackService = serviceOptions.find((service: any) => service.id === fallbackServiceId) || data.service
-    setBillingForm({
-      serviceId: fallbackServiceId,
-      billingType: data.billingType || fallbackService?.name || '',
-      installmentOption: allowedInstallments.includes(data.installmentOption || '') ? data.installmentOption : (allowedInstallments[0] || '1x'),
-      dropoutInsurance: !!data.dropoutInsurance,
-      discountCoupon: couponAllowed ? (data.discountCoupon || '') : '',
-      packActive: !!data.packActive,
+    setBillingForm((prev: any) => {
+      const currentServiceId = data.service?.id || ''
+      const prevServiceId = prev?.serviceId || ''
+
+      const preferredServiceId =
+        (prevServiceId && serviceOptions.some((service: any) => service.id === prevServiceId) && prevServiceId)
+        || (currentServiceId && serviceOptions.some((service: any) => service.id === currentServiceId) && currentServiceId)
+        || serviceOptions[0]?.id
+        || currentServiceId
+        || ''
+
+      const preferredService =
+        serviceOptions.find((service: any) => service.id === preferredServiceId)
+        || availableServices.find((service: any) => service.id === preferredServiceId)
+        || data.service
+
+      const nextInstallments = getAllowedInstallments(preferredService)
+      const installmentFromCase = data.installmentOption || ''
+      const prevInstallment = prev?.installmentOption || ''
+      const nextInstallment =
+        (prevInstallment && nextInstallments.includes(prevInstallment) && prevInstallment)
+        || (installmentFromCase && nextInstallments.includes(installmentFromCase) && installmentFromCase)
+        || nextInstallments[0]
+        || '1x'
+
+      const couponEnabled = isAlignerType(preferredService)
+
+      return {
+        serviceId: preferredServiceId,
+        billingType: preferredService?.name || prev?.billingType || data.billingType || '',
+        installmentOption: nextInstallment,
+        dropoutInsurance: typeof prev?.dropoutInsurance === 'boolean' ? prev.dropoutInsurance : !!data.dropoutInsurance,
+        discountCoupon: couponEnabled ? (prev?.discountCoupon ?? data.discountCoupon ?? '') : '',
+        packActive: typeof prev?.packActive === 'boolean' ? prev.packActive : !!data.packActive,
+      }
     })
-  }, [data, serviceOptions, allowedInstallments, couponAllowed])
+  }, [data, serviceOptions, availableServices])
 
   const billingMutation = useMutation({
     mutationFn: () => api.patch(`/workflow/case/${id}/billing`, billingForm),
@@ -300,7 +324,7 @@ export default function CaseDetailPage() {
                     <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
                   )}
                   {effectiveProductType === 'ALINHADORES' && !hasUnidadeOption && (
-                    <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo. Cadastre um serviço com tipo UNIDADE ou EXPRESS em Admin &gt; Serviços.</p>
+                    <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo. Cadastre um serviço com tipo UNIDADE em Admin &gt; Serviços.</p>
                   )}
                 </div>
                 <div>

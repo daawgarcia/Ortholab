@@ -153,19 +153,43 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
 
   useEffect(() => {
     if (!caseData) return
-    const currentServiceId = caseData.service?.id || ''
-    const currentServiceAllowed = !currentServiceId || serviceOptions.some((service: any) => service.id === currentServiceId)
-    const fallbackServiceId = currentServiceAllowed ? currentServiceId : (serviceOptions[0]?.id || '')
-    const fallbackService = serviceOptions.find((service: any) => service.id === fallbackServiceId) || caseData.service
-    setBillingForm({
-      serviceId: fallbackServiceId,
-      billingType: caseData.billingType || fallbackService?.name || '',
-      installmentOption: allowedInstallments.includes(caseData.installmentOption || '') ? caseData.installmentOption : (allowedInstallments[0] || '1x'),
-      dropoutInsurance: !!caseData.dropoutInsurance,
-      discountCoupon: couponAllowed ? (caseData.discountCoupon || '') : '',
-      packActive: !!caseData.packActive,
+    setBillingForm((prev: any) => {
+      const currentServiceId = caseData.service?.id || ''
+      const prevServiceId = prev?.serviceId || ''
+
+      const preferredServiceId =
+        (prevServiceId && serviceOptions.some((service: any) => service.id === prevServiceId) && prevServiceId)
+        || (currentServiceId && serviceOptions.some((service: any) => service.id === currentServiceId) && currentServiceId)
+        || serviceOptions[0]?.id
+        || currentServiceId
+        || ''
+
+      const preferredService =
+        serviceOptions.find((service: any) => service.id === preferredServiceId)
+        || availableServices.find((service: any) => service.id === preferredServiceId)
+        || caseData.service
+
+      const nextInstallments = getAllowedInstallments(preferredService)
+      const installmentFromCase = caseData.installmentOption || ''
+      const prevInstallment = prev?.installmentOption || ''
+      const nextInstallment =
+        (prevInstallment && nextInstallments.includes(prevInstallment) && prevInstallment)
+        || (installmentFromCase && nextInstallments.includes(installmentFromCase) && installmentFromCase)
+        || nextInstallments[0]
+        || '1x'
+
+      const couponEnabled = isAlignerType(preferredService)
+
+      return {
+        serviceId: preferredServiceId,
+        billingType: preferredService?.name || prev?.billingType || caseData.billingType || '',
+        installmentOption: nextInstallment,
+        dropoutInsurance: typeof prev?.dropoutInsurance === 'boolean' ? prev.dropoutInsurance : !!caseData.dropoutInsurance,
+        discountCoupon: couponEnabled ? (prev?.discountCoupon ?? caseData.discountCoupon ?? '') : '',
+        packActive: typeof prev?.packActive === 'boolean' ? prev.packActive : !!caseData.packActive,
+      }
     })
-  }, [caseData, serviceOptions, allowedInstallments, couponAllowed])
+  }, [caseData, serviceOptions, availableServices])
 
   return (
     <div className="space-y-4">
@@ -362,7 +386,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                               <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
                             )}
                             {effectiveProductType === 'ALINHADORES' && !hasUnidadeOption && (
-                              <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo. Cadastre um serviço com tipo UNIDADE ou EXPRESS em Admin &gt; Serviços.</p>
+                              <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo. Cadastre um serviço com tipo UNIDADE em Admin &gt; Serviços.</p>
                             )}
                           </div>
                           <div>
