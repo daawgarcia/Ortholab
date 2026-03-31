@@ -120,6 +120,16 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     })
   }
 
+  async function clearOpenDentistInvoices(caseId: string, dentistId: string) {
+    await fastify.prisma.dentistInvoice.deleteMany({
+      where: {
+        caseId,
+        dentistId,
+        status: 'OPEN',
+      },
+    })
+  }
+
   async function persistBilling(caseData: any, payload: any) {
     const { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive, serviceId } = payload
     const wantsPricing = !!(billingType || installmentOption || discountCoupon || serviceId)
@@ -171,6 +181,12 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
         service: { include: { prices: { orderBy: { validFrom: 'desc' } } } },
       },
     })
+
+    // 21x is handled by the financial team manually and must not generate payment titles.
+    if ((updated.installmentOption || '').toLowerCase() === '21x') {
+      await clearOpenDentistInvoices(updated.id, updated.dentistId)
+      return { updated, baseAmount: null, finalAmount: null, requiresManualPricing: true }
+    }
 
     if (updated.service) {
       try {
