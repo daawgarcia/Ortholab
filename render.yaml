@@ -7,8 +7,9 @@ services:
     startCommand: cd packages/backend && npx prisma db push && node dist/server.js
     envVars:
       - key: DATABASE_URL
-        scope: build
-        value: ${{ database.internal_url }}
+        fromDatabase:
+          name: ortholab-postgres
+          property: connectionString
       - key: NODE_ENV
         value: production
       - key: PORT
