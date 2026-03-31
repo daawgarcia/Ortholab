@@ -48,6 +48,7 @@ export default function DentistFinancialPage() {
   const qc = useQueryClient()
   const [selected, setSelected] = useState<string[]>([])
   const [method, setMethod] = useState<'PIX' | 'CREDIT_CARD'>('PIX')
+  const [installments, setInstallments] = useState<number>(1)
   const [cardData, setCardData] = useState({ number: '', holder: '', expiry: '', cvv: '' })
   const [payResult, setPayResult] = useState<PaymentResult | null>(null)
   const [paying, setPaying] = useState(false)
@@ -75,6 +76,7 @@ export default function DentistFinancialPage() {
       const res = await api.post('/dentist-financial/invoices/pay', {
         invoiceIds: selected,
         method,
+        installments: method === 'CREDIT_CARD' ? installments : 1,
         cardData: method === 'CREDIT_CARD' ? cardData : undefined,
       })
       setPayResult(res.data)
@@ -211,12 +213,24 @@ export default function DentistFinancialPage() {
                 method === 'CREDIT_CARD' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300')}>
               <CreditCard className="w-6 h-6 text-primary" />
               <span className="font-medium text-sm">Cartão de Crédito</span>
-              <span className="text-xs text-gray-400">Até 12x</span>
+              <span className="text-xs text-gray-400">Escolha as parcelas</span>
             </button>
           </div>
 
           {method === 'CREDIT_CARD' && (
             <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-xs text-gray-500 mb-1 block">Parcelas</label>
+                <select
+                  className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+                  value={installments}
+                  onChange={e => setInstallments(Number(e.target.value))}
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(opt => (
+                    <option key={opt} value={opt}>{opt}x</option>
+                  ))}
+                </select>
+              </div>
               <div className="col-span-2">
                 <label className="text-xs text-gray-500 mb-1 block">Número do Cartão</label>
                 <input className="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="0000 0000 0000 0000"
