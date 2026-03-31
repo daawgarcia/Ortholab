@@ -65,7 +65,9 @@ export function getAllowedServiceTypesForProduct(productType?: string) {
 export function filterServicesForProduct(services: any[], productType?: string) {
   const allowedTypes = getAllowedServiceTypesForProduct(productType)
   if (!allowedTypes) return services
-  return services.filter((service: any) => allowedTypes.includes(normalizeServiceKind(service)))
+  const filtered = services.filter((service: any) => allowedTypes.includes(normalizeServiceKind(service)))
+  // Fallback for legacy/uncategorized service catalogs: keep options selectable.
+  return filtered.length > 0 ? filtered : services
 }
 
 export function sortBillingServices(services: any[]) {
@@ -108,6 +110,15 @@ export function getAllowedInstallments(service?: any) {
     if (price.groupId === 'INSTALLMENT_13') available.add('13x')
     if (price.groupId === 'INSTALLMENT_21') available.add('21x')
   }
+
+  // Some API responses expose latest prices as flattened fields.
+  const latestPrices = service.latestPrices || {}
+  if (latestPrices.cash !== undefined && latestPrices.cash !== null) available.add('1x')
+  if (latestPrices.installment2 !== undefined && latestPrices.installment2 !== null) available.add('2x')
+  if (latestPrices.installment6 !== undefined && latestPrices.installment6 !== null) available.add('6x')
+  if (latestPrices.installment12 !== undefined && latestPrices.installment12 !== null) available.add('12x')
+  if (latestPrices.installment13 !== undefined && latestPrices.installment13 !== null) available.add('13x')
+  if (latestPrices.installment21 !== undefined && latestPrices.installment21 !== null) available.add('21x')
 
   if (serviceKind === 'UNIDADE') return ['1x']
   if (serviceKind === 'MID') {

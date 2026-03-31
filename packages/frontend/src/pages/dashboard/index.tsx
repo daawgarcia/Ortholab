@@ -65,10 +65,30 @@ export default function DashboardPage() {
   const recentCases = cases.slice(0, 5)
   const total = casesData?.total || 0
 
+  const resolveCaseStatus = (item: any) => {
+    if (item?.status && item.status !== 'DRAFT') return item.status
+    const stage = item?.workflowEvents?.[0]?.stage
+    const stageMap: Record<number, string> = {
+      1: 'IN_PLANNING',
+      2: 'IN_PLANNING',
+      3: 'IN_MOVEMENT',
+      4: 'LAB_APPROVAL',
+      5: 'WAITING_APPROVAL',
+      6: 'APPROVED',
+      7: 'PRINTING_3D',
+      8: 'LABORATORY',
+      9: 'EXPEDITION',
+    }
+    return stageMap[Number(stage)] || item?.status || 'DRAFT'
+  }
+
   const statusCount = (key: string) =>
     user?.role === 'ADMIN'
-      ? adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0
-      : cases.filter((item: any) => item.status === key).length
+      ? Math.max(
+          adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0,
+          cases.filter((item: any) => resolveCaseStatus(item) === key).length,
+        )
+      : cases.filter((item: any) => resolveCaseStatus(item) === key).length
 
   const stats = [
     { label: 'Total de Pacientes',        value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
@@ -189,7 +209,7 @@ export default function DashboardPage() {
                   <p className="font-medium text-sm">{c.patientName}</p>
                   <p className="text-xs text-gray-400">{c.dentist?.name} {c.dentist?.clinic ? `· ${c.dentist.clinic}` : ''}</p>
                 </div>
-                <StatusBadge status={c.status} />
+                <StatusBadge status={resolveCaseStatus(c)} />
               </Link>
             ))}
           </div>
@@ -227,7 +247,7 @@ export default function DashboardPage() {
                   <p className="font-medium text-sm truncate">{c.patientName}</p>
                   <p className="text-xs text-muted-foreground">{c.dentist?.clinic || c.dentist?.name} · {formatDate(c.createdAt)}</p>
                 </div>
-                <StatusBadge status={c.status} />
+                <StatusBadge status={resolveCaseStatus(c)} />
               </Link>
             ))}
           </div>
