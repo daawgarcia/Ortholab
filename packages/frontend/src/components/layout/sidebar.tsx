@@ -89,10 +89,6 @@ export function Sidebar() {
           <NavItem href="/dentists" icon={Users} label="Dentistas" active={isActive('/dentists')} />
         )}
 
-        {['LAB_TECH', 'FINANCIAL'].includes(user?.role || '') && (
-          <NavItem href="/cases" icon={FolderOpen} label="Casos" active={isActive('/cases')} />
-        )}
-
         {(isSeller || isDentist || isAdmin || isFinancial) && (
           <NavItem href="/chat" icon={MessageCircle} label="Chat" active={isActive('/chat')} />
         )}

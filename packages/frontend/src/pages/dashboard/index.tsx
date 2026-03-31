@@ -68,7 +68,7 @@ export default function DashboardPage() {
     adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0
 
   const stats = [
-    { label: 'Total de Casos',           value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
+    { label: 'Total de Pacientes',        value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
     { label: 'A Preparar',               value: statusCount('IN_PLANNING'),       icon: Clock,       color: 'text-yellow-600', bg: 'bg-yellow-50' },
     { label: 'A Movimentar',             value: statusCount('IN_MOVEMENT'),        icon: Package,     color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { label: 'Aguardando Aprovação',     value: statusCount('WAITING_APPROVAL'),   icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-50' },
@@ -92,8 +92,8 @@ export default function DashboardPage() {
             </Button>
           )}
           {user?.role === 'DENTIST' && (
-            <Link to="/cases/new">
-              <Button className="gap-2"><Plus className="w-4 h-4" /> Novo Caso</Button>
+            <Link to="/patients/new">
+              <Button className="gap-2"><Plus className="w-4 h-4" /> Novo Paciente</Button>
             </Link>
           )}
         </div>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
         {caseSearch && caseByNumber?.cases?.length > 0 && (
           <div className="lg:col-span-3 border rounded-lg bg-white shadow-sm divide-y">
             {caseByNumber.cases.map((c: any) => (
-              <Link key={c.id} to={`/cases/${c.id}`}
+              <Link key={c.id} to={`/patients/${c.patientId}`}
                 className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
                 <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
                   #{c.caseNumber}
@@ -195,8 +195,8 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base">Casos Recentes</CardTitle>
-          <Link to="/cases">
+          <CardTitle className="text-base">Pacientes Recentes</CardTitle>
+          <Link to="/patients">
             <Button variant="ghost" size="sm" className="text-primary gap-1">
               <TrendingUp className="w-4 h-4" /> Ver todos
             </Button>
@@ -207,16 +207,16 @@ export default function DashboardPage() {
             {cases.length === 0 && (
               <div className="py-10 text-center text-muted-foreground">
                 <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Nenhum caso encontrado</p>
+                <p className="text-sm">Nenhum paciente encontrado</p>
                 {user?.role === 'DENTIST' && (
-                  <Link to="/cases/new">
-                    <Button size="sm" variant="outline" className="mt-3 gap-1"><Plus className="w-3 h-3" /> Criar primeiro caso</Button>
+                  <Link to="/patients/new">
+                    <Button size="sm" variant="outline" className="mt-3 gap-1"><Plus className="w-3 h-3" /> Criar primeiro paciente</Button>
                   </Link>
                 )}
               </div>
             )}
             {cases.map((c: any) => (
-              <Link key={c.id} to={`/cases/${c.id}`} className="flex items-center gap-4 py-3.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors">
+              <Link key={c.id} to={`/patients/${c.patientId}`} className="flex items-center gap-4 py-3.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors">
                 <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
                   #{c.caseNumber}
                 </div>

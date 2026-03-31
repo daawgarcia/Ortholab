@@ -98,8 +98,8 @@ export default function App() {
           <Route path="dentists" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL']}><DentistsPage /></ProtectedRoute>} />
           <Route path="dentists/:id" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL']}><DentistDetailPage /></ProtectedRoute>} />
 
-          <Route path="cases" element={<CasesPage />} />
-          <Route path="cases/new" element={<ProtectedRoute roles={['DENTIST']}><NewCasePage /></ProtectedRoute>} />
+          <Route path="cases" element={<Navigate to="/patients" replace />} />
+          <Route path="cases/new" element={<Navigate to="/patients/new" replace />} />
           <Route path="cases/:id" element={<CaseDetailPage />} />
 
           <Route path="workflow/planning-center" element={<ProtectedRoute roles={WORKFLOW_ROLES}><PlanningCenterPage /></ProtectedRoute>} />
