@@ -74,18 +74,31 @@ export default function CaseDetailPage() {
   const [showRevision, setShowRevision] = useState(false)
   const [billingForm, setBillingForm] = useState<any>({})
 
+  const { data: servicesData } = useQuery({
+    queryKey: ['services-billing-options'],
+    queryFn: () => api.get('/services').then(r => r.data),
+  })
+
   const { data, isLoading } = useQuery({
     queryKey: ['case', id],
     queryFn: () => api.get(`/cases/${id}`).then(r => r.data.case),
   })
 
-  const allowedInstallments = useMemo(() => getAllowedInstallments(data?.service), [data?.service])
-  const couponAllowed = isAlignerType(data?.service?.type)
+  const availableServices = servicesData?.services || []
+  const selectedService = useMemo(() => {
+    return availableServices.find((service: any) => service.id === billingForm.serviceId)
+      || availableServices.find((service: any) => service.id === data?.service?.id)
+      || data?.service
+  }, [availableServices, billingForm.serviceId, data?.service])
+  const allowedInstallments = useMemo(() => getAllowedInstallments(selectedService), [selectedService])
+  const couponAllowed = isAlignerType(selectedService?.type)
+  const showBillingSection = ['WAITING_APPROVAL', 'APPROVED', 'PRINTING_3D', 'LABORATORY', 'EXPEDITION', 'SHIPPED', 'COMPLETED'].includes(data?.status)
 
   useEffect(() => {
     if (!data) return
     setBillingForm({
-      billingType: data.billingType || '',
+      serviceId: data.service?.id || '',
+      billingType: data.billingType || data.service?.name || '',
       installmentOption: allowedInstallments.includes(data.installmentOption || '') ? data.installmentOption : (allowedInstallments[0] || '1x'),
       dropoutInsurance: !!data.dropoutInsurance,
       discountCoupon: couponAllowed ? (data.discountCoupon || '') : '',
@@ -95,7 +108,12 @@ export default function CaseDetailPage() {
 
   const billingMutation = useMutation({
     mutationFn: () => api.patch(`/workflow/case/${id}/billing`, billingForm),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['case', id] }); toast({ title: 'Faturamento salvo!' }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['case', id] })
+      qc.invalidateQueries({ queryKey: ['dentist-invoices'] })
+      qc.invalidateQueries({ queryKey: ['financial'] })
+      toast({ title: 'Faturamento salvo!' })
+    },
     onError: (err: any) => toast({ variant: 'destructive', title: 'Erro', description: err?.response?.data?.error || 'Falha ao salvar faturamento' }),
   })
 
@@ -105,8 +123,14 @@ export default function CaseDetailPage() {
   })
 
   const approveMutation = useMutation({
-    mutationFn: () => api.post(`/cases/${id}/approve`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['case', id] }); toast({ title: 'Planejamento aprovado!' }) },
+    mutationFn: () => api.post(`/workflow/case/${id}/approve`, billingForm),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['case', id] })
+      qc.invalidateQueries({ queryKey: ['dentist-invoices'] })
+      qc.invalidateQueries({ queryKey: ['financial'] })
+      toast({ title: 'Planejamento aprovado!' })
+    },
+    onError: (err: any) => toast({ variant: 'destructive', title: 'Erro', description: err?.response?.data?.error || 'Falha ao aprovar caso' }),
   })
 
   const revisionMutation = useMutation({
@@ -243,7 +267,7 @@ export default function CaseDetailPage() {
         </div>
 
         <div className="space-y-5">
-          {c.status === 'APPROVED' && (
+          {showBillingSection && (
             <Card className="border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-blue-700">Faturamento</CardTitle>
@@ -251,15 +275,27 @@ export default function CaseDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Tipo</label>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2">
-                    {['Unidade', 'MID', 'FULL', 'EA AIR²', 'Finalização (Contenção)', 'Placa Miorrelaxante'].map(t => (
-                      <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm">
-                        <input type="radio" checked={billingForm.billingType === t} onChange={() => setBillingForm((f: any) => ({ ...f, billingType: t }))} className="accent-primary" />
-                        {t}
-                      </label>
+                  <label className="text-xs text-gray-500 block mb-1">Tipo de produto/pacote</label>
+                  <select
+                    className="w-full border rounded px-2 py-1.5 text-sm"
+                    value={billingForm.serviceId || ''}
+                    onChange={e => {
+                      const nextService = availableServices.find((service: any) => service.id === e.target.value)
+                      const nextInstallments = getAllowedInstallments(nextService)
+                      setBillingForm((f: any) => ({
+                        ...f,
+                        serviceId: e.target.value,
+                        billingType: nextService?.name || '',
+                        installmentOption: nextInstallments[0] || '1x',
+                        discountCoupon: isAlignerType(nextService?.type) ? f.discountCoupon : '',
+                      }))
+                    }}
+                  >
+                    <option value="">Selecione o produto/pacote</option>
+                    {availableServices.map((service: any) => (
+                      <option key={service.id} value={service.id}>{service.name}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Parcelas</label>

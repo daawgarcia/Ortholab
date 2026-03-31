@@ -9,7 +9,12 @@ const createCaseSchema = z.object({
   patientDob: z.string().optional(),
   gender: z.string().optional(),
   notes: z.string().optional(),
+  patientId: z.string().optional(),
   serviceId: z.string().optional(),
+  productType: z.string().optional(),
+  planningFormData: z.any().optional(),
+  status: z.nativeEnum(CaseStatus).optional(),
+  dentistId: z.string().optional(),
   isRefinement: z.boolean().optional(),
   parentCaseId: z.string().optional(),
 })
@@ -24,6 +29,13 @@ export async function caseRoutes(fastify: FastifyInstance) {
 
     const where: any = {}
     if (user.role === Role.DENTIST) where.dentistId = user.id
+    if (user.role === Role.SELLER) {
+      const portfolio = await fastify.prisma.sellerClient.findMany({
+        where: { sellerId: user.id },
+        select: { clientId: true },
+      })
+      where.dentistId = { in: portfolio.map((item) => item.clientId) }
+    }
     if (status) where.status = status
     if (search) where.patientName = { contains: search, mode: 'insensitive' }
 
@@ -77,20 +89,57 @@ export async function caseRoutes(fastify: FastifyInstance) {
     if (user.role === Role.DENTIST && caseData.dentistId !== user.id) {
       return reply.status(403).send({ error: 'Acesso negado' })
     }
+    if (user.role === Role.SELLER) {
+      const relation = await fastify.prisma.sellerClient.findUnique({
+        where: { sellerId_clientId: { sellerId: user.id, clientId: caseData.dentistId } },
+      })
+      if (!relation) return reply.status(403).send({ error: 'Acesso negado' })
+    }
 
     return { case: caseData }
   })
 
-  fastify.post('/', { preHandler: requireRole(Role.DENTIST) }, async (request, reply) => {
+  fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
     const data = createCaseSchema.parse(request.body)
-    
+    const user = request.user as JwtPayload
+
+    let dentistId = user.id
+    let patientData: any = null
+
+    if (data.patientId) {
+      patientData = await fastify.prisma.patient.findUnique({ where: { id: data.patientId } })
+      if (!patientData) return reply.status(404).send({ error: 'Paciente não encontrado' })
+      dentistId = patientData.dentistId
+    } else if (data.dentistId) {
+      dentistId = data.dentistId
+    }
+
+    if (user.role === Role.DENTIST && dentistId !== user.id) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
+
+    if (user.role === Role.SELLER) {
+      const relation = await fastify.prisma.sellerClient.findUnique({
+        where: { sellerId_clientId: { sellerId: user.id, clientId: dentistId } },
+      })
+      if (!relation) return reply.status(403).send({ error: 'Acesso negado' })
+    }
+
     const caseData = await fastify.prisma.case.create({
-      data: { ...data, dentistId: (request.user as JwtPayload).id, patientDob: data.patientDob ? new Date(data.patientDob) : undefined } as any,
+      data: {
+        ...data,
+        dentistId,
+        patientId: data.patientId,
+        patientName: patientData?.name || data.patientName,
+        patientDob: patientData?.dob || (data.patientDob ? new Date(data.patientDob) : undefined),
+        gender: patientData?.gender || data.gender,
+        status: data.status || CaseStatus.DRAFT,
+      } as any,
       include: { dentist: true, service: true },
     })
 
     await fastify.prisma.caseActivity.create({
-      data: { caseId: caseData.id, userId: (request.user as JwtPayload).id, action: 'CREATED', description: 'Caso criado' },
+      data: { caseId: caseData.id, userId: user.id, action: 'CREATED', description: 'Caso criado' },
     })
 
     return reply.status(201).send({ case: caseData })

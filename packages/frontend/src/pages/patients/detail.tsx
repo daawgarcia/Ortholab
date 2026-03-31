@@ -45,18 +45,35 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const { user } = useAuthStore()
   const qc = useQueryClient()
   const [workflowTab, setWorkflowTab] = useState<'Em Aberto' | 'Concluídos'>('Em Aberto')
-  const openCases = cases.filter(c => c.status !== 'COMPLETED')
+  const draftCases = cases.filter(c => ['DRAFT', 'SUBMITTED'].includes(c.status) && (!c.workflowEvents || c.workflowEvents.length === 0))
+  const openCases = cases.filter(c => !['COMPLETED', 'DRAFT', 'SUBMITTED'].includes(c.status))
   const completedCases = cases.filter(c => c.status === 'COMPLETED')
   const [selectedCase, setSelectedCase] = useState<string>(openCases[0]?.id || '')
   const [notes, setNotes] = useState('')
+  const [revisionNotes, setRevisionNotes] = useState('')
   const [billingForm, setBillingForm] = useState<any>({})
 
-  const canStartWorkflow = user?.role !== 'DENTIST'
+  const canStartWorkflow = user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL'
+  const canApproveForDentist = user?.role === 'ADMIN' || user?.role === 'SELLER'
+
+  const invalidateRelatedQueries = () => {
+    qc.invalidateQueries({ queryKey: ['patient', patientId] })
+    qc.invalidateQueries({ queryKey: ['cases-summary'] })
+    qc.invalidateQueries({ queryKey: ['admin-stats'] })
+    qc.invalidateQueries({ queryKey: ['seller-cases'] })
+    qc.invalidateQueries({ queryKey: ['financial'] })
+    qc.invalidateQueries({ queryKey: ['dentist-invoices'] })
+  }
+
+  const { data: servicesData } = useQuery({
+    queryKey: ['services-billing-options'],
+    queryFn: () => api.get('/services').then(r => r.data),
+  })
 
   const startWorkflowMutation = useMutation({
     mutationFn: () => api.post(`/patients/${patientId}/open-workflow`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['patient', patientId] })
+      invalidateRelatedQueries()
       toast({ title: 'Fluxo iniciado', description: 'Recebimento dos modelos registrado com sucesso.' })
     },
     onError: (error: any) => {
@@ -82,6 +99,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
     mutationFn: () => api.post(`/workflow/case/${selectedCase}/advance`, { notes }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workflow', selectedCase] })
+      invalidateRelatedQueries()
       setNotes('')
       toast({ title: 'Etapa salva com sucesso', description: 'O caso foi avançado no fluxo.' })
     },
@@ -89,9 +107,38 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
 
   const billingMutation = useMutation({
     mutationFn: () => api.patch(`/workflow/case/${selectedCase}/billing`, billingForm),
-    onSuccess: () => toast({ title: 'Faturamento atualizado' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workflow', selectedCase] })
+      invalidateRelatedQueries()
+      toast({ title: 'Faturamento atualizado' })
+    },
     onError: (error: any) => {
       toast({ variant: 'destructive', title: 'Erro', description: error?.response?.data?.error || 'Falha ao atualizar faturamento' })
+    },
+  })
+
+  const approveMutation = useMutation({
+    mutationFn: () => api.post(`/workflow/case/${selectedCase}/approve`, billingForm),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workflow', selectedCase] })
+      invalidateRelatedQueries()
+      toast({ title: 'Caso aprovado', description: 'O workflow seguiu para Impressão 3D.' })
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro', description: error?.response?.data?.error || 'Falha ao aprovar caso' })
+    },
+  })
+
+  const revisionMutation = useMutation({
+    mutationFn: () => api.post(`/cases/${selectedCase}/request-revision`, { notes: revisionNotes }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workflow', selectedCase] })
+      invalidateRelatedQueries()
+      setRevisionNotes('')
+      toast({ title: 'Revisão solicitada' })
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro', description: error?.response?.data?.error || 'Falha ao solicitar revisão' })
     },
   })
 
@@ -99,13 +146,21 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const events = caseData?.workflowEvents || []
   const currentStage = events[events.length - 1]?.stage || 0
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL'
-  const allowedInstallments = useMemo(() => getAllowedInstallments(caseData?.service), [caseData?.service])
-  const couponAllowed = isAlignerType(caseData?.service?.type)
+  const availableServices = servicesData?.services || []
+  const selectedService = useMemo(() => {
+    return availableServices.find((service: any) => service.id === billingForm.serviceId)
+      || availableServices.find((service: any) => service.id === caseData?.service?.id)
+      || caseData?.service
+  }, [availableServices, billingForm.serviceId, caseData?.service])
+  const allowedInstallments = useMemo(() => getAllowedInstallments(selectedService), [selectedService])
+  const couponAllowed = isAlignerType(selectedService?.type)
+  const showBillingSection = ['WAITING_APPROVAL', 'APPROVED', 'PRINTING_3D', 'LABORATORY', 'EXPEDITION', 'SHIPPED', 'COMPLETED'].includes(caseData?.status)
 
   useEffect(() => {
     if (!caseData) return
     setBillingForm({
-      billingType: caseData.billingType || '',
+      serviceId: caseData.service?.id || '',
+      billingType: caseData.billingType || caseData.service?.name || '',
       installmentOption: allowedInstallments.includes(caseData.installmentOption || '') ? caseData.installmentOption : (allowedInstallments[0] || '1x'),
       dropoutInsurance: !!caseData.dropoutInsurance,
       discountCoupon: couponAllowed ? (caseData.discountCoupon || '') : '',
@@ -150,7 +205,22 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
         <>
           {openCases.length === 0 ? (
             <div className="p-6 space-y-3">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg text-blue-700 p-4">Nenhum fluxo em aberto. Registre o recebimento dos modelos para iniciar o processo.</div>
+              {draftCases.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg text-blue-700 p-4">
+                    Paciente criado com sucesso. Próximo passo: adicione as fotos, os modelos digitais e as fichas. Quando a caixa for aberta, o fluxo entra em preparo de modelos automaticamente.
+                  </div>
+                  <div className="border rounded-lg bg-white p-4 text-sm text-gray-600 space-y-2">
+                    <p className="font-medium text-gray-800">Checklist recomendado</p>
+                    <p>1. Enviar fotos do paciente</p>
+                    <p>2. Enviar modelos digitais</p>
+                    <p>3. Preencher as fichas necessárias</p>
+                    <p>4. Registrar o recebimento para iniciar o workflow</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg text-blue-700 p-4">Nenhum fluxo em aberto. Registre o recebimento dos modelos para iniciar o processo.</div>
+              )}
               {canStartWorkflow ? (
                 <Button
                   size="sm"
@@ -161,7 +231,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                   {startWorkflowMutation.isLoading ? 'Registrando...' : 'Registrar recebimento e iniciar fluxo'}
                 </Button>
               ) : (
-                <div className="text-sm text-gray-500">Apenas administradores/funcionários podem iniciar o fluxo.</div>
+                <div className="text-sm text-gray-500">A abertura do fluxo é feita pelo time interno após o recebimento da caixa.</div>
               )}
             </div>
           ) : (
@@ -221,7 +291,45 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                   </div>
 
                   <div className="space-y-3">
-                    {caseData?.status === 'APPROVED' && (
+                    {caseData?.status === 'WAITING_APPROVAL' && (
+                      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+                        <div className="px-4 py-3 border-b bg-gray-50">
+                          <p className="text-sm font-semibold text-gray-700">Aprovação</p>
+                          <p className="text-xs text-gray-400 mt-0.5">O dentista pode aprovar diretamente ou o time interno pode aprovar em nome dele.</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          {user?.role === 'DENTIST' && (
+                            <>
+                              <textarea
+                                value={revisionNotes}
+                                onChange={e => setRevisionNotes(e.target.value)}
+                                className="w-full border rounded text-xs px-3 py-2 resize-none"
+                                rows={3}
+                                placeholder="Se precisar, descreva aqui o pedido de revisão"
+                              />
+                              <div className="grid grid-cols-2 gap-2">
+                                <Button variant="outline" size="sm" onClick={() => revisionMutation.mutate()} disabled={!revisionNotes.trim() || revisionMutation.isPending}>
+                                  {revisionMutation.isPending ? 'Enviando...' : 'Solicitar revisão'}
+                                </Button>
+                                <Button size="sm" onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>
+                                  {approveMutation.isPending ? 'Aprovando...' : 'Aprovar setup'}
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                          {canApproveForDentist && (
+                            <div className="space-y-2">
+                              <p className="text-xs text-gray-500">Admin e vendedor podem aprovar para o dentista. Se for vendedor, é obrigatório ter uma foto na área restrita comprovando a solicitação.</p>
+                              <Button size="sm" className="w-full" onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>
+                                {approveMutation.isPending ? 'Aprovando...' : 'Aprovar para o dentista'}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {showBillingSection && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-gray-50">
                           <p className="text-sm font-semibold text-gray-700">Faturamento</p>
@@ -229,15 +337,27 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         </div>
                         <div className="p-4 space-y-3">
                           <div>
-                            <label className="text-xs text-gray-500 block mb-1">Tipo *</label>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2">
-                              {['Unidade', 'MID', 'FULL', 'EA AIR²', 'Finalização (Contenção)', 'Placa Miorrelaxante'].map(t => (
-                                <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm">
-                                  <input type="radio" checked={billingForm.billingType === t} onChange={() => setBillingForm((f: any) => ({ ...f, billingType: t }))} className="accent-primary" />
-                                  {t}
-                                </label>
+                            <label className="text-xs text-gray-500 block mb-1">Tipo de produto/pacote</label>
+                            <select
+                              className="w-full border rounded px-2 py-1.5 text-sm"
+                              value={billingForm.serviceId || ''}
+                              onChange={e => {
+                                const nextService = availableServices.find((service: any) => service.id === e.target.value)
+                                const nextInstallments = getAllowedInstallments(nextService)
+                                setBillingForm((f: any) => ({
+                                  ...f,
+                                  serviceId: e.target.value,
+                                  billingType: nextService?.name || '',
+                                  installmentOption: nextInstallments[0] || '1x',
+                                  discountCoupon: isAlignerType(nextService?.type) ? f.discountCoupon : '',
+                                }))
+                              }}
+                            >
+                              <option value="">Selecione o produto/pacote</option>
+                              {availableServices.map((service: any) => (
+                                <option key={service.id} value={service.id}>{service.name}</option>
                               ))}
-                            </div>
+                            </select>
                           </div>
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Parcelas</label>
@@ -268,7 +388,10 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                             />
                             {!couponAllowed && <p className="text-xs text-gray-400 mt-1">Cupons não podem ser aplicados em placas e outros serviços não alinhadores.</p>}
                           </div>
-                          <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()}>Salvar Faturamento</Button>
+                          <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()} disabled={billingMutation.isPending}>
+                            {billingMutation.isPending ? 'Salvando...' : 'Salvar Faturamento'}
+                          </Button>
+                          <p className="text-xs text-gray-400">Ao salvar, o valor já fica disponível no painel financeiro do dentista.</p>
                         </div>
                       </div>
                     )}
