@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { requireRole, JwtPayload } from '../../plugins/auth'
 import { Role, UserStatus } from '@prisma/client'
+import ExcelJS from 'exceljs'
 
 export async function adminRoutes(fastify: FastifyInstance) {
   fastify.post('/users', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
@@ -221,6 +222,91 @@ export async function adminRoutes(fastify: FastifyInstance) {
         uniqueDentists: item.dentists.size,
       })),
     }
+  })
+
+  fastify.get('/coupons/report.xlsx', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
+    const cases = await fastify.prisma.case.findMany({
+      where: { discountCoupon: { not: null } },
+      select: {
+        id: true,
+        caseNumber: true,
+        discountCoupon: true,
+        status: true,
+        createdAt: true,
+        dentist: { select: { id: true, name: true, clinic: true, email: true } },
+        service: { select: { name: true, type: true } },
+        financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const workbook = new ExcelJS.Workbook()
+    const summarySheet = workbook.addWorksheet('Resumo')
+    const usagesSheet = workbook.addWorksheet('Usos')
+
+    const usageByCoupon = new Map<string, { code: string; totalUses: number; dentists: Set<string> }>()
+    for (const item of cases) {
+      const code = item.discountCoupon || ''
+      if (!code) continue
+      const existing = usageByCoupon.get(code) || { code, totalUses: 0, dentists: new Set<string>() }
+      existing.totalUses += 1
+      if (item.dentist?.id) existing.dentists.add(item.dentist.id)
+      usageByCoupon.set(code, existing)
+    }
+
+    const summaryRows = Array.from(usageByCoupon.values())
+      .sort((a, b) => b.totalUses - a.totalUses)
+      .map((item) => ({
+        Cupom: item.code,
+        'Total de usos': item.totalUses,
+        'Dentistas únicos': item.dentists.size,
+      }))
+
+    summarySheet.columns = [
+      { header: 'Cupom', key: 'Cupom', width: 24 },
+      { header: 'Total de usos', key: 'Total de usos', width: 18 },
+      { header: 'Dentistas únicos', key: 'Dentistas únicos', width: 20 },
+    ]
+    summaryRows.forEach((row) => summarySheet.addRow(row))
+
+    usagesSheet.columns = [
+      { header: 'Cupom', key: 'Cupom', width: 18 },
+      { header: 'Caso', key: 'Caso', width: 10 },
+      { header: 'Status', key: 'Status', width: 20 },
+      { header: 'Dentista', key: 'Dentista', width: 28 },
+      { header: 'Clínica', key: 'Clínica', width: 30 },
+      { header: 'Email Dentista', key: 'Email Dentista', width: 34 },
+      { header: 'Serviço', key: 'Serviço', width: 24 },
+      { header: 'NF', key: 'NF', width: 18 },
+      { header: 'Valor Faturado', key: 'Valor Faturado', width: 18 },
+      { header: 'Data Referência', key: 'Data Referência', width: 16 },
+    ]
+
+    cases.forEach((item) => {
+      usagesSheet.addRow({
+        Cupom: item.discountCoupon || '',
+        Caso: item.caseNumber,
+        Status: item.status,
+        Dentista: item.dentist?.name || '',
+        'Clínica': item.dentist?.clinic || '',
+        'Email Dentista': item.dentist?.email || '',
+        'Serviço': item.service?.name || item.service?.type || '',
+        NF: item.financial?.invoiceNumber || '',
+        'Valor Faturado': item.financial?.amount ?? '',
+        'Data Referência': new Date(item.financial?.billedAt || item.createdAt).toLocaleDateString('pt-BR'),
+      })
+    })
+
+    summarySheet.getRow(1).font = { bold: true }
+    usagesSheet.getRow(1).font = { bold: true }
+    summarySheet.views = [{ state: 'frozen', ySplit: 1 }]
+    usagesSheet.views = [{ state: 'frozen', ySplit: 1 }]
+
+    reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    reply.header('Content-Disposition', 'attachment; filename="relatorio-uso-cupons.xlsx"')
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    return reply.send(Buffer.from(buffer))
   })
 
   fastify.post('/coupons', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {

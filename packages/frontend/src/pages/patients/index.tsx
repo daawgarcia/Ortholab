@@ -7,6 +7,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Plus, UserCircle } from 'lucide-react'
 
+const PRODUCT_TYPE_LABELS: Record<string, string> = {
+  ALINHADORES: 'Alinhadores',
+  FINALIZACAO: 'Contenção',
+  PLACA_MIORRELAXANTE: 'Placa Miorrelaxante',
+  EA_AIR2: 'EA Air²',
+}
+
+function getTreatmentLabel(patient: any) {
+  const latestCase = patient?.cases?.[0]
+  if (!latestCase) return ''
+  if (latestCase.productType && PRODUCT_TYPE_LABELS[latestCase.productType]) return PRODUCT_TYPE_LABELS[latestCase.productType]
+  return latestCase.service?.name || latestCase.service?.type || ''
+}
+
 export default function PatientsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -97,24 +111,32 @@ export default function PatientsPage() {
               {search ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
             </div>
           )}
-          {patients.map((p: any) => (
-            <button
-              key={p.id}
-              onClick={() => navigate(`/patients/${p.id}`)}
-              className="col-span-4 grid grid-cols-[1fr_150px_80px_60px] gap-4 px-5 py-3.5 text-left hover:bg-gray-50 transition-colors items-center"
-            >
-              <span className="flex items-center gap-2">
-                <UserCircle className="w-5 h-5 text-gray-300 shrink-0" />
-                <span className="font-medium text-gray-900 text-sm">{p.name}</span>
-                {p.gender && <span className="text-xs text-gray-400">{p.gender === 'M' ? 'Masc' : 'Fem'}</span>}
-              </span>
-              <span className="text-sm text-gray-500 truncate">{p.dentist?.name || '—'}</span>
-              <span className="text-sm text-gray-500">{p._count?.cases ?? 0} caso(s)</span>
-              <span className={`text-xs font-medium ${p.active ? 'text-green-600' : 'text-gray-400'}`}>
-                {p.active ? 'Ativo' : 'Inativo'}
-              </span>
-            </button>
-          ))}
+          {patients.map((p: any) => {
+            const treatmentLabel = getTreatmentLabel(p)
+            return (
+              <button
+                key={p.id}
+                onClick={() => navigate(`/patients/${p.id}`)}
+                className="col-span-4 grid grid-cols-[1fr_150px_80px_60px] gap-4 px-5 py-3.5 text-left hover:bg-gray-50 transition-colors items-center"
+              >
+                <span className="flex items-center gap-2">
+                  <UserCircle className="w-5 h-5 text-gray-300 shrink-0" />
+                  <span className="font-medium text-gray-900 text-sm">{p.name}</span>
+                  {treatmentLabel && (
+                    <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[11px] font-medium">
+                      {treatmentLabel}
+                    </span>
+                  )}
+                  {p.gender && <span className="text-xs text-gray-400">{p.gender === 'M' ? 'Masc' : 'Fem'}</span>}
+                </span>
+                <span className="text-sm text-gray-500 truncate">{p.dentist?.name || '—'}</span>
+                <span className="text-sm text-gray-500">{p._count?.cases ?? 0} caso(s)</span>
+                <span className={`text-xs font-medium ${p.active ? 'text-green-600' : 'text-gray-400'}`}>
+                  {p.active ? 'Ativo' : 'Inativo'}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>
