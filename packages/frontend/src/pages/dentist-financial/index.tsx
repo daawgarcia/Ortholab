@@ -116,14 +116,14 @@ export default function DentistFinancialPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Financeiro</h1>
-        <p className="text-gray-500 text-sm mt-1">Visualize seus títulos e acompanhe o processamento pelo nosso Financeiro</p>
+        <p className="text-gray-500 text-sm mt-1">Visualize seus títulos faturados e escolha o que deseja pagar</p>
       </div>
 
       <div className="border rounded-xl bg-amber-50 border-amber-200 p-4 text-sm text-amber-900">
-        O pagamento direto pelo portal está temporariamente desabilitado. Neste momento, o faturamento e a liberação são centralizados pelo Financeiro.
+        Os títulos são liberados pelo Financeiro. Quando estiverem em aberto, você pode selecionar e pagar por cartão ou PIX.
       </div>
 
-      {false && payResult?.payment.method === 'PIX' && payResult.payment.status !== 'PAID' && (
+      {payResult?.payment.method === 'PIX' && payResult.payment.status !== 'PAID' && (
         <div className="border-2 border-primary/30 rounded-xl p-6 bg-primary/5 space-y-4">
           <div className="flex items-center gap-2 text-primary font-semibold text-lg">
             <QrCode className="w-5 h-5" /> Aguardando Pagamento PIX
@@ -201,7 +201,7 @@ export default function DentistFinancialPage() {
         )}
       </div>
 
-      {false && selected.length > 0 && (
+      {selected.length > 0 && (
         <div className="bg-white border rounded-xl p-5 space-y-4">
           <p className="font-semibold text-gray-800">Forma de Pagamento</p>
           <div className="flex gap-3">
