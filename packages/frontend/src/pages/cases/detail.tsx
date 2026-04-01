@@ -167,6 +167,7 @@ export default function CaseDetailPage() {
   const c = data
   const latestPlanning = c.plannings?.[0]
   const isDentist = user?.role === 'DENTIST'
+  const canManageBilling = ['ADMIN', 'LAB_TECH', 'FINANCIAL'].includes(user?.role || '')
   const canSubmit = isDentist && c.status === 'DRAFT'
   const canApprove = isDentist && c.status === 'WAITING_APPROVAL'
 
@@ -290,11 +291,11 @@ export default function CaseDetailPage() {
         </div>
 
         <div className="space-y-5">
-          {showBillingSection && (
+          {showBillingSection && canManageBilling && (
             <Card className="border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-blue-700">Faturamento</CardTitle>
-                <p className="text-xs text-blue-500">Opcional — pode ser preenchido pelo dentista ou pelo nosso time</p>
+                <p className="text-xs text-blue-500">Preenchimento interno — centralizado no Financeiro</p>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>

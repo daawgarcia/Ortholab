@@ -5,15 +5,31 @@ import { Role, UserStatus } from '@prisma/client'
 export async function adminRoutes(fastify: FastifyInstance) {
   fastify.post('/users', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
     const bcrypt = require('bcryptjs')
-    const { name, email, password, role, cro, clinic, cnpj, phone, address, city, state, zipCode } = request.body as any
+    const { name, email, password, role, cro, clinic, cnpj, phone, address, city, state, zipCode, firstCaseCouponEligible } = request.body as any
 
     const existing = await fastify.prisma.user.findUnique({ where: { email } })
     if (existing) return reply.status(400).send({ error: 'E-mail já cadastrado' })
 
     const hash = await bcrypt.hash(password, 12)
     const user = await fastify.prisma.user.create({
-      data: { name, email, password: hash, role: role || 'DENTIST', status: 'ACTIVE', emailVerified: true, cro, clinic, cnpj, phone, address, city, state, zipCode },
-      select: { id: true, name: true, email: true, role: true, status: true },
+      data: {
+        name,
+        email,
+        password: hash,
+        role: role || 'DENTIST',
+        status: 'ACTIVE',
+        emailVerified: true,
+        cro,
+        clinic,
+        cnpj,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        firstCaseCouponEligible: role === 'DENTIST' ? Boolean(firstCaseCouponEligible) : false,
+      },
+      select: { id: true, name: true, email: true, role: true, status: true, firstCaseCouponEligible: true },
     })
     return reply.status(201).send({ user })
   })
@@ -39,7 +55,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const [users, total] = await Promise.all([
       fastify.prisma.user.findMany({
         where,
-        select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, phone: true, createdAt: true },
+        select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, phone: true, createdAt: true, firstCaseCouponEligible: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: parseInt(limit),
@@ -68,6 +84,27 @@ export async function adminRoutes(fastify: FastifyInstance) {
       data: { role },
       select: { id: true, name: true, email: true, role: true },
     })
+    return { user }
+  })
+
+  fastify.patch('/users/:id/first-case-coupon', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const { firstCaseCouponEligible } = request.body as { firstCaseCouponEligible: boolean }
+
+    const currentUser = await fastify.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    })
+
+    if (!currentUser) return reply.status(404).send({ error: 'Usuário não encontrado' })
+    if (currentUser.role !== Role.DENTIST) return reply.status(400).send({ error: 'Benefício disponível apenas para dentistas' })
+
+    const user = await fastify.prisma.user.update({
+      where: { id },
+      data: { firstCaseCouponEligible: Boolean(firstCaseCouponEligible) },
+      select: { id: true, name: true, email: true, firstCaseCouponEligible: true },
+    })
+
     return { user }
   })
 
@@ -102,14 +139,27 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
 
     const caseWhere: any = dateFilter ? { createdAt: dateFilter } : {}
+    const billedWhere: any = {
+      billedAt: dateFilter,
+    }
 
-    const [totalCases, totalUsers, pendingUsers, casesByStatus] = await Promise.all([
+    const [totalCases, totalUsers, pendingUsers, casesByStatus, billedCases, billedAmountAggregate] = await Promise.all([
       fastify.prisma.case.count({ where: caseWhere }),
       fastify.prisma.user.count({ where: { status: UserStatus.ACTIVE } }),
       fastify.prisma.user.count({ where: { status: UserStatus.PENDING } }),
       fastify.prisma.case.groupBy({ by: ['status'], where: caseWhere, _count: { _all: true } }),
+      fastify.prisma.financial.count({ where: billedWhere }),
+      fastify.prisma.financial.aggregate({ where: billedWhere, _sum: { amount: true } }),
     ])
-    return { totalCases, totalUsers, pendingUsers, casesByStatus }
+
+    return {
+      totalCases,
+      totalUsers,
+      pendingUsers,
+      casesByStatus,
+      billedCases,
+      billedAmount: Number(billedAmountAggregate._sum.amount || 0),
+    }
   })
 
   fastify.get('/dentists', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
@@ -132,6 +182,42 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.get('/coupons', { preHandler: requireRole(Role.ADMIN) }, async () => {
     const coupons = await fastify.prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } })
     return { coupons }
+  })
+
+  fastify.get('/coupons/report', { preHandler: requireRole(Role.ADMIN) }, async () => {
+    const cases = await fastify.prisma.case.findMany({
+      where: { discountCoupon: { not: null } },
+      select: {
+        id: true,
+        caseNumber: true,
+        discountCoupon: true,
+        status: true,
+        createdAt: true,
+        dentist: { select: { id: true, name: true, clinic: true, email: true } },
+        service: { select: { name: true, type: true } },
+        financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const usageByCoupon = new Map<string, { code: string; totalUses: number; dentists: Set<string> }>()
+    for (const item of cases) {
+      const code = item.discountCoupon || ''
+      if (!code) continue
+      const existing = usageByCoupon.get(code) || { code, totalUses: 0, dentists: new Set<string>() }
+      existing.totalUses += 1
+      if (item.dentist?.id) existing.dentists.add(item.dentist.id)
+      usageByCoupon.set(code, existing)
+    }
+
+    return {
+      usages: cases,
+      summary: Array.from(usageByCoupon.values()).map((item) => ({
+        code: item.code,
+        totalUses: item.totalUses,
+        uniqueDentists: item.dentists.size,
+      })),
+    }
   })
 
   fastify.post('/coupons', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {

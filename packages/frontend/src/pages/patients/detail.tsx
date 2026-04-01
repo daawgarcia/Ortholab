@@ -5,11 +5,18 @@ import { useAuthStore } from '@/store/auth'
 import api from '@/lib/api'
 import { ensureSelectedServiceInList, filterServicesForProduct, getAllowedInstallments, getServiceDisplayName, inferProductType, isAlignerType, normalizeServiceKind, sortBillingServices } from '@/lib/billing'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Plus } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { ArrowRightLeft, ChevronLeft, Plus, Trash2 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { StatusBadge } from '@/components/status-badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
-const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica']
+function isVideoFile(filename: string) {
+  return /\.(mp4|webm|mov)$/i.test(filename)
+}
+
+const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica', 'Informações Importantes']
+const IMPORTANT_NOTES_POPUP_ROLES = ['ADMIN', 'LAB_TECH', 'FINANCIAL']
 
 const WORKFLOW_STAGES = [
   { n: 1, label: 'Recebimento dos modelos' },
@@ -128,6 +135,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
   const events = caseData?.workflowEvents || []
   const currentStage = events[events.length - 1]?.stage || 0
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL'
+  const canManageBilling = ['ADMIN', 'LAB_TECH', 'FINANCIAL'].includes(user?.role || '')
   const availableServices = servicesData?.services || []
   const effectiveProductType = useMemo(
     () => inferProductType(caseData?.productType, caseData?.planningFormData, caseData?.service, caseData?.billingType),
@@ -352,11 +360,11 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                       </div>
                     )}
 
-                    {showBillingSection && (
+                    {showBillingSection && canManageBilling && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-gray-50">
                           <p className="text-sm font-semibold text-gray-700">Faturamento</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Opcional — pode ser preenchido pelo dentista ou pelo time interno</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Preenchimento interno — centralizado no Financeiro</p>
                         </div>
                         <div className="p-4 space-y-3">
                           <div>
@@ -455,7 +463,8 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
     try {
       await api.post(`/patients/${patientId}/photos`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       qc.invalidateQueries({ queryKey: ['patient-photos', patientId] })
-    } catch { toast({ variant: 'destructive', title: 'Erro ao enviar fotos' }) }
+      toast({ title: isPrivate ? 'Mídias restritas enviadas' : 'Mídias enviadas' })
+    } catch { toast({ variant: 'destructive', title: 'Erro ao enviar mídias' }) }
     finally { setUploading(false) }
   }
 
@@ -465,15 +474,19 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
     <div className="space-y-4">
       <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors hover:bg-gray-50 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
         <Plus className="w-4 h-4" />
-        {uploading ? 'Enviando...' : `Adicionar ${isPrivate ? 'Fotos Restritas' : 'Fotos'}`}
-        <input type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+        {uploading ? 'Enviando...' : `Adicionar ${isPrivate ? 'Fotos/Vídeos Restritos' : 'Fotos/Vídeos'}`}
+        <input type="file" multiple accept="image/*,video/mp4,video/webm,video/quicktime" className="hidden" onChange={handleUpload} disabled={uploading} />
       </label>
-      {photos.length === 0 && <p className="text-sm text-gray-400 py-4">Nenhuma foto</p>}
+      {photos.length === 0 && <p className="text-sm text-gray-400 py-4">Nenhuma mídia</p>}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {photos.map((p: any) => (
           <a key={p.id} href={p.url} target="_blank" rel="noreferrer"
             className="aspect-square rounded-lg overflow-hidden border bg-gray-100 hover:opacity-90 transition-opacity">
-            <img src={p.url} alt={p.filename} className="w-full h-full object-cover" />
+            {isVideoFile(p.filename) ? (
+              <video src={p.url} className="w-full h-full object-cover" controls />
+            ) : (
+              <img src={p.url} alt={p.filename} className="w-full h-full object-cover" />
+            )}
           </a>
         ))}
       </div>
@@ -563,7 +576,7 @@ function FormsTab({ patientId }: { patientId: string }) {
     <div className="space-y-6">
       <FormSection title="Fichas de Planejamento" items={planning} onAdd={() => navigate(`/patients/${patientId}/forms/planning/new`)} />
       <FormSection title="Fichas de Finalização" items={completion} onAdd={() => navigate(`/patients/${patientId}/forms/completion/new`)} />
-      <FormSection title="Outros Serviços (EA GUARD / SPLINT / MIO / AIR)" items={otherServices} onAdd={() => navigate(`/patients/${patientId}/forms/other-services/new`)} />
+      <FormSection title="Outros Serviços (EA SPLINT / AIR)" items={otherServices} onAdd={() => navigate(`/patients/${patientId}/forms/other-services/new`)} />
     </div>
   )
 }
@@ -621,20 +634,111 @@ function ClinicalRecordsTab({ patientId }: { patientId: string }) {
   )
 }
 
+function ImportantNotesTab({ patientId, initialValue }: { patientId: string; initialValue?: string | null }) {
+  const qc = useQueryClient()
+  const [notes, setNotes] = useState(initialValue || '')
+
+  useEffect(() => {
+    setNotes(initialValue || '')
+  }, [initialValue])
+
+  const saveMutation = useMutation({
+    mutationFn: () => api.patch(`/patients/${patientId}/important-notes`, { importantNotes: notes }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['patient', patientId] })
+      qc.invalidateQueries({ queryKey: ['patients'] })
+      toast({ title: 'Informações importantes atualizadas' })
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro ao salvar', description: error?.response?.data?.error || 'Falha ao salvar informações importantes' })
+    },
+  })
+
+  return (
+    <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+      <div className="px-5 py-3 border-b bg-gray-50">
+        <p className="text-sm font-semibold text-gray-700">Informações internas para preparo e movimentação</p>
+        <p className="text-xs text-gray-500 mt-1">Esse conteúdo é visível apenas para a equipe interna e nunca para o dentista.</p>
+      </div>
+      <div className="p-5 space-y-4">
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={8}
+          className="w-full border rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
+          placeholder="Adicione aqui orientações importantes para o time que prepara e movimenta o caso..."
+        />
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setNotes(initialValue || '')} disabled={saveMutation.isPending}>Restaurar</Button>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || notes === (initialValue || '')}>
+            {saveMutation.isPending ? 'Salvando...' : 'Salvar informações'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PatientDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Workflow')
+  const [transferDentistId, setTransferDentistId] = useState('')
+  const [importantNotesOpen, setImportantNotesOpen] = useState(false)
   const { user } = useAuthStore()
   const isAdminOrSupport = user?.role !== 'DENTIST'
+  const qc = useQueryClient()
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ['patient', id],
     queryFn: () => api.get(`/patients/${id}`).then(r => r.data),
   })
 
+  const { data: dentistsData } = useQuery({
+    queryKey: ['patient-transfer-dentists'],
+    queryFn: () => api.get('/admin/dentists').then(r => r.data),
+    enabled: user?.role === 'ADMIN',
+    staleTime: 30000,
+  })
+
+  const transferMutation = useMutation({
+    mutationFn: () => api.post(`/patients/${id}/transfer`, { dentistId: transferDentistId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['patient', id] })
+      qc.invalidateQueries({ queryKey: ['patients'] })
+      setTransferDentistId('')
+      toast({ title: 'Paciente transferido com sucesso' })
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro ao transferir', description: error?.response?.data?.error || 'Falha ao transferir paciente' })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/patients/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['patients'] })
+      toast({ title: 'Paciente apagado com sucesso' })
+      navigate('/patients')
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Erro ao apagar', description: error?.response?.data?.error || 'Falha ao apagar paciente' })
+    },
+  })
+
+  const shouldOpenImportantNotesPopup = IMPORTANT_NOTES_POPUP_ROLES.includes(user?.role || '') && !!patient?.importantNotes?.trim()
+
+  useEffect(() => {
+    if (shouldOpenImportantNotesPopup) {
+      setImportantNotesOpen(true)
+    }
+  }, [patient?.id, patient?.updatedAt, shouldOpenImportantNotesPopup])
+
   if (isLoading) return <div className="p-6 text-gray-400">Carregando...</div>
   if (!patient) return <div className="p-6 text-red-500">Paciente não encontrado</div>
+
+  const availableDentists = (dentistsData?.dentists || []).filter((dentist: any) => dentist.id !== patient.dentistId)
+  const hasImportantNotes = Boolean(patient.importantNotes?.trim())
 
   const isCreatorDentist = user?.role === 'DENTIST' && patient.dentistId === user.id
   const tabs = isAdminOrSupport
@@ -647,6 +751,21 @@ export default function PatientDetailPage() {
 
   return (
     <div className="p-6 space-y-5 max-w-6xl mx-auto">
+      <Dialog open={importantNotesOpen} onOpenChange={setImportantNotesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Informações Importantes</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">Este paciente possui instruções internas para a equipe de preparo e movimentação.</p>
+            <div className="rounded-lg border bg-amber-50 border-amber-200 p-4 text-sm text-amber-950 whitespace-pre-wrap">{patient.importantNotes}</div>
+            <div className="flex justify-end">
+              <Button onClick={() => setImportantNotesOpen(false)}>Fechar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/patients')} className="text-gray-400 hover:text-gray-600">
           <ChevronLeft className="w-5 h-5" />
@@ -659,13 +778,59 @@ export default function PatientDetailPage() {
         <Button size="sm" variant="outline" className="ml-auto" onClick={() => navigate(`/patients/${id}/edit`)}>Editar</Button>
       </div>
 
+      {user?.role === 'ADMIN' && (
+        <div className="border rounded-lg bg-white shadow-sm p-4 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-gray-800">Ações administrativas</p>
+            <p className="text-xs text-gray-500">Você pode transferir este paciente para outro dentista ou apagar o cadastro junto com os arquivos e histórico relacionados.</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value={transferDentistId}
+                onChange={(e) => setTransferDentistId(e.target.value)}
+                className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white min-w-[260px]"
+              >
+                <option value="">Selecione o dentista de destino</option>
+                {availableDentists.map((dentist: any) => (
+                  <option key={dentist.id} value={dentist.id}>{dentist.name}{dentist.clinic ? ` - ${dentist.clinic}` : ''}</option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={!transferDentistId || transferMutation.isPending}
+                onClick={() => transferMutation.mutate()}
+              >
+                <ArrowRightLeft className="w-4 h-4" />
+                {transferMutation.isPending ? 'Transferindo...' : 'Transferir paciente'}
+              </Button>
+            </div>
+          </div>
+          <Button
+            variant="destructive"
+            className="gap-2"
+            disabled={deleteMutation.isPending}
+            onClick={() => {
+              if (window.confirm('Isso apagará o paciente e todo o histórico relacionado. Deseja continuar?')) {
+                deleteMutation.mutate()
+              }
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+            {deleteMutation.isPending ? 'Apagando...' : 'Apagar paciente'}
+          </Button>
+        </div>
+      )}
+
       <div className="border-b flex gap-0 overflow-x-auto">
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors inline-flex items-center gap-2 ${
               activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}>
             {tab}
+            {tab === 'Informações Importantes' && hasImportantNotes && (
+              <Badge variant="warning" className="px-2 py-0 text-[10px] leading-5">Aviso</Badge>
+            )}
           </button>
         ))}
       </div>
@@ -678,6 +843,7 @@ export default function PatientDetailPage() {
         {activeTab === 'Relatório' && <FilesTab patientId={id!} type="work" />}
         {activeTab === 'Fichas' && <FormsTab patientId={id!} />}
         {activeTab === 'Ficha Clínica' && <ClinicalRecordsTab patientId={id!} />}
+        {activeTab === 'Informações Importantes' && isAdminOrSupport && <ImportantNotesTab patientId={id!} initialValue={patient.importantNotes} />}
       </div>
     </div>
   )

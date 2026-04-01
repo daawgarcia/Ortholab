@@ -54,7 +54,7 @@ export default function PlanningCenterPage() {
     const url = URL.createObjectURL(res.data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `planning-center-todos.csv`;
+    a.download = `planning-center-todos.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   };

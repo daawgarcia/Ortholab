@@ -18,7 +18,7 @@ const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
 const workflowItems = [
   { label: 'Planning Center', href: '/workflow/planning-center', icon: FlaskConical },
   { label: 'Impressão 3D', href: '/workflow/printing', icon: Printer },
-  { label: 'Laboratório', href: '/workflow/laboratory', icon: Beaker },
+  { label: 'Recorte', href: '/workflow/laboratory', icon: Beaker },
   { label: 'Expedição', href: '/workflow/expedition', icon: Send },
   { label: 'Financeiro', href: '/financial', icon: DollarSign },
 ]

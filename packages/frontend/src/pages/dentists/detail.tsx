@@ -116,6 +116,28 @@ export default function DentistDetailPage() {
         </div>
       </div>
 
+      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b bg-gray-50">
+          <p className="text-sm font-semibold text-gray-700">Uso de Cupons</p>
+        </div>
+        <div className="p-5 space-y-3">
+          {dentist.cases?.length > 0 ? (
+            dentist.cases.map((c: any) => (
+              <div key={c.id} className="border rounded-lg p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">{c.discountCoupon}</p>
+                  <span className="text-xs text-gray-400">Caso #{c.caseNumber}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{c.service?.name || c.service?.type || 'Serviço não informado'} • {new Date(c.financial?.billedAt || c.createdAt).toLocaleDateString('pt-BR')}</p>
+                <p className="text-xs text-gray-500 mt-1">NF: {c.financial?.invoiceNumber || 'não faturado'} • Status: {c.status}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">Nenhum cupom utilizado até agora.</p>
+          )}
+        </div>
+      </div>
+
       {dentist.patients?.length > 0 && (
         <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b bg-gray-50">

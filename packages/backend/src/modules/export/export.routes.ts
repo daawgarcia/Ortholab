@@ -1,15 +1,35 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
+import ExcelJS from 'exceljs'
 
-function toCSV(rows: Record<string, any>[]): string {
-  if (!rows.length) return ''
-  const headers = Object.keys(rows[0])
-  const esc = (v: any) => {
-    const s = v == null ? '' : String(v)
-    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
+async function sendWorkbook(reply: any, sheetName: string, fileName: string, rows: Record<string, any>[]) {
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet(sheetName)
+
+  const headers = rows.length > 0 ? Object.keys(rows[0]) : []
+  worksheet.columns = headers.map((header) => ({ header, key: header, width: Math.max(14, header.length + 4) }))
+
+  rows.forEach((row) => worksheet.addRow(row))
+
+  if (headers.length > 0) {
+    worksheet.getRow(1).font = { bold: true }
+    worksheet.views = [{ state: 'frozen', ySplit: 1 }]
+
+    headers.forEach((header, index) => {
+      const longestValue = rows.reduce((max, row) => {
+        const size = String(row[header] ?? '').length
+        return Math.max(max, size)
+      }, header.length)
+      worksheet.getColumn(index + 1).width = Math.min(Math.max(longestValue + 4, 14), 40)
+    })
   }
-  return [headers.join(','), ...rows.map(r => headers.map(h => esc(r[h])).join(','))].join('\n')
+
+  reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  reply.header('Content-Disposition', `attachment; filename="${fileName}"`)
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  return reply.send(Buffer.from(buffer))
 }
 
 export async function exportRoutes(fastify: FastifyInstance) {
@@ -50,9 +70,7 @@ export async function exportRoutes(fastify: FastifyInstance) {
     }))
 
     const label = status ? `casos-${status}` : 'casos-todos'
-    reply.header('Content-Type', 'text/csv; charset=utf-8')
-    reply.header('Content-Disposition', `attachment; filename="${label}.csv"`)
-    return reply.send('\uFEFF' + toCSV(rows))
+    return sendWorkbook(reply, 'Casos', `${label}.xlsx`, rows)
   })
 
   fastify.get('/patients', { preHandler: authenticate }, async (request, reply) => {
@@ -83,9 +101,7 @@ export async function exportRoutes(fastify: FastifyInstance) {
       'Cadastrado Em': new Date(p.createdAt).toLocaleDateString('pt-BR'),
     }))
 
-    reply.header('Content-Type', 'text/csv; charset=utf-8')
-    reply.header('Content-Disposition', 'attachment; filename="pacientes.csv"')
-    return reply.send('\uFEFF' + toCSV(rows))
+    return sendWorkbook(reply, 'Pacientes', 'pacientes.xlsx', rows)
   })
 
   fastify.get('/clinical-records', { preHandler: authenticate }, async (request, reply) => {
@@ -120,8 +136,6 @@ export async function exportRoutes(fastify: FastifyInstance) {
       'Observações': r.observations || '',
     }))
 
-    reply.header('Content-Type', 'text/csv; charset=utf-8')
-    reply.header('Content-Disposition', 'attachment; filename="fichas-clinicas.csv"')
-    return reply.send('\uFEFF' + toCSV(rows))
+    return sendWorkbook(reply, 'Fichas Clinicas', 'fichas-clinicas.xlsx', rows)
   })
 }

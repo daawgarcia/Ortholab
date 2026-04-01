@@ -131,3 +131,34 @@ export function applyCouponDiscount(amount: number, coupon: CouponLike) {
   }
   return Number(Math.max(0, base - Number(coupon.value)).toFixed(2))
 }
+
+export function applyPercentageDiscount(amount: number, percentage: number) {
+  const base = Number(amount || 0)
+  const rate = Number(percentage || 0)
+  if (rate <= 0) return base
+  return Number(Math.max(0, base - (base * rate / 100)).toFixed(2))
+}
+
+export function getProgressiveAlignerDiscountRate(serviceType?: string | null, billedCasesInMonth = 0) {
+  if (!serviceType || !['MID', 'FULL'].includes(serviceType)) return 0
+  const caseOrdinal = Number(billedCasesInMonth || 0) + 1
+  if (caseOrdinal >= 3) return 15
+  if (caseOrdinal === 2) return 10
+  return 0
+}
+
+export function getCasePricingSnapshot(service: ServiceLike, installmentOption?: string | null, coupon?: CouponLike | null, progressiveDiscountPercent = 0) {
+  const normalizedInstallment = normalizeInstallmentOption(installmentOption)
+  const baseAmount = getChargeAmountForCase(service, normalizedInstallment)
+  const amountAfterProgressive = applyPercentageDiscount(baseAmount, progressiveDiscountPercent)
+  const finalAmount = coupon ? applyCouponDiscount(amountAfterProgressive, coupon) : amountAfterProgressive
+
+  return {
+    installmentOption: normalizedInstallment,
+    baseAmount,
+    progressiveDiscountPercent,
+    amountAfterProgressive,
+    finalAmount,
+    discountAmount: Number((baseAmount - finalAmount).toFixed(2)),
+  }
+}

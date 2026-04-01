@@ -116,6 +116,7 @@ model User {
   totvsChave          String?
   totvsLoja           String?
   totvsProteusClient  String?
+  firstCaseCouponEligible Boolean @default(false)
   emailVerified       Boolean    @default(false)
   emailVerifyToken    String?
   resetPasswordToken  String?
@@ -191,6 +192,7 @@ model Patient {
   dob       DateTime?
   dentistId String
   active    Boolean   @default(true)
+  importantNotes String?
   teethData Json?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

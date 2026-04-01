@@ -15,24 +15,11 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   )
 }
 
-function Radio({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex gap-4">
-      {options.map(opt => (
-        <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
-          <input type="radio" checked={value === opt} onChange={() => onChange(opt)} className="accent-primary" />
-          <span className="text-sm">{opt}</span>
-        </label>
-      ))}
-    </div>
-  )
-}
-
 export default function OtherServicesFormPage() {
   const { patientId } = useParams()
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    eaGuard: false, eaSplint: false, eaMio: '', eaAir: false, observations: '',
+    eaSplint: false, eaAir: false, observations: '',
   })
 
   const { data: patient } = useQuery({
@@ -68,24 +55,12 @@ export default function OtherServicesFormPage() {
           <p className="text-sm font-semibold text-gray-700">Selecione os serviços solicitados</p>
         </div>
 
-        <Row label="EA GUARD">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.eaGuard} onChange={e => set('eaGuard', e.target.checked)}
-              className="w-4 h-4 accent-primary" />
-            <span className="text-sm text-gray-600">Solicitar EA GUARD</span>
-          </label>
-        </Row>
-
         <Row label="EA SPLINT">
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.eaSplint} onChange={e => set('eaSplint', e.target.checked)}
               className="w-4 h-4 accent-primary" />
             <span className="text-sm text-gray-600">Solicitar EA SPLINT</span>
           </label>
-        </Row>
-
-        <Row label="EA MIO">
-          <Radio options={['Superior', 'Inferior', 'Ambas']} value={form.eaMio} onChange={v => set('eaMio', v)} />
         </Row>
 
         <Row label="EA Air²">

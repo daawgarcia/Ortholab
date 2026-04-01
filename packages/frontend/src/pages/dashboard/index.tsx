@@ -18,6 +18,14 @@ const PERIOD_OPTIONS = [
   { value: 'month', label: 'Este mês' },
 ]
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export default function DashboardPage() {
   const { user, setAuth } = useAuthStore()
   const navigate = useNavigate()
@@ -99,6 +107,13 @@ export default function DashboardPage() {
     { label: 'Em Recorte',               value: statusCount('LABORATORY'),         icon: Scissors,    color: 'text-pink-600',   bg: 'bg-pink-50' },
     { label: 'Em Postagem',              value: statusCount('EXPEDITION'),         icon: Send,        color: 'text-green-600',  bg: 'bg-green-50' },
   ]
+
+  const billingStats = user?.role === 'ADMIN'
+    ? [
+        { label: 'Casos Faturados', value: adminStats?.billedCases || 0 },
+        { label: 'Valor Faturado', value: formatCurrency(adminStats?.billedAmount || 0) },
+      ]
+    : []
 
   return (
     <div className="space-y-6">
@@ -186,6 +201,19 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {billingStats.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {billingStats.map((item) => (
+            <Card key={item.label}>
+              <CardContent className="p-5">
+                <p className="text-sm text-muted-foreground mb-2">{item.label}</p>
+                <p className="text-3xl font-bold text-gray-900">{item.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="relative">

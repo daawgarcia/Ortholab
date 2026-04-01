@@ -33,6 +33,7 @@ export async function dentistFinancialRoutes(fastify: FastifyInstance) {
   fastify.post('/invoices/pay', async (request, reply) => {
     const user = (request as any).user
     if (user.role !== 'DENTIST') return reply.status(403).send({ error: 'Apenas dentistas podem realizar pagamentos' })
+    return reply.status(403).send({ error: 'Pagamento direto temporariamente desabilitado. O Financeiro fará a liberação.' })
 
     const { invoiceIds, method, cardData } = request.body as {
       invoiceIds: string[]
@@ -134,6 +135,7 @@ export async function dentistFinancialRoutes(fastify: FastifyInstance) {
 
   fastify.get('/invoices/payment/:id/status', async (request, reply) => {
     const user = (request as any).user
+    return reply.status(403).send({ error: 'Consulta de pagamento direto desabilitada no momento.' })
     const { id } = request.params as { id: string }
 
     const payment = await fastify.prisma.invoicePayment.findUnique({ where: { id } })

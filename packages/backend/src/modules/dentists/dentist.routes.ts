@@ -20,6 +20,7 @@ export async function dentistRoutes(fastify: FastifyInstance) {
         select: {
           id: true, name: true, email: true, cro: true, clinic: true,
           cnpj: true, phone: true, status: true, totvsCode: true,
+          firstCaseCouponEligible: true,
           deliveryCity: true, deliveryState: true, country: true,
           _count: { select: { cases: true, patients: true } },
         },
@@ -43,11 +44,25 @@ export async function dentistRoutes(fastify: FastifyInstance) {
         deliveryNeighborhood: true, deliveryCity: true, deliveryState: true,
         deliveryZip: true, deliveryPhone: true, deliveryMobile: true,
         totvsCode: true, totvsChave: true, totvsLoja: true, status: true,
+        firstCaseCouponEligible: true,
         createdAt: true,
         patients: {
           select: { id: true, name: true, active: true, _count: { select: { cases: true } } },
           orderBy: { name: 'asc' },
           take: 20,
+        },
+        cases: {
+          where: { discountCoupon: { not: null } },
+          select: {
+            id: true,
+            caseNumber: true,
+            discountCoupon: true,
+            status: true,
+            createdAt: true,
+            service: { select: { name: true, type: true } },
+            financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
+          },
+          orderBy: { createdAt: 'desc' },
         },
         _count: { select: { cases: true, patients: true } },
       },

@@ -163,6 +163,48 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
       if (!coupon || !coupon.active) {
         throw new Error('Cupom inválido ou inativo')
       }
+
+      const previousUse = await fastify.prisma.case.findFirst({
+        where: {
+          dentistId: caseData.dentistId,
+          id: { not: caseData.id },
+          discountCoupon: normalizedCoupon,
+        },
+        select: { caseNumber: true },
+      })
+      if (previousUse) {
+        throw new Error(`Este cupom já foi usado por este dentista no caso #${previousUse.caseNumber}`)
+      }
+
+      if (normalizedCoupon.startsWith('PRIMEIROCASO')) {
+        const previousFirstCaseCouponUse = await fastify.prisma.case.findFirst({
+          where: {
+            dentistId: caseData.dentistId,
+            id: { not: caseData.id },
+            discountCoupon: { startsWith: 'PRIMEIROCASO' },
+          },
+          select: { caseNumber: true },
+          orderBy: { createdAt: 'asc' },
+        })
+
+        if (previousFirstCaseCouponUse) {
+          throw new Error(`Cupom PRIMEIROCASO já foi utilizado por este dentista no caso #${previousFirstCaseCouponUse.caseNumber}`)
+        }
+
+        const previousBilledCase = await fastify.prisma.case.findFirst({
+          where: {
+            dentistId: caseData.dentistId,
+            id: { not: caseData.id },
+            financial: { is: { billedAt: { not: null } } },
+          },
+          select: { caseNumber: true },
+          orderBy: { createdAt: 'asc' },
+        })
+
+        if (previousBilledCase && !caseData.dentist?.firstCaseCouponEligible) {
+          throw new Error(`Cupom PRIMEIROCASO disponível apenas para dentistas sem compras anteriores. Primeiro caso faturado encontrado: #${previousBilledCase.caseNumber}`)
+        }
+      }
     }
 
     const updated = await fastify.prisma.case.update({
@@ -302,16 +344,22 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
   fastify.patch('/case/:caseId/billing', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
+    const billingRoles: Role[] = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL]
+    if (!billingRoles.includes(user.role)) {
+      return reply.status(403).send({ error: 'Faturamento centralizado no Financeiro' })
+    }
     const { caseId } = request.params as { caseId: string }
 
     const caseData = await fastify.prisma.case.findUnique({
       where: { id: caseId },
-      include: { service: { include: { prices: { orderBy: { validFrom: 'desc' } } } } },
+      include: {
+        service: { include: { prices: { orderBy: { validFrom: 'desc' } } } },
+        dentist: { select: { firstCaseCouponEligible: true } },
+      },
     })
 
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
-    if (user.role === Role.DENTIST && caseData.dentistId !== user.id) return reply.status(403).send({ error: 'Acesso negado' })
-    if (!(await ensureSellerAccess(user, caseData.dentistId))) return reply.status(403).send({ error: 'Acesso negado' })
+    if (!caseData.service) return reply.status(400).send({ error: 'Caso sem serviço vinculado' })
 
     try {
       const billingResult = await persistBilling(caseData, request.body as any)

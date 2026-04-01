@@ -1,8 +1,28 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
-import { Role, CaseStatus } from '@prisma/client'
+import { Role, CaseStatus, UserStatus } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
+
+function extractStorageKey(url: string) {
+  if (!url) return null
+
+  const localMarker = '/api/uploads/'
+  const localIndex = url.indexOf(localMarker)
+  if (localIndex >= 0) {
+    const relativeKey = decodeURIComponent(url.slice(localIndex + localMarker.length))
+    return `local/${relativeKey}`
+  }
+
+  const bucket = process.env.S3_BUCKET || 'ortholab-files'
+  const bucketMarker = `/${bucket}/`
+  const bucketIndex = url.indexOf(bucketMarker)
+  if (bucketIndex >= 0) {
+    return url.slice(bucketIndex + bucketMarker.length)
+  }
+
+  return null
+}
 
 const patientSchema = z.object({
   name: z.string().min(2),
@@ -14,6 +34,27 @@ const patientSchema = z.object({
   productType: z.string().optional(),
   planningFormData: z.any().optional(),
 })
+
+const importantNotesSchema = z.object({
+  importantNotes: z.string().max(5000).optional().nullable(),
+})
+
+function buildPatientSelect(includeImportantNotes: boolean) {
+  return {
+    id: true,
+    name: true,
+    gender: true,
+    dob: true,
+    dentistId: true,
+    active: true,
+    importantNotes: includeImportantNotes,
+    teethData: true,
+    createdAt: true,
+    updatedAt: true,
+    dentist: { select: { name: true, clinic: true, email: true } },
+    _count: { select: { cases: true } },
+  }
+}
 
 export async function patientRoutes(fastify: FastifyInstance) {
   const mailer = new EventMailer(fastify)
@@ -61,6 +102,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
     const user = request.user as JwtPayload
     const { search, dentistId, page = '1', limit = '50' } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
+    const includeImportantNotes = user.role !== Role.DENTIST
 
     const where: any = {}
     if (user.role === Role.DENTIST) {
@@ -79,10 +121,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
     const [patients, total] = await Promise.all([
       fastify.prisma.patient.findMany({
         where,
-        include: {
-          dentist: { select: { name: true, clinic: true } },
-          _count: { select: { cases: true } },
-        },
+        select: buildPatientSelect(includeImportantNotes),
         orderBy: { name: 'asc' },
         skip,
         take: parseInt(limit),
@@ -96,6 +135,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
   fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const { id } = request.params as { id: string }
+    const includeImportantNotes = user.role !== Role.DENTIST
 
     const accessiblePatient = await getAccessiblePatient(id, user)
     if (!accessiblePatient) return reply.status(404).send({ error: 'Paciente não encontrado' })
@@ -103,7 +143,8 @@ export async function patientRoutes(fastify: FastifyInstance) {
 
     const patient = await fastify.prisma.patient.findUnique({
       where: { id },
-      include: {
+      select: {
+        ...buildPatientSelect(includeImportantNotes),
         dentist: { select: { name: true, clinic: true, email: true } },
         cases: {
           orderBy: { createdAt: 'desc' },
@@ -118,6 +159,29 @@ export async function patientRoutes(fastify: FastifyInstance) {
     if (!patient) return reply.status(404).send({ error: 'Paciente não encontrado' })
 
     return patient
+  })
+
+  fastify.patch('/:id/important-notes', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    if (user.role === Role.DENTIST) {
+      return reply.status(403).send({ error: 'Dentistas não podem acessar informações internas' })
+    }
+
+    const { id } = request.params as { id: string }
+    const { importantNotes } = importantNotesSchema.parse(request.body)
+
+    const existing = await fastify.prisma.patient.findUnique({ where: { id }, select: { id: true } })
+    if (!existing) return reply.status(404).send({ error: 'Paciente não encontrado' })
+
+    const patient = await fastify.prisma.patient.update({
+      where: { id },
+      select: { id: true, importantNotes: true, updatedAt: true },
+      data: {
+        importantNotes: importantNotes?.trim() ? importantNotes.trim() : null,
+      },
+    })
+
+    return { patient }
   })
 
   fastify.post('/:id/open-workflow', { preHandler: authenticate }, async (request, reply) => {
@@ -279,6 +343,106 @@ export async function patientRoutes(fastify: FastifyInstance) {
     return patient
   })
 
+  fastify.post('/:id/transfer', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    if (user.role !== Role.ADMIN) return reply.status(403).send({ error: 'Apenas administradores podem transferir pacientes' })
+
+    const { id } = request.params as { id: string }
+    const { dentistId } = request.body as { dentistId?: string }
+
+    if (!dentistId) return reply.status(400).send({ error: 'Dentista de destino é obrigatório' })
+
+    const patient = await fastify.prisma.patient.findUnique({ where: { id } })
+    if (!patient) return reply.status(404).send({ error: 'Paciente não encontrado' })
+    if (patient.dentistId === dentistId) return reply.status(400).send({ error: 'O paciente já está vinculado a este dentista' })
+
+    const dentist = await fastify.prisma.user.findFirst({
+      where: { id: dentistId, role: Role.DENTIST, status: UserStatus.ACTIVE },
+      select: { id: true, name: true, clinic: true },
+    })
+    if (!dentist) return reply.status(404).send({ error: 'Dentista de destino não encontrado' })
+
+    const transferredPatient = await fastify.prisma.$transaction(async (tx) => {
+      const caseIds = (await tx.case.findMany({ where: { patientId: id }, select: { id: true } })).map((item) => item.id)
+
+      await tx.patient.update({ where: { id }, data: { dentistId } })
+      await tx.case.updateMany({ where: { patientId: id }, data: { dentistId } })
+      await tx.planningForm.updateMany({ where: { patientId: id }, data: { dentistId } })
+      await tx.completionForm.updateMany({ where: { patientId: id }, data: { dentistId } })
+      await tx.otherServicesForm.updateMany({ where: { patientId: id }, data: { dentistId } })
+      await tx.clinicalRecord.updateMany({ where: { patientId: id }, data: { dentistId } })
+
+      if (caseIds.length > 0) {
+        await tx.payment.updateMany({ where: { caseId: { in: caseIds } }, data: { dentistId } })
+      }
+
+      return tx.patient.findUnique({
+        where: { id },
+        include: { dentist: { select: { name: true, clinic: true, email: true } } },
+      })
+    })
+
+    return { patient: transferredPatient, dentist }
+  })
+
+  fastify.delete('/:id', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    if (user.role !== Role.ADMIN) return reply.status(403).send({ error: 'Apenas administradores podem apagar pacientes' })
+
+    const { id } = request.params as { id: string }
+    const patient = await fastify.prisma.patient.findUnique({ where: { id }, select: { id: true, name: true } })
+    if (!patient) return reply.status(404).send({ error: 'Paciente não encontrado' })
+
+    const [photos, digitalModels, workFiles] = await Promise.all([
+      fastify.prisma.photo.findMany({ where: { patientId: id }, select: { url: true } }),
+      fastify.prisma.digitalModel.findMany({ where: { patientId: id }, select: { url: true } }),
+      fastify.prisma.workFile.findMany({ where: { patientId: id }, select: { url: true } }),
+    ])
+
+    await fastify.prisma.$transaction(async (tx) => {
+      const caseIds = (await tx.case.findMany({ where: { patientId: id }, select: { id: true } })).map((item) => item.id)
+      const planningIds = (await tx.planning.findMany({ where: { caseId: { in: caseIds } }, select: { id: true } })).map((item) => item.id)
+
+      if (planningIds.length > 0) {
+        await tx.revision.deleteMany({ where: { planningId: { in: planningIds } } })
+      }
+
+      if (caseIds.length > 0) {
+        await tx.workflowEvent.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.caseActivity.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.emailLog.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.financial.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.payment.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.production.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.caseDocument.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.planning.deleteMany({ where: { caseId: { in: caseIds } } })
+        await tx.case.deleteMany({ where: { id: { in: caseIds } } })
+      }
+
+      await tx.photo.deleteMany({ where: { patientId: id } })
+      await tx.digitalModel.deleteMany({ where: { patientId: id } })
+      await tx.workFile.deleteMany({ where: { patientId: id } })
+      await tx.planningForm.deleteMany({ where: { patientId: id } })
+      await tx.completionForm.deleteMany({ where: { patientId: id } })
+      await tx.otherServicesForm.deleteMany({ where: { patientId: id } })
+      await tx.clinicalRecord.deleteMany({ where: { patientId: id } })
+      await tx.patient.delete({ where: { id } })
+    })
+
+    const storedFiles = [...photos, ...digitalModels, ...workFiles]
+    await Promise.all(storedFiles.map(async (file) => {
+      const key = extractStorageKey(file.url)
+      if (!key) return
+      try {
+        await fastify.s3.delete(key)
+      } catch {
+        // Ignore storage cleanup errors after DB deletion.
+      }
+    }))
+
+    return { ok: true, deletedPatientId: id, name: patient.name }
+  })
+
   fastify.get('/:id/photos', { preHandler: authenticate }, async (request) => {
     const { id } = request.params as { id: string }
     const { isPrivate } = request.query as any
@@ -302,6 +466,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
 
     const parts = request.parts()
     const saved: any[] = []
+    const failed: any[] = []
     let isPrivate = false
 
     for await (const part of parts) {
@@ -319,9 +484,13 @@ export async function patientRoutes(fastify: FastifyInstance) {
           })
           saved.push(photo)
         } catch {
-          saved.push({ filename: part.filename, error: 'Upload failed - S3 not configured' })
+          failed.push({ filename: part.filename, error: 'Falha ao enviar arquivo' })
         }
       }
+    }
+
+    if (saved.length === 0 && failed.length > 0) {
+      return reply.status(500).send({ error: 'Falha ao enviar arquivos', failed })
     }
 
     if (saved.length > 0) {
@@ -339,7 +508,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
       }
     }
 
-    return reply.status(201).send({ photos: saved })
+    return reply.status(201).send({ photos: saved, failed })
   })
 
   fastify.delete('/:id/photos/:photoId', { preHandler: authenticate }, async (request) => {
@@ -398,7 +567,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
           }
           return reply.status(201).send(file)
         } catch {
-          return reply.status(201).send({ filename: part.filename, kind, error: 'S3 not configured' })
+          return reply.status(500).send({ filename: part.filename, kind, error: 'Falha ao enviar arquivo STL' })
         }
       }
     }
@@ -452,7 +621,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
           }
           return reply.status(201).send(file)
         } catch {
-          return reply.status(201).send({ filename: part.filename, error: 'S3 not configured' })
+          return reply.status(500).send({ filename: part.filename, error: 'Falha ao enviar arquivo' })
         }
       }
     }

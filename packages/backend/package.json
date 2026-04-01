@@ -6,6 +6,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma db push",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio"
