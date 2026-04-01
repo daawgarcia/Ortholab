@@ -467,6 +467,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
     const parts = request.parts()
     const saved: any[] = []
     const failed: any[] = []
+    const filesToUpload: Array<{ filename: string; mimetype: string; buffer: Buffer }> = []
     let isPrivate = false
 
     for await (const part of parts) {
@@ -477,15 +478,19 @@ export async function patientRoutes(fastify: FastifyInstance) {
         for await (const chunk of part.file) chunks.push(chunk)
         const buffer = Buffer.concat(chunks)
 
-        try {
-          const { url } = await fastify.s3.upload(buffer, part.filename, part.mimetype, `patients/${id}/photos`)
-          const photo = await fastify.prisma.photo.create({
-            data: { patientId: id, url, filename: part.filename, size: buffer.length, isPrivate },
-          })
-          saved.push(photo)
-        } catch {
-          failed.push({ filename: part.filename, error: 'Falha ao enviar arquivo' })
-        }
+        filesToUpload.push({ filename: part.filename, mimetype: part.mimetype, buffer })
+      }
+    }
+
+    for (const file of filesToUpload) {
+      try {
+        const { url } = await fastify.s3.upload(file.buffer, file.filename, file.mimetype, `patients/${id}/photos`)
+        const photo = await fastify.prisma.photo.create({
+          data: { patientId: id, url, filename: file.filename, size: file.buffer.length, isPrivate },
+        })
+        saved.push(photo)
+      } catch {
+        failed.push({ filename: file.filename, error: 'Falha ao enviar arquivo' })
       }
     }
 
