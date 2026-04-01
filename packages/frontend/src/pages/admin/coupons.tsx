@@ -4,6 +4,7 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
+import { Download } from 'lucide-react'
 
 export default function AdminCouponsPage() {
   const qc = useQueryClient()
@@ -52,6 +53,22 @@ export default function AdminCouponsPage() {
       toast({ variant: 'destructive', title: 'Erro', description: error?.response?.data?.error || 'Erro ao apagar cupom' })
     },
   })
+
+  const downloadReport = async () => {
+    try {
+      const response = await api.get('/admin/coupons/report.xlsx', { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `relatorio_uso_cupons_${new Date().toISOString().slice(0, 10)}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erro ao baixar relatório', description: error?.response?.data?.error || 'Não foi possível gerar o Excel' })
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -106,10 +123,13 @@ export default function AdminCouponsPage() {
       </div>
 
       <div className="border rounded-lg bg-white p-4 space-y-4">
-        <div>
+        <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">Relatório de uso de cupons</h2>
-          <p className="text-sm text-gray-500">Controle por cupom, dentista e caso faturado ou em andamento.</p>
+          <Button variant="outline" onClick={downloadReport} className="gap-2">
+            <Download className="w-4 h-4" /> Baixar Excel
+          </Button>
         </div>
+        <p className="text-sm text-gray-500">Controle por cupom, dentista e caso faturado ou em andamento.</p>
 
         {reportLoading ? (
           <div className="text-sm text-gray-500">Carregando relatório...</div>

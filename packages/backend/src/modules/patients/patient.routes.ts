@@ -39,7 +39,7 @@ const importantNotesSchema = z.object({
   importantNotes: z.string().max(5000).optional().nullable(),
 })
 
-function buildPatientSelect(includeImportantNotes: boolean) {
+function buildPatientSelect(includeImportantNotes: boolean, includeLatestCase = false) {
   return {
     id: true,
     name: true,
@@ -53,6 +53,17 @@ function buildPatientSelect(includeImportantNotes: boolean) {
     updatedAt: true,
     dentist: { select: { name: true, clinic: true, email: true } },
     _count: { select: { cases: true } },
+    cases: includeLatestCase
+      ? {
+          select: {
+            id: true,
+            productType: true,
+            service: { select: { name: true, type: true } },
+          },
+          orderBy: { createdAt: 'desc' as const },
+          take: 1,
+        }
+      : false,
   }
 }
 
@@ -121,7 +132,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
     const [patients, total] = await Promise.all([
       fastify.prisma.patient.findMany({
         where,
-        select: buildPatientSelect(includeImportantNotes),
+        select: buildPatientSelect(includeImportantNotes, true),
         orderBy: { name: 'asc' },
         skip,
         take: parseInt(limit),

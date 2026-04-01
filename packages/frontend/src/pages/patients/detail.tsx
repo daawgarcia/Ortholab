@@ -17,6 +17,12 @@ function isVideoFile(filename: string) {
 
 const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica', 'Informações Importantes']
 const IMPORTANT_NOTES_POPUP_ROLES = ['ADMIN', 'LAB_TECH', 'FINANCIAL']
+const PRODUCT_TYPE_LABELS: Record<string, string> = {
+  ALINHADORES: 'Alinhadores',
+  FINALIZACAO: 'Contenção',
+  PLACA_MIORRELAXANTE: 'Placa Miorrelaxante',
+  EA_AIR2: 'EA Air²',
+}
 
 const WORKFLOW_STAGES = [
   { n: 1, label: 'Recebimento dos modelos' },
@@ -749,6 +755,10 @@ export default function PatientDetailPage() {
       : ['Workflow', 'Fotos', 'Fichas', 'Ficha Clínica']
 
   const activeCase = patient.cases?.find(c => c.totvsOrderId)
+  const caseForServiceBadge = activeCase || patient.cases?.[0]
+  const treatmentLabel = caseForServiceBadge?.productType
+    ? PRODUCT_TYPE_LABELS[caseForServiceBadge.productType] || caseForServiceBadge.productType
+    : caseForServiceBadge?.service?.name || caseForServiceBadge?.service?.type || ''
 
   return (
     <div className="p-6 space-y-5 max-w-6xl mx-auto">
@@ -774,7 +784,10 @@ export default function PatientDetailPage() {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{patient.name}</h1>
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+            <span>{patient.name}</span>
+            {treatmentLabel && <Badge variant="secondary">{treatmentLabel}</Badge>}
+          </h1>
           <p className="text-sm text-gray-400">{patient.dentist?.name}{patient.dentist?.clinic ? ` · ${patient.dentist.clinic}` : ''}</p>
           {activeCase?.totvsOrderId && <p className="text-sm text-blue-600 font-medium">Nº de Caixa: {activeCase.totvsOrderId}</p>}
         </div>
