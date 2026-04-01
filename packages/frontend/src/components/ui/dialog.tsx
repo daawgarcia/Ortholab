@@ -15,8 +15,14 @@ export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
   const handleClose = () => onOpenChange?.(false)
 
   if (!open) {
-    // Render children to keep `DialogTrigger` in DOM with its handlers
-    return <>{children}</>
+    // Only keep DialogTrigger children in the DOM; hide content/title
+    return <>
+      {React.Children.map(children, child => {
+        if (!React.isValidElement(child)) return null
+        if (child.type === DialogTrigger) return child
+        return null
+      })}
+    </>
   }
 
   return (
