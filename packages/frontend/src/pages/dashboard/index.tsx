@@ -11,6 +11,13 @@ import { formatDate } from '@/lib/utils'
 import { Plus, FolderOpen, Clock, CheckCircle, TrendingUp, AlertCircle, Search, UserCog, Package, Printer, Scissors, Send } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 
+const PRODUCT_TYPE_LABELS: Record<string, string> = {
+  ALINHADORES: 'Alinhadores',
+  FINALIZACAO: 'Contenção',
+  PLACA_MIORRELAXANTE: 'Placa Miorrelaxante',
+  EA_AIR2: 'EA Air²',
+}
+
 const PERIOD_OPTIONS = [
   { value: 'all', label: 'Todos' },
   { value: 'day', label: 'Hoje' },
@@ -263,18 +270,30 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
-            {recentCases.map((c: any) => (
-              <Link key={c.id} to={`/patients/${c.patientId}`} className="flex items-center gap-4 py-3.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors">
-                <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
-                  #{c.caseNumber}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{c.patientName}</p>
-                  <p className="text-xs text-muted-foreground">{c.dentist?.clinic || c.dentist?.name} · {formatDate(c.createdAt)}</p>
-                </div>
-                <StatusBadge status={resolveCaseStatus(c)} />
-              </Link>
-            ))}
+            {recentCases.map((c: any) => {
+              const treatmentLabel = c.productType
+                ? (PRODUCT_TYPE_LABELS[c.productType] || c.service?.name)
+                : c.service?.name
+              return (
+                <Link key={c.id} to={`/patients/${c.patientId}`} className="flex items-center gap-4 py-3.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors">
+                  <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                    #{c.caseNumber}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-medium text-sm truncate">{c.patientName}</p>
+                      {treatmentLabel && (
+                        <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[11px] font-medium shrink-0">
+                          {treatmentLabel}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{c.dentist?.clinic || c.dentist?.name} · {formatDate(c.createdAt)}</p>
+                  </div>
+                  <StatusBadge status={resolveCaseStatus(c)} />
+                </Link>
+              )
+            })}
           </div>
         </CardContent>
       </Card>
