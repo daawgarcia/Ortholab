@@ -739,6 +739,7 @@ export default function PatientDetailPage() {
 
   const availableDentists = (dentistsData?.dentists || []).filter((dentist: any) => dentist.id !== patient.dentistId)
   const hasImportantNotes = Boolean(patient.importantNotes?.trim())
+  const canRenderImportantNotesPopup = IMPORTANT_NOTES_POPUP_ROLES.includes(user?.role || '') && hasImportantNotes
 
   const isCreatorDentist = user?.role === 'DENTIST' && patient.dentistId === user.id
   const tabs = isAdminOrSupport
@@ -751,20 +752,22 @@ export default function PatientDetailPage() {
 
   return (
     <div className="p-6 space-y-5 max-w-6xl mx-auto">
-      <Dialog open={importantNotesOpen} onOpenChange={setImportantNotesOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Informações Importantes</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500">Este paciente possui instruções internas para a equipe de preparo e movimentação.</p>
-            <div className="rounded-lg border bg-amber-50 border-amber-200 p-4 text-sm text-amber-950 whitespace-pre-wrap">{patient.importantNotes}</div>
-            <div className="flex justify-end">
-              <Button onClick={() => setImportantNotesOpen(false)}>Fechar</Button>
+      {canRenderImportantNotesPopup && importantNotesOpen && (
+        <Dialog open={importantNotesOpen} onOpenChange={setImportantNotesOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Informações Importantes</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">Este paciente possui instruções internas para a equipe de preparo e movimentação.</p>
+              <div className="rounded-lg border bg-amber-50 border-amber-200 p-4 text-sm text-amber-950 whitespace-pre-wrap">{patient.importantNotes}</div>
+              <div className="flex justify-end">
+                <Button onClick={() => setImportantNotesOpen(false)}>Fechar</Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/patients')} className="text-gray-400 hover:text-gray-600">
