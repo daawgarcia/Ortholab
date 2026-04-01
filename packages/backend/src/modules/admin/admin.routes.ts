@@ -140,10 +140,14 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
 
     const caseWhere: any = dateFilter ? { createdAt: dateFilter } : {}
-    const patientWhere: any = dateFilter ? { createdAt: dateFilter } : {}
-    const billedWhere: any = {
-      billedAt: dateFilter,
-    }
+    // Count patients who have at least one case in the period (not just new registrations)
+    const patientWhere: any = dateFilter
+      ? { cases: { some: { createdAt: dateFilter } } }
+      : {}
+    // For 'all', only count records that were actually billed (billedAt not null)
+    const billedWhere: any = dateFilter
+      ? { billedAt: dateFilter }
+      : { billedAt: { not: null } }
 
     const [totalCases, totalPatients, totalUsers, pendingUsers, casesByStatus, billedCases, billedAmountAggregate] = await Promise.all([
       fastify.prisma.case.count({ where: caseWhere }),

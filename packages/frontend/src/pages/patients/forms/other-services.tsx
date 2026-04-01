@@ -55,11 +55,11 @@ export default function OtherServicesFormPage() {
           <p className="text-sm font-semibold text-gray-700">Selecione os serviços solicitados</p>
         </div>
 
-        <Row label="EA SPLINT">
+        <Row label="Placa Miorrelaxante">
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.eaSplint} onChange={e => set('eaSplint', e.target.checked)}
               className="w-4 h-4 accent-primary" />
-            <span className="text-sm text-gray-600">Solicitar EA SPLINT</span>
+            <span className="text-sm text-gray-600">Solicitar Placa Miorrelaxante</span>
           </label>
         </Row>
 

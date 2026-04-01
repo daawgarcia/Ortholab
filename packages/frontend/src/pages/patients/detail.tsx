@@ -582,7 +582,7 @@ function FormsTab({ patientId }: { patientId: string }) {
     <div className="space-y-6">
       <FormSection title="Fichas de Planejamento" items={planning} onAdd={() => navigate(`/patients/${patientId}/forms/planning/new`)} />
       <FormSection title="Fichas de Finalização" items={completion} onAdd={() => navigate(`/patients/${patientId}/forms/completion/new`)} />
-      <FormSection title="Outros Serviços (EA SPLINT / AIR)" items={otherServices} onAdd={() => navigate(`/patients/${patientId}/forms/other-services/new`)} />
+      <FormSection title="Outros Serviços (Placa Miorrelaxante / AIR)" items={otherServices} onAdd={() => navigate(`/patients/${patientId}/forms/other-services/new`)} />
     </div>
   )
 }
