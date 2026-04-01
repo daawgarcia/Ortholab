@@ -39,10 +39,19 @@ export async function clinicalRecordRoutes(fastify: FastifyInstance) {
     const user = request.user as JwtPayload
     const { patientId, dentistId, consultationAt, evaluation, activities, observations } = request.body as any
 
+    const patient = await fastify.prisma.patient.findUnique({
+      where: { id: patientId },
+      select: { dentistId: true },
+    })
+
+    if (!patient) return reply.status(404).send({ error: 'Paciente não encontrado' })
+
+    const resolvedDentistId = user.role === Role.DENTIST ? user.id : (dentistId || patient.dentistId)
+
     const record = await fastify.prisma.clinicalRecord.create({
       data: {
         patientId,
-        dentistId: user.role === Role.DENTIST ? user.id : (dentistId || user.id),
+        dentistId: resolvedDentistId,
         consultationAt: new Date(consultationAt),
         evaluation,
         activities: activities || [],

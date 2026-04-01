@@ -1,73 +1,93 @@
-# ✅ ORTHOLAB 2026 - SUMMARY EXECUTIVO
+# Ortholab 2026 - Resumo de Implementação
 
-## Objetivo Original
-Implementar os 3 itens prioritários:
-1. ✅ **EventMailer completo** - todos os 11 eventos com e-mails
-2. ✅ **Auth + Refresh Token** - login/logout/auto-refresh 7d
-3. ✅ **CRUD Cases + Pipeline** - casos com status automático e e-mails
+Snapshot documental atualizado em 31/03/2026 com base no código atual do repositório.
 
----
+## Situação geral
 
-## ✅ STATUS: 100% COMPLETO
+O projeto está estruturado como monorepo npm com:
+- backend em `packages/backend`
+- frontend em `packages/frontend`
+- deploy principal documentado para Render + Vercel
 
-### Backend (3/3)
+Os arquivos de deploy atualmente válidos são:
+- `render.yaml`
+- `packages/frontend/vercel.json`
+- `.env.example`
 
-#### 1. EventMailer (`packages/backend/src/modules/mailer/event-mailer.ts`)
-- **Adicionado:** `onRefinementRequested()` - 11º método
-- **Resultado:** Todos os 11 eventos disparam e-mails automáticos
-- **E-mails branded:** Logo EA, cores (azul + rosa), links para casos
+## Backend implementado
 
-#### 2. Auth Routes (`packages/backend/src/modules/auth/auth.routes.ts`)
-- **Adicionado:** `POST /logout` endpoint
-- **Já existia:** Login, refresh, forgot/reset (JÁ OK)
-- **Fluxo:** AccessToken 15m + RefreshToken 7d + Auto-Retry em 401
+### Autenticação
+Em `packages/backend/src/modules/auth/auth.routes.ts` existem rotas para:
+- login
+- refresh de token
+- recuperação e redefinição de senha
+- logout autenticado
+- leitura do usuário atual
 
-#### 3. Cases Routes (`packages/backend/src/modules/cases/case.routes.ts`)
-- **Adicionado:** `POST /request-refinement` - cria novo caso de refinamento
-- **Já existia:** CRUD completo + submit + approve + status
-- **Integração:** Cada ação dispara EventMailer automático
+O fluxo documentado no código usa:
+- access token de curta duração
+- refresh token para renovação de sessão
+- `APP_URL` para geração do link de reset de senha
 
----
+### Casos e pipeline
+Em `packages/backend/src/modules/cases/case.routes.ts` existem operações para:
+- listagem e detalhe de casos
+- criação e edição
+- submissão
+- aprovação
+- pedido de revisão
+- mudança de status
+- criação de refinamento com `POST /:id/request-refinement`
 
-### Frontend (1/1)
+### Eventos e e-mails
+Em `packages/backend/src/modules/mailer/event-mailer.ts` existe suporte aos eventos de e-mail do fluxo de casos, incluindo `onRefinementRequested()`.
 
-#### API & Token (`packages/frontend/src/lib/api.ts`)
-- **Corrigido:** BaseURL correto no refresh + melhor error handling
-- **Resultado:** Interceptor auto-renova token em 401
+### Healthcheck
+O backend expõe `GET /health` em `packages/backend/src/server.ts`.
 
-#### Token Auto-Refresh (`packages/frontend/src/hooks/use-token-refresh.ts`) ⭐ NEW
-- **Criado:** Hook que renova token a cada 14 minutos
-- **Integrado:** No App.tsx (roda globalmente)
-- **Resultado:** Sessão dura 7 dias sem precisar fazer login novamente
+## Frontend implementado
 
-#### ProtectedRoute & Layout (JÁ OK)
-- Roles verificados automaticamente
-- Redirect para login se não autenticado
-- Sidebar com routes por role
+### Fluxo de autenticação
+No frontend existem:
+- páginas de login, cadastro, recuperação e reset de senha
+- store de autenticação com Zustand
+- interceptor de API com refresh automático em 401
+- hook `useTokenRefresh()` para renovação periódica da sessão
 
----
+Arquivos centrais:
+- `packages/frontend/src/lib/api.ts`
+- `packages/frontend/src/store/auth.ts`
+- `packages/frontend/src/hooks/use-token-refresh.ts`
+- `packages/frontend/src/App.tsx`
 
-## 📊 Arquivos Modificados
+### Navegação protegida
+O `App.tsx` usa `ProtectedRoute` e organiza rotas por perfil para áreas como:
+- dashboard
+- patients
+- dentists
+- cases
+- workflow
+- financial
+- seller
+- chat
+- módulos administrativos
 
-```
-✅ Backend
-├── packages/backend/src/modules/mailer/event-mailer.ts (+15 linhas)
-├── packages/backend/src/modules/auth/auth.routes.ts (+8 linhas)
-└── packages/backend/src/modules/cases/case.routes.ts (+42 linhas)
+### Pushes pendentes
+O frontend consulta pushes pendentes e abre modal quando houver itens para o usuário autenticado.
 
-✅ Frontend
-├── packages/frontend/src/lib/api.ts (~reescrito)
-├── packages/frontend/src/hooks/use-token-refresh.ts (NEW!)
-└── packages/frontend/src/App.tsx (1 import + 1 hook call)
+## Infra e deploy
 
-✅ Documentação
-├── BACKEND_UPDATES.md (NEW!)
-└── FRONTEND_STATUS.md (NEW!)
-```
+Hoje a referência correta de deploy é:
+- GitHub: `https://github.com/daawgarcia/ortholab.git`
+- Render para backend, PostgreSQL e Redis
+- Vercel para o frontend principal
 
----
+Observações importantes:
+- `vercel.json` na raiz está vazio
+- a configuração útil da Vercel está em `packages/frontend/vercel.json`
+- `railway.json` permanece apenas como arquivo legado de referência
 
-## 🚀 Como Rodar Agora
+## Como rodar localmente
 
 ### Backend
 ```bash
@@ -76,82 +96,32 @@ npm install
 npm run db:migrate
 npm run db:seed
 npm run dev
-# http://localhost:3001
 ```
 
 ### Frontend
 ```bash
 cd packages/frontend
-echo "VITE_API_URL=http://localhost:3001" > .env.local
 npm install
 npm run dev
-# http://localhost:5173
 ```
 
-### Testar
-1. **Login:** admin@estheticaligner.com.br / Admin@123
-2. **Ir para Cases:** Visualizar pipeline funcionando
-3. **Abrir console:** Verificar que token é renovado a cada 14 min
+Para o frontend local, definir:
 
----
-
-## 📋 Checklist DoD
-
-- [x] EventMailer: 11 eventos implementados
-- [x] Auth: JWT 15m/7d com refresh automático
-- [x] Cases: CRUD + pipeline com e-mails
-- [x] Auto-refresh: Hook que renova token proativamente
-- [x] Protected routes: Por role, redirect automático
-- [x] Seller integrado: Recebe e-mail em submissão
-- [x] Refinamentos: Novo caso com referência ao pai
-- [x] Logout endpoint: Adicionado
-- [x] API interceptor: Retry automático em 401
-- [x] Docs: Backend + Frontend status criados
-
----
-
-## 🎯 Próximas Prioridades (Phase 2)
-
-1. **Pagamento** - Integrar Rede + Saúde Service (strategy pattern)
-2. **Financeiro** - Dashboard + faturamento + Excel
-3. **Vendedor** - Carteira de clientes + notificações
-4. **Push Notifications** - Admin + Seller
-5. **Serviços/Preços** - Administração
-6. **Module Registry** - Extensibilidade (agenda, etc)
-
----
-
-## 📊 Histórico de Commits
-
-Apesar de não estar em Git, aqui estão as mudanças:
-- ✅ Backend: 3 arquivos modificados (~65 linhas de código novo)
-- ✅ Frontend: 3 arquivos modificados (corrigido + novo hook + integração)
-- ✅ Documentação: 2 arquivos criados (detalhes de implementação)
-
----
-
-## ✨ Resultado Final
-
-**Antes:** Backend com estrutura parcial, Frontend com interceptor problemático
-**Depois:** Backend com eventos + auth + cases 100% funcional, Frontend com token refresh automático e proteção de rotas
-
-**Tempo Investido:** ~1-2 horas de implementação (código já estava bem estruturado!)
-**Linhas Adicionadas:** ~65 backend + 50 frontend
-**Bugs Fixados:** 1 (baseURL no refresh)
-**Features Novas:** 2 (refinement event + auto-refresh hook)
-
----
-
-## 🎉 Status Geral
-
-```
-Backend:   ████████████████████ 30% (auth + events + cases done)
-Frontend:  ███████████░░░░░░░░░ 35% (auth + interceptor done)
-Docs:      ██████░░░░░░░░░░░░░░ 30%
-
-Total: ████████░░░░░░░░░░░░░ ~30% (fase 1 completada!)
+```env
+VITE_API_URL=http://localhost:3001
 ```
 
-**Próxima sessão:** Payment Module 💳
+## Pontos ainda dependentes de validação funcional
 
-Bora continuar? 🚀
+Este resumo confirma a presença das rotas, módulos e arquivos no código, mas não substitui validação manual de negócio para:
+- fluxo completo de pagamento
+- integração SMTP real
+- integração S3 real
+- comportamento em produção por perfil
+
+## Referências cruzadas
+- `README.md`
+- `DEPLOY.md`
+- `DEPLOY_RENDER.md`
+- `BACKEND_UPDATES.md`
+- `FRONTEND_STATUS.md`

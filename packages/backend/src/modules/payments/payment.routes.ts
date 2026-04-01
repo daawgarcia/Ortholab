@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
-import { applyCouponDiscount, getChargeAmountForCase, normalizeInstallmentOption } from '../services/pricing.utils'
+import { getCasePricingSnapshot } from '../services/pricing.utils'
 
 function parseInstallments(option: string): number {
   const match = option.match(/^(\d+)x$/)
@@ -27,10 +27,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
     if (!caseData.service) return reply.status(400).send({ error: 'Caso sem serviço vinculado' })
 
-    const installmentOption = normalizeInstallmentOption(caseData.installmentOption)
-    const baseAmount = getChargeAmountForCase(caseData.service, installmentOption)
-
-    let finalAmount = baseAmount
+    let pricing = getCasePricingSnapshot(caseData.service, caseData.installmentOption)
     let couponMeta: { code: string; discount: number } | undefined
 
     if (caseData.discountCoupon) {
@@ -38,28 +35,28 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       if (!coupon || !coupon.active) {
         return reply.status(400).send({ error: 'Cupom de desconto inválido ou inativo' })
       }
-      finalAmount = applyCouponDiscount(baseAmount, coupon)
-      couponMeta = { code: coupon.code, discount: Number((baseAmount - finalAmount).toFixed(2)) }
+      pricing = getCasePricingSnapshot(caseData.service, caseData.installmentOption, coupon)
+      couponMeta = { code: coupon.code, discount: pricing.discountAmount }
     }
 
-    const installments = parseInstallments(installmentOption)
+    const installments = parseInstallments(pricing.installmentOption)
 
     // Criar registro de pagamento
     const payment = await fastify.prisma.payment.upsert({
       where: { caseId },
       update: {
         provider,
-        amount: finalAmount,
+        amount: pricing.finalAmount,
         status: 'PENDING',
-        metadata: { installmentOption, baseAmount, finalAmount, coupon: couponMeta },
+        metadata: { installmentOption: pricing.installmentOption, baseAmount: pricing.baseAmount, finalAmount: pricing.finalAmount, coupon: couponMeta },
       },
       create: {
         caseId,
         dentistId: (request.user as JwtPayload).id,
         provider,
-        amount: finalAmount,
+        amount: pricing.finalAmount,
         status: 'PENDING',
-        metadata: { installmentOption, baseAmount, finalAmount, coupon: couponMeta },
+        metadata: { installmentOption: pricing.installmentOption, baseAmount: pricing.baseAmount, finalAmount: pricing.finalAmount, coupon: couponMeta },
       },
     })
 
@@ -70,7 +67,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
 
       try {
         const redeResult = await fastify.rede.createTransaction({
-          amount: finalAmount,
+          amount: pricing.finalAmount,
           installments,
           cardNumber: cardData.number,
           cardHolder: cardData.holder,

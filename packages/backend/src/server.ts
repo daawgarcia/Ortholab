@@ -4,6 +4,8 @@ import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import multipart from '@fastify/multipart'
 import websocket from '@fastify/websocket'
+import { promises as fs } from 'fs'
+import path from 'path'
 import { prismaPlugin } from './plugins/prisma'
 import { s3Plugin } from './plugins/s3'
 import { mailerPlugin } from './plugins/mailer'
@@ -35,6 +37,26 @@ import { contentRoutes } from './modules/content/content.routes'
 import { dentistFinancialRoutes } from './modules/dentist-financial/dentist-financial.routes'
 
 const app = Fastify({ logger: true })
+
+function getContentType(filePath: string) {
+  const ext = path.extname(filePath).toLowerCase()
+  const contentTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mov': 'video/quicktime',
+    '.stl': 'model/stl',
+    '.obj': 'model/obj',
+    '.zip': 'application/zip',
+    '.pdf': 'application/pdf',
+  }
+
+  return contentTypes[ext] || 'application/octet-stream'
+}
 
 const start = async () => {
   await app.register(cors, {
@@ -143,6 +165,24 @@ const start = async () => {
   await app.register(videoRoutes, { prefix: '/api/videos' })
   await app.register(contentRoutes, { prefix: '/api/content' })
   await app.register(dentistFinancialRoutes, { prefix: '/api/dentist-financial' })
+
+  app.get('/api/uploads/*', async (request, reply) => {
+    const uploadsRoot = path.resolve(process.cwd(), 'uploads')
+    const requestedPath = decodeURIComponent(String((request.params as any)['*'] || ''))
+    const normalizedPath = requestedPath.split('/').filter(Boolean).join(path.sep)
+    const filePath = path.resolve(uploadsRoot, normalizedPath)
+
+    if (!filePath.startsWith(uploadsRoot)) {
+      return reply.status(400).send({ error: 'Caminho inválido' })
+    }
+
+    try {
+      const file = await fs.readFile(filePath)
+      return reply.type(getContentType(filePath)).send(file)
+    } catch {
+      return reply.status(404).send({ error: 'Arquivo não encontrado' })
+    }
+  })
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 

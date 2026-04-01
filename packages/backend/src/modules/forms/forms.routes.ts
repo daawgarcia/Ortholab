@@ -87,9 +87,9 @@ export async function formsRoutes(fastify: FastifyInstance) {
   fastify.post('/other-services/:patientId', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const { patientId } = request.params as { patientId: string }
-    const { eaGuard, eaSplint, eaMio, eaAir, observations } = request.body as any
+    const { eaSplint, eaAir, observations } = request.body as any
     const form = await fastify.prisma.otherServicesForm.create({
-      data: { patientId, dentistId: user.id, eaGuard: !!eaGuard, eaSplint: !!eaSplint, eaMio, eaAir: !!eaAir, observations },
+      data: { patientId, dentistId: user.id, eaGuard: false, eaSplint: !!eaSplint, eaMio: null, eaAir: !!eaAir, observations },
     })
 
     const patient = await fastify.prisma.patient.findUnique({ where: { id: patientId } })

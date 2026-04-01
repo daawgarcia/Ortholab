@@ -14,6 +14,11 @@ export default function AdminCouponsPage() {
     queryFn: () => api.get('/admin/coupons').then(r => r.data),
   })
 
+  const { data: reportData, isLoading: reportLoading } = useQuery({
+    queryKey: ['admin-coupons-report'],
+    queryFn: () => api.get('/admin/coupons/report').then(r => r.data),
+  })
+
   const createCoupon = useMutation({
     mutationFn: () => api.post('/admin/coupons', form),
     onSuccess: () => {
@@ -53,7 +58,7 @@ export default function AdminCouponsPage() {
       <h1 className="text-2xl font-bold tracking-tight">Admin - Cupons</h1>
 
       <div className="rounded-lg border bg-blue-50 p-4 text-sm text-blue-900">
-        O cupom é aplicado sobre o valor final da condição de pagamento escolhida e só pode ser usado em casos de alinhadores.
+        O cupom é aplicado sobre o valor final da condição de pagamento escolhida, só pode ser usado em casos de alinhadores e cada dentista pode usar o mesmo cupom apenas uma vez.
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,6 +103,58 @@ export default function AdminCouponsPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="border rounded-lg bg-white p-4 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Relatório de uso de cupons</h2>
+          <p className="text-sm text-gray-500">Controle por cupom, dentista e caso faturado ou em andamento.</p>
+        </div>
+
+        {reportLoading ? (
+          <div className="text-sm text-gray-500">Carregando relatório...</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {(reportData?.summary || []).map((item: any) => (
+                <div key={item.code} className="rounded border p-3">
+                  <p className="text-sm font-semibold">{item.code}</p>
+                  <p className="text-xs text-gray-500">{item.totalUses} uso(s) • {item.uniqueDentists} dentista(s)</p>
+                </div>
+              ))}
+              {(reportData?.summary || []).length === 0 && <div className="text-sm text-gray-500">Nenhum uso registrado ainda.</div>}
+            </div>
+
+            {(reportData?.usages || []).length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-gray-500 border-b">
+                      <th className="py-2 pr-3">Cupom</th>
+                      <th className="py-2 pr-3">Dentista</th>
+                      <th className="py-2 pr-3">Caso</th>
+                      <th className="py-2 pr-3">Serviço</th>
+                      <th className="py-2 pr-3">NF</th>
+                      <th className="py-2 pr-3">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.usages.map((item: any) => (
+                      <tr key={item.id} className="border-b last:border-0">
+                        <td className="py-2 pr-3 font-medium">{item.discountCoupon}</td>
+                        <td className="py-2 pr-3">{item.dentist?.name}</td>
+                        <td className="py-2 pr-3">#{item.caseNumber}</td>
+                        <td className="py-2 pr-3">{item.service?.name || item.service?.type || '-'}</td>
+                        <td className="py-2 pr-3">{item.financial?.invoiceNumber || '-'}</td>
+                        <td className="py-2 pr-3 text-gray-500">{new Date(item.financial?.billedAt || item.createdAt).toLocaleDateString('pt-BR')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

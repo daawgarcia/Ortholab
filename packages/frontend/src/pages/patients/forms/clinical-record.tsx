@@ -75,7 +75,7 @@ export default function NewClinicalRecordPage() {
     const url = URL.createObjectURL(res.data)
     const a = document.createElement('a')
     a.href = url
-    a.download = `ficha-clinica-${patient?.name || patientId}.csv`
+    a.download = `ficha-clinica-${patient?.name || patientId}.xlsx`
     a.click()
     URL.revokeObjectURL(url)
   }

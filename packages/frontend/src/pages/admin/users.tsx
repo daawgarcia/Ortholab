@@ -18,7 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState({
     name: '', email: '', password: '', role: 'DENTIST', cro: '', clinic: '', cnpj: '', phone: '',
-    address: '', city: '', state: '', zipCode: '',
+    address: '', city: '', state: '', zipCode: '', firstCaseCouponEligible: false,
   })
 
   const mutation = useMutation({
@@ -98,6 +98,14 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                   <Label>Estado</Label>
                   <Input className="mt-1" value={form.state} onChange={e => set('state', e.target.value)} placeholder="SP" />
                 </div>
+                <label className="col-span-2 flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={form.firstCaseCouponEligible}
+                    onChange={e => setForm(f => ({ ...f, firstCaseCouponEligible: e.target.checked }))}
+                  />
+                  Manter elegibilidade herdada do benefício PRIMEIROCASO
+                </label>
               </div>
             </div>
           )}
@@ -137,6 +145,11 @@ export default function AdminUsersPage() {
   const updateRole = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) => api.patch(`/admin/users/${id}/role`, { role }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast({ title: 'Perfil atualizado!' }) },
+  })
+
+  const updateFirstCaseCoupon = useMutation({
+    mutationFn: ({ id, firstCaseCouponEligible }: { id: string; firstCaseCouponEligible: boolean }) => api.patch(`/admin/users/${id}/first-case-coupon`, { firstCaseCouponEligible }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast({ title: 'Elegibilidade do PRIMEIROCASO atualizada!' }) },
   })
 
   const users = data?.users || []
@@ -203,10 +216,21 @@ export default function AdminUsersPage() {
                 <div className="col-span-2 text-xs text-muted-foreground">
                   {u.clinic && <p>{u.clinic}</p>}
                   {u.cro && <p className="text-gray-400">CRO: {u.cro}</p>}
+                  {u.role === 'DENTIST' && u.firstCaseCouponEligible && <p className="text-amber-700">Elegível PRIMEIROCASO</p>}
                 </div>
                 <div className="col-span-1"><StatusBadge status={u.status} /></div>
                 <div className="col-span-1 text-xs text-muted-foreground">{formatDate(u.createdAt)}</div>
                 <div className="col-span-1 flex gap-1">
+                  {u.role === 'DENTIST' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px] text-amber-700"
+                      onClick={() => updateFirstCaseCoupon.mutate({ id: u.id, firstCaseCouponEligible: !u.firstCaseCouponEligible })}
+                    >
+                      {u.firstCaseCouponEligible ? 'Remover benefício' : 'Liberar benefício'}
+                    </Button>
+                  )}
                   {u.status !== 'ACTIVE' && (
                     <Button size="icon" variant="ghost" className="w-7 h-7 text-green-600"
                       onClick={() => updateStatus.mutate({ id: u.id, status: 'ACTIVE' })}>

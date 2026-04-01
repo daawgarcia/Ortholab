@@ -1,216 +1,152 @@
-# Deploy Ortholab — Hostinger VPS (teste) → AWS (produção)
+# Deploy Ortholab 2026
 
-## Estrutura de arquivos no seu computador
+Este documento foi atualizado com base no estado atual do repositório, usando como fonte os arquivos `render.yaml`, `packages/frontend/vercel.json`, `railway.json`, `.env.example` e o remoto GitHub configurado.
 
-```
-C:\Users\otavi\.verdent\verdent-projects\Ortholab_2026\
-├── package.json                  ← raiz do monorepo
-├── docker-compose.yml            ← PostgreSQL + MinIO + Redis
-├── .env.example                  ← copiar para .env e preencher
-├── .gitignore
-└── packages/
-    ├── backend/                  ← API Node.js + Fastify
-    │   ├── package.json
-    │   ├── tsconfig.json
-    │   ├── prisma/
-    │   │   ├── schema.prisma     ← schema do banco
-    │   │   └── seed.ts           ← dados iniciais
-    │   └── src/
-    │       ├── server.ts
-    │       ├── plugins/          ← prisma, s3, mailer, auth
-    │       └── modules/          ← auth, cases, planning, financial...
-    └── frontend/                 ← React + Vite + Tailwind
-        ├── package.json
-        ├── vite.config.ts
-        ├── tailwind.config.js
-        ├── index.html
-        └── src/
-            ├── main.tsx
-            ├── App.tsx
-            ├── index.css
-            ├── lib/              ← api.ts, utils.ts
-            ├── store/            ← auth.ts (Zustand)
-            ├── components/       ← layout, ui, shared
-            ├── hooks/            ← use-toast.ts
-            └── pages/            ← auth, dashboard, cases, planning...
+Snapshot documental atualizado em 31/03/2026.
+
+## Stack de deploy em uso
+- Código-fonte: GitHub em `https://github.com/daawgarcia/ortholab.git`
+- Backend: Render Web Service
+- Banco: Render PostgreSQL
+- Cache/fila: Render Redis
+- Frontend principal: Vercel
+- Frontend alternativo: Render Static Site já descrito no blueprint
+
+## Estrutura relevante do monorepo
+
+```text
+Ortholab_2026/
+|-- package.json
+|-- .env.example
+|-- docker-compose.yml
+|-- render.yaml
+|-- vercel.json
+|-- railway.json
+`-- packages/
+    |-- backend/
+    |   |-- package.json
+    |   `-- src/
+    `-- frontend/
+        |-- package.json
+        |-- vercel.json
+        `-- src/
 ```
 
----
+## Deploy recomendado
 
-## PASSO 1 — Instalar pré-requisitos (seu Windows)
-
-1. **Node.js 20+**: https://nodejs.org/en/download (versão LTS)
-2. **Docker Desktop**: https://www.docker.com/products/docker-desktop
-3. Abrir o PowerShell na pasta do projeto e rodar:
-
-```powershell
-cd "C:\Users\otavi\.verdent\verdent-projects\Ortholab_2026"
-npm install
-```
-
----
-
-## PASSO 2 — Configurar ambiente local
-
-```powershell
-# Copiar o .env.example para .env
-Copy-Item .env.example .env
-```
-
-Edite o `.env` e preencha pelo menos:
-- `DATABASE_URL` (já está correto para o Docker local)
-- `JWT_SECRET` e `JWT_REFRESH_SECRET` (qualquer string longa aleatória)
-- `SMTP_*` (use Mailtrap para testes: https://mailtrap.io)
-
----
-
-## PASSO 3 — Subir banco de dados local (Docker)
-
-```powershell
-docker-compose up -d
-```
-
-Aguarde ~10 segundos e depois:
-
-```powershell
-cd packages/backend
-npm run db:migrate
-npm run db:seed
-```
-
-Isso cria todas as tabelas e o usuário admin:
-- **E-mail**: admin@estheticaligner.com.br
-- **Senha**: Admin@123
-
----
-
-## PASSO 4 — Rodar localmente
-
-```powershell
-# Terminal 1 — Backend
-cd "C:\Users\otavi\.verdent\verdent-projects\Ortholab_2026\packages\backend"
-npm run dev
-
-# Terminal 2 — Frontend
-cd "C:\Users\otavi\.verdent\verdent-projects\Ortholab_2026\packages\frontend"
-npm run dev
-```
-
-Acesse: http://localhost:5173
-
----
-
-## PASSO 5 — Deploy na Hostinger VPS (teste)
-
-### O que você precisa na Hostinger:
-- VPS com Ubuntu 22.04
-- Mínimo 2GB RAM, 2 vCPU (plano KVM 2 é suficiente para testes)
-- Domínio apontado: `ortholab.estheticaligner.com.br`
-
-### Configuração no servidor Hostinger:
+### 1. Publicar o repositório no GitHub
+O remoto atual já aponta para:
 
 ```bash
-# 1. Instalar Docker e Node.js
-curl -fsSL https://get.docker.com | sh
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt-get install -y nodejs
-
-# 2. Instalar Nginx e Certbot (SSL grátis)
-apt install -y nginx certbot python3-certbot-nginx
-
-# 3. Clonar o projeto (via Git ou SFTP)
-git clone https://github.com/SEU_USUARIO/ortholab.git /var/www/ortholab
-cd /var/www/ortholab
-
-# 4. Criar .env com as variáveis de produção
-cp .env.example .env
-nano .env   # preencher todas as variáveis
-
-# 5. Subir banco + MinIO
-docker-compose up -d
-
-# 6. Instalar dependências e buildar
-npm install
-cd packages/backend && npm run db:migrate && npm run db:seed && npm run build
-cd ../frontend && npm run build
-
-# 7. Iniciar o backend com PM2
-npm install -g pm2
-pm2 start "node packages/backend/dist/server.js" --name ortholab-api
-pm2 save && pm2 startup
+https://github.com/daawgarcia/ortholab.git
 ```
 
-### Configurar Nginx:
+Se o deploy estiver ligado a outra conta ou outro repositório, alinhar primeiro no GitHub antes de importar em Render e Vercel.
 
-```nginx
-# /etc/nginx/sites-available/ortholab
-server {
-    server_name ortholab.estheticaligner.com.br;
+### 2. Subir backend, PostgreSQL e Redis no Render
 
-    # Frontend (arquivos estáticos buildados)
-    location / {
-        root /var/www/ortholab/packages/frontend/dist;
-        try_files $uri $uri/ /index.html;
-    }
+No Render:
+1. New +
+2. Blueprint
+3. Selecionar o repositório GitHub do Ortholab
+4. Confirmar o arquivo `render.yaml`
+5. Preencher as variáveis com `sync: false`
+6. Executar o deploy
 
-    # Backend API
-    location /api {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        client_max_body_size 250M;
-    }
-}
+O blueprint cria estes serviços:
+- `ortholab-backend`
+- `ortholab-postgres`
+- `ortholab-redis`
+- `ortholab-frontend` (opcional se o frontend principal ficar na Vercel)
+
+### 3. Subir o frontend na Vercel
+
+Na Vercel:
+1. Add New Project
+2. Import Git Repository
+3. Selecionar o mesmo repositório
+4. Definir Root Directory como `packages/frontend`
+5. Usar o `packages/frontend/vercel.json`
+6. Configurar `VITE_API_URL`
+7. Fazer o deploy
+
+## Comandos de build já definidos
+
+### Backend
+- Build: `cd packages/backend && npm install && npm run db:generate && npm run build`
+- Start: `cd packages/backend && npm run db:migrate && node dist/server.js`
+- Healthcheck legado em `railway.json`: `/health`
+
+### Frontend
+- Build: `npm run build`
+- Output: `dist`
+- Rewrite SPA: todas as rotas apontam para `index.html`
+
+## Variáveis obrigatórias
+
+### Render / backend
+
+```env
+DATABASE_URL=
+NODE_ENV=production
+PORT=3001
+
+JWT_SECRET=
+JWT_REFRESH_SECRET=
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+FRONTEND_URL=https://SEU-FRONTEND.vercel.app
+APP_URL=https://SEU-FRONTEND.vercel.app
+
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=Esthetic Aligner <noreply@estheticaligner.com.br>
+
+S3_ENDPOINT=s3.amazonaws.com
+S3_ACCESS_KEY=
+S3_SECRET_KEY=
+S3_BUCKET=ortholab-files
+S3_REGION=us-east-1
+
+TOTVS_ENABLED=false
+TOTVS_BASE_URL=
+TOTVS_API_KEY=
+TOTVS_WEBHOOK_SECRET=
 ```
 
-```bash
-ln -s /etc/nginx/sites-available/ortholab /etc/nginx/sites-enabled/
-certbot --nginx -d ortholab.estheticaligner.com.br
-nginx -t && systemctl reload nginx
+### Vercel / frontend
+
+```env
+VITE_API_URL=https://SEU-BACKEND.onrender.com
 ```
 
----
+## Observações importantes
+- O `vercel.json` na raiz está vazio. A configuração útil hoje está em `packages/frontend/vercel.json`.
+- O `railway.json` continua no projeto, mas hoje serve apenas como referência legada de build e healthcheck.
+- Se o frontend for servido pela Vercel, ajustar no Render as variáveis `FRONTEND_URL` e `APP_URL` com a URL final da Vercel.
+- Se optar por usar o frontend estático do próprio Render, então `VITE_API_URL` do serviço `ortholab-frontend` precisa apontar para o backend do Render.
 
-## PASSO 6 — Migrar para AWS (produção)
+## Checklist de validação pós-deploy
+1. Abrir o frontend publicado e validar carregamento da SPA.
+2. Testar login com o backend publicado.
+3. Confirmar resposta do healthcheck do backend.
+4. Verificar logs do Render em caso de erro de migration ou variáveis ausentes.
+5. Validar upload e envio de e-mail, caso SMTP e S3 estejam ativos.
 
-Quando o sistema estiver validado na Hostinger, a migração para AWS envolve apenas trocar os serviços:
+## Credencial inicial
 
-| Serviço atual (Hostinger) | Equivalente AWS | Motivo |
+| E-mail | Senha | Perfil |
 |---|---|---|
-| PostgreSQL no Docker | **RDS PostgreSQL** | Banco gerenciado, backups automáticos |
-| MinIO no Docker | **S3** | Storage nativo AWS, sem manutenção |
-| Node.js com PM2 | **EC2** ou **ECS** | Escalabilidade automática |
-| Nginx | **ALB (Load Balancer)** | Balanceamento + SSL gerenciado |
-| Variáveis `.env` | **Secrets Manager** | Segurança das credenciais |
+| admin@estheticaligner.com.br | Admin@123 | ADMIN |
 
-### Mudanças no `.env` para AWS:
-```
-DATABASE_URL=postgresql://user:pass@rds-endpoint.amazonaws.com:5432/ortholab
-S3_ENDPOINT=           ← remover (usar SDK nativo da AWS)
-S3_ACCESS_KEY=         ← usar IAM Role em vez de credenciais fixas
-S3_BUCKET=ortholab-prod-files
-S3_REGION=sa-east-1    ← São Paulo
-```
+Trocar a senha após o primeiro acesso.
 
----
-
-## Resumo dos URLs no sistema em produção
-
-| URL | O que é |
-|---|---|
-| `ortholab.estheticaligner.com.br` | Portal principal (frontend) |
-| `ortholab.estheticaligner.com.br/api` | API backend |
-| `ortholab.estheticaligner.com.br:9001` | MinIO console (somente interno) |
-
----
-
-## Credenciais padrão após seed
-
-| Usuário | E-mail | Senha | Perfil |
-|---|---|---|---|
-| Admin | admin@estheticaligner.com.br | Admin@123 | ADMIN |
-
-> Troque a senha imediatamente após o primeiro acesso em produção!
+## Referências
+- `README.md`
+- `DEPLOY_RENDER.md`
+- `IMPLEMENTATION_SUMMARY.md`
+- `.env.example`
+- `render.yaml`

@@ -189,8 +189,8 @@ export function PrintingPage() {
       title="Impressão 3D (BR)"
       status="PRINTING_3D"
       subtitle="Casos a imprimir"
-      advanceLabel="Liberar para Laboratório"
-      confirmMessage="Liberar {case} para o Laboratório?"
+      advanceLabel="Liberar para Recorte"
+      confirmMessage="Liberar {case} para Recorte?"
     />
   )
 }
@@ -198,7 +198,7 @@ export function PrintingPage() {
 export function LaboratoryPage() {
   return (
     <WorkflowList
-      title="Laboratório (BR)"
+      title="Recorte (BR)"
       status="LABORATORY"
       subtitle="Casos a confeccionar (Pressurização de placas, Recorte, Acabamento, Embalagem)"
       advanceLabel="Liberar para Expedição"

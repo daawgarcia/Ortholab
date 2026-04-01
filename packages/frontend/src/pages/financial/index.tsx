@@ -9,6 +9,29 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { Download, DollarSign, Loader2, CheckCircle } from 'lucide-react'
 
+function getAmountDetails(c: any) {
+  if (c.financial?.amount !== null && c.financial?.amount !== undefined) {
+    return { tone: 'text-emerald-700', text: 'Valor já faturado no Financeiro' }
+  }
+
+  if (c.payment?.amount !== null && c.payment?.amount !== undefined) {
+    return { tone: 'text-sky-700', text: 'Valor vindo do pagamento registrado' }
+  }
+
+  if (c.pricingContext) {
+    const parts = [`Base ${formatCurrency(Number(c.pricingContext.baseAmount || 0))}`]
+    if (c.pricingContext.progressiveDiscountPercent) {
+      parts.push(`Progressivo ${c.pricingContext.progressiveDiscountPercent}%`)
+    }
+    if (c.pricingContext.couponCode) {
+      parts.push(`Cupom ${c.pricingContext.couponCode}`)
+    }
+    return { tone: 'text-amber-700', text: parts.join(' · ') }
+  }
+
+  return { tone: 'text-muted-foreground', text: 'Valor ainda sem composição disponível' }
+}
+
 export default function FinancialPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
@@ -33,6 +56,13 @@ export default function FinancialPage() {
   }
 
   const cases = data?.cases || []
+
+  function getDisplayAmount(c: any) {
+    if (c.financial?.amount !== null && c.financial?.amount !== undefined) return Number(c.financial.amount)
+    if (c.payment?.amount !== null && c.payment?.amount !== undefined) return Number(c.payment.amount)
+    if (c.suggestedAmount !== null && c.suggestedAmount !== undefined) return Number(c.suggestedAmount)
+    return null
+  }
 
   return (
     <div className="space-y-5">
@@ -77,12 +107,15 @@ export default function FinancialPage() {
                   <div className="col-span-2">{c.dentist?.name}</div>
                   <div className="col-span-2 text-muted-foreground text-xs"><p>{c.dentist?.clinic}</p><p>{c.dentist?.cnpj}</p></div>
                   <div className="col-span-1 text-xs text-muted-foreground">{c.service?.name || '-'}</div>
-                  <div className="col-span-1 font-medium">{c.financial?.amount ? formatCurrency(Number(c.financial.amount)) : c.payment?.amount ? formatCurrency(Number(c.payment.amount)) : '-'}</div>
+                  <div className="col-span-1 font-medium">
+                    {getDisplayAmount(c) !== null ? formatCurrency(getDisplayAmount(c)) : '-'}
+                    <p className={`mt-1 text-[11px] leading-tight ${getAmountDetails(c).tone}`}>{getAmountDetails(c).text}</p>
+                  </div>
                   <div className="col-span-1"><StatusBadge status={c.payment?.status || 'PENDING'} /></div>
                   <div className="col-span-1 text-xs">{c.financial?.invoiceNumber || <span className="text-muted-foreground">-</span>}</div>
                   <div className="col-span-1">
                     {!c.financial?.invoiceNumber ? (
-                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setBillModal(c); setBillForm({ invoiceNumber: '', amount: '', notes: '' }) }}>
+                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setBillModal(c); setBillForm({ invoiceNumber: '', amount: getDisplayAmount(c) !== null ? String(getDisplayAmount(c)) : '', notes: '' }) }}>
                         <DollarSign className="w-3 h-3 mr-1" /> Faturar
                       </Button>
                     ) : (
@@ -103,6 +136,9 @@ export default function FinancialPage() {
             <CardContent className="space-y-4">
               <div className="space-y-1"><label className="text-xs font-medium">Número da NF (opcional)</label><Input placeholder="NF-12345" value={billForm.invoiceNumber} onChange={e => setBillForm(f => ({ ...f, invoiceNumber: e.target.value }))} /></div>
               <div className="space-y-1"><label className="text-xs font-medium">Valor (R$)</label><Input type="number" placeholder="0.00" value={billForm.amount} onChange={e => setBillForm(f => ({ ...f, amount: e.target.value }))} /></div>
+              {billModal && (
+                <p className={`text-xs ${getAmountDetails(billModal).tone}`}>{getAmountDetails(billModal).text}</p>
+              )}
               <div className="space-y-1"><label className="text-xs font-medium">Observações</label><Input value={billForm.notes} onChange={e => setBillForm(f => ({ ...f, notes: e.target.value }))} /></div>
               <p className="text-xs text-muted-foreground">Use este fluxo para lançar valor manual (ex.: 21x e UNIDADE) e liberar para pagamento do cliente.</p>
               <div className="flex gap-2 justify-end">
