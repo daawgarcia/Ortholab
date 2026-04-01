@@ -139,12 +139,14 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
 
     const caseWhere: any = dateFilter ? { createdAt: dateFilter } : {}
+    const patientWhere: any = dateFilter ? { createdAt: dateFilter } : {}
     const billedWhere: any = {
       billedAt: dateFilter,
     }
 
-    const [totalCases, totalUsers, pendingUsers, casesByStatus, billedCases, billedAmountAggregate] = await Promise.all([
+    const [totalCases, totalPatients, totalUsers, pendingUsers, casesByStatus, billedCases, billedAmountAggregate] = await Promise.all([
       fastify.prisma.case.count({ where: caseWhere }),
+      fastify.prisma.patient.count({ where: patientWhere }),
       fastify.prisma.user.count({ where: { status: UserStatus.ACTIVE } }),
       fastify.prisma.user.count({ where: { status: UserStatus.PENDING } }),
       fastify.prisma.case.groupBy({ by: ['status'], where: caseWhere, _count: { _all: true } }),
@@ -154,6 +156,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
     return {
       totalCases,
+      totalPatients,
       totalUsers,
       pendingUsers,
       casesByStatus,

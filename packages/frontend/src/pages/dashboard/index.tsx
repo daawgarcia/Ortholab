@@ -92,14 +92,11 @@ export default function DashboardPage() {
 
   const statusCount = (key: string) =>
     user?.role === 'ADMIN'
-      ? Math.max(
-          adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0,
-          cases.filter((item: any) => resolveCaseStatus(item) === key).length,
-        )
+      ? (adminStats?.casesByStatus?.find((s: any) => s.status === key)?._count?._all || 0)
       : cases.filter((item: any) => resolveCaseStatus(item) === key).length
 
   const stats = [
-    { label: 'Total de Pacientes',        value: user?.role === 'ADMIN' ? (adminStats?.totalCases || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
+    { label: 'Total de Pacientes',        value: user?.role === 'ADMIN' ? (adminStats?.totalPatients || 0) : total, icon: FolderOpen, color: 'text-blue-600',   bg: 'bg-blue-50' },
     { label: 'A Preparar',               value: statusCount('IN_PLANNING'),       icon: Clock,       color: 'text-yellow-600', bg: 'bg-yellow-50' },
     { label: 'A Movimentar',             value: statusCount('IN_MOVEMENT'),        icon: Package,     color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { label: 'Aguardando Aprovação',     value: statusCount('WAITING_APPROVAL'),   icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-50' },

@@ -458,8 +458,8 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
     if (!files?.length) return
     setUploading(true)
     const formData = new FormData()
-    Array.from(files).forEach(f => formData.append('files', f))
     formData.append('isPrivate', String(!!isPrivate))
+    Array.from(files).forEach(f => formData.append('files', f))
     try {
       await api.post(`/patients/${patientId}/photos`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       qc.invalidateQueries({ queryKey: ['patient-photos', patientId] })
