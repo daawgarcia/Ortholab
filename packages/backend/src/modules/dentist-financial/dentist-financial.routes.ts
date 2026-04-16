@@ -267,6 +267,21 @@ export async function dentistFinancialRoutes(fastify: FastifyInstance) {
       }
     })
 
+    // Lista todos os pagamentos PIX para o painel admin
+    authed.get('/invoices/payments/pix', async (request, reply) => {
+      const user = (request as any).user
+      if (user.role !== 'ADMIN' && user.role !== 'FINANCIAL') {
+        return reply.status(403).send({ error: 'Forbidden' })
+      }
+
+      const payments = await authed.prisma.invoicePayment.findMany({
+        where: { method: 'PIX' },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      })
+      return { payments }
+    })
+
     authed.post('/invoices', async (request, reply) => {
       const user = (request as any).user
       if (user.role !== 'ADMIN' && user.role !== 'FINANCIAL') return reply.status(403).send({ error: 'Forbidden' })
