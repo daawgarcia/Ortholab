@@ -1,12 +1,28 @@
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
-import { Settings, Mail, Link2 } from 'lucide-react'
+import { Settings, Mail, Link2, Webhook } from 'lucide-react'
+import { api } from '@/lib/api'
 
 export default function AdminSettingsPage() {
+  const [registeringWebhook, setRegisteringWebhook] = useState(false)
+
   const save = () => toast({ title: 'Configurações salvas!', description: 'Aplique via variáveis de ambiente no servidor.' })
+
+  const registerPixWebhook = async () => {
+    setRegisteringWebhook(true)
+    try {
+      const res = await api.post('/dentist-financial/webhooks/pix/register')
+      toast({ title: 'Webhook PIX registrado!', description: `URL: ${res.data.webhookUrl}` })
+    } catch (err: any) {
+      toast({ title: 'Erro ao registrar webhook', description: err.response?.data?.error || err.message, variant: 'destructive' })
+    } finally {
+      setRegisteringWebhook(false)
+    }
+  }
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -40,6 +56,18 @@ export default function AdminSettingsPage() {
             <p>SAUDE_SERVICE_URL=https://api...</p>
             <p>SAUDE_SERVICE_KEY=sua-chave</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Webhook className="w-4 h-4" /> Webhook PIX (Rede)</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Registra a URL de notificação PIX na Rede. Faça isso <strong>uma única vez</strong> após o deploy em cada ambiente (sandbox/produção).
+          </p>
+          <Button onClick={registerPixWebhook} disabled={registeringWebhook} variant="outline">
+            {registeringWebhook ? 'Registrando...' : 'Registrar Webhook PIX'}
+          </Button>
         </CardContent>
       </Card>
     </div>

@@ -107,7 +107,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     if (!user) return { message: 'Se o e-mail existir, você receberá as instruções.' }
 
     const token = require('crypto').randomBytes(32).toString('hex')
-    const expiry = new Date(Date.now() + 60 * 60 * 1000)
+    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 horas
 
     await fastify.prisma.user.update({
       where: { id: user.id },
@@ -131,7 +131,14 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   fastify.post('/reset-password', async (request, reply) => {
     const { token, password } = request.body as { token: string; password: string }
-    
+
+    if (!password || password.length < 8) {
+      return reply.status(400).send({ error: 'A senha deve ter no mínimo 8 caracteres' })
+    }
+    if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      return reply.status(400).send({ error: 'A senha deve conter ao menos uma letra maiúscula e um número' })
+    }
+
     const user = await fastify.prisma.user.findFirst({
       where: { resetPasswordToken: token, resetPasswordExpiry: { gt: new Date() } },
     })

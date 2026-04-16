@@ -111,6 +111,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
   fastify.post('/impersonate/:userId', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
     const { userId } = request.params as { userId: string }
+    const admin = request.user as JwtPayload
+
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true, role: true, status: true },
@@ -118,8 +120,18 @@ export async function adminRoutes(fastify: FastifyInstance) {
     if (!user) return reply.status(404).send({ error: 'Usuário não encontrado' })
     if (user.status !== UserStatus.ACTIVE) return reply.status(400).send({ error: 'Usuário inativo' })
 
+    fastify.log.warn({
+      event: 'impersonation',
+      adminId: admin.id,
+      adminEmail: admin.email,
+      targetUserId: user.id,
+      targetEmail: user.email,
+      ip: request.ip,
+      at: new Date().toISOString(),
+    }, 'Admin impersonation started')
+
     const payload = { id: user.id, email: user.email, role: user.role, name: user.name }
-    const accessToken = fastify.jwt.sign(payload, { expiresIn: '2h' })
+    const accessToken = fastify.jwt.sign(payload, { expiresIn: '30m' })
     return { accessToken, user: payload, impersonated: true }
   })
 
