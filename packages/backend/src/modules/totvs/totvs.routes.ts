@@ -1,15 +1,30 @@
 import { FastifyInstance } from 'fastify'
+import { timingSafeEqual } from 'crypto'
 import { requireRole } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 
 const TOTVS_ENABLED = process.env.TOTVS_ENABLED === 'true'
 
+function validateTotvsSecret(provided: string | string[] | undefined): boolean {
+  const expected = process.env.TOTVS_WEBHOOK_SECRET
+  if (!expected || !provided || Array.isArray(provided)) return false
+  try {
+    const a = Buffer.from(expected)
+    const b = Buffer.from(provided)
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
+
 export async function totvsRoutes(fastify: FastifyInstance) {
 
   // ─── Webhook: TOTVS envia clientes ──────────────────────────────
   fastify.post('/webhooks/clientes', async (request, reply) => {
-    const secret = request.headers['x-totvs-secret']
-    if (secret !== process.env.TOTVS_WEBHOOK_SECRET) return reply.status(401).send({ error: 'Unauthorized' })
+    if (!validateTotvsSecret(request.headers['x-totvs-secret'])) {
+      return reply.status(401).send({ error: 'Unauthorized' })
+    }
 
     const body = request.body as any
     await fastify.prisma.totvsLog.create({
@@ -21,8 +36,9 @@ export async function totvsRoutes(fastify: FastifyInstance) {
 
   // ─── Webhook: TOTVS envia títulos/faturas (NFs) ──────────────────
   fastify.post('/webhooks/titulos', async (request, reply) => {
-    const secret = request.headers['x-totvs-secret']
-    if (secret !== process.env.TOTVS_WEBHOOK_SECRET) return reply.status(401).send({ error: 'Unauthorized' })
+    if (!validateTotvsSecret(request.headers['x-totvs-secret'])) {
+      return reply.status(401).send({ error: 'Unauthorized' })
+    }
 
     const body = request.body as any
     await fastify.prisma.totvsLog.create({

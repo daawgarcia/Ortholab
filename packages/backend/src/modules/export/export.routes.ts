@@ -49,7 +49,7 @@ export async function exportRoutes(fastify: FastifyInstance) {
         financial: { select: { invoiceNumber: true, billedAt: true, amount: true } },
       },
       orderBy: { createdAt: 'desc' },
-      take: 5000,
+      take: 1000,
     })
 
     const rows = cases.map((c: any) => ({
@@ -87,7 +87,7 @@ export async function exportRoutes(fastify: FastifyInstance) {
         _count: { select: { cases: true } },
       },
       orderBy: { name: 'asc' },
-      take: 5000,
+      take: 1000,
     })
 
     const rows = patients.map((p: any) => ({
@@ -124,7 +124,7 @@ export async function exportRoutes(fastify: FastifyInstance) {
         dentist: { select: { name: true, clinic: true } },
       },
       orderBy: { consultationAt: 'desc' },
-      take: 5000,
+      take: 1000,
     })
 
     const rows = records.map((r: any) => ({

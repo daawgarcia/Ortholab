@@ -4,12 +4,14 @@ import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import multipart from '@fastify/multipart'
 import websocket from '@fastify/websocket'
+import rateLimit from '@fastify/rate-limit'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { prismaPlugin } from './plugins/prisma'
 import { s3Plugin } from './plugins/s3'
 import { mailerPlugin } from './plugins/mailer'
 import { redePlugin } from './plugins/rede'
+import { pixPlugin } from './plugins/pix'
 import { authRoutes } from './modules/auth/auth.routes'
 import { userRoutes } from './modules/users/user.routes'
 import { caseRoutes } from './modules/cases/case.routes'
@@ -36,7 +38,13 @@ import { videoRoutes } from './modules/videos/video.routes'
 import { contentRoutes } from './modules/content/content.routes'
 import { dentistFinancialRoutes } from './modules/dentist-financial/dentist-financial.routes'
 
+// Fail fast if required secrets are missing
+if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is required')
+if (!process.env.JWT_REFRESH_SECRET && !process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is required')
+
 const app = Fastify({ logger: true })
+
+const MAX_WS_MESSAGE_BYTES = 10 * 1024 // 10 KB
 
 function getContentType(filePath: string) {
   const ext = path.extname(filePath).toLowerCase()
@@ -61,11 +69,14 @@ function getContentType(filePath: string) {
 const start = async () => {
   await app.register(cors, {
     origin: (origin, cb) => {
-      const allowed = [
-        'http://localhost:5173',
-        process.env.FRONTEND_URL,
-      ].filter(Boolean)
-      if (!origin || allowed.some(o => origin.startsWith(o as string)) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
+      const allowed = new Set(
+        [
+          'http://localhost:5173',
+          'http://localhost:3000',
+          process.env.FRONTEND_URL,
+        ].filter(Boolean) as string[]
+      )
+      if (!origin || allowed.has(origin)) {
         cb(null, true)
       } else {
         cb(new Error('Not allowed by CORS'), false)
@@ -74,12 +85,19 @@ const start = async () => {
     credentials: true,
   })
 
+  await app.register(rateLimit, {
+    global: true,
+    max: 200,
+    timeWindow: '1 minute',
+    errorResponseBuilder: () => ({ error: 'Muitas requisições. Tente novamente em instantes.' }),
+  })
+
   await app.register(jwt, {
-    secret: process.env.JWT_SECRET || 'fallback-secret',
+    secret: process.env.JWT_SECRET!,
   })
 
   await app.register(multipart, {
-    limits: { fileSize: 200 * 1024 * 1024 },
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
   })
 
   const wsClients = new Map<string, any>()
@@ -88,6 +106,7 @@ const start = async () => {
   await app.register(s3Plugin)
   await app.register(mailerPlugin)
   await app.register(redePlugin)
+  await app.register(pixPlugin)
   await app.register(websocket)
 
   await app.register(authRoutes, { prefix: '/api/auth' })
@@ -111,22 +130,33 @@ const start = async () => {
       const userId = user.id
       wsClients.set(userId, connection.socket)
 
-      connection.socket.on('message', async (data) => {
+      connection.socket.on('message', async (data: Buffer) => {
         try {
+          if (data.length > MAX_WS_MESSAGE_BYTES) {
+            connection.socket.send(JSON.stringify({ error: 'Mensagem muito grande' }))
+            return
+          }
+
           const payload = JSON.parse(data.toString())
           if (payload.type === 'message') {
+            if (!payload.to || typeof payload.to !== 'string') return
+            if (!payload.content || typeof payload.content !== 'string') return
+
+            const receiver = await app.prisma.user.findUnique({
+              where: { id: payload.to },
+              select: { id: true, status: true },
+            })
+            if (!receiver || receiver.status !== 'ACTIVE') return
+
             const message = await app.prisma.chatMessage.create({
               data: {
                 senderId: userId,
                 receiverId: payload.to,
-                content: payload.content,
+                content: String(payload.content).slice(0, 4000),
               },
             })
 
-            const messagePayload = JSON.stringify({
-              type: 'message',
-              message,
-            })
+            const messagePayload = JSON.stringify({ type: 'message', message })
 
             const peerSocket = wsClients.get(payload.to)
             if (peerSocket && peerSocket.readyState === 1) {
@@ -137,7 +167,7 @@ const start = async () => {
             }
           }
         } catch (err) {
-          console.error('WS message parse error', err)
+          console.error('WS message error', err)
         }
       })
 
@@ -166,13 +196,19 @@ const start = async () => {
   await app.register(contentRoutes, { prefix: '/api/content' })
   await app.register(dentistFinancialRoutes, { prefix: '/api/dentist-financial' })
 
-  app.get('/api/uploads/*', async (request, reply) => {
+  app.get('/api/uploads/*', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (request, reply) => {
+    try {
+      await request.jwtVerify()
+    } catch {
+      return reply.status(401).send({ error: 'Unauthorized' })
+    }
+
     const uploadsRoot = path.resolve(process.cwd(), 'uploads')
-    const requestedPath = decodeURIComponent(String((request.params as any)['*'] || ''))
-    const normalizedPath = requestedPath.split('/').filter(Boolean).join(path.sep)
+    const raw = String((request.params as any)['*'] || '')
+    const normalizedPath = raw.split('/').filter(Boolean).join(path.sep)
     const filePath = path.resolve(uploadsRoot, normalizedPath)
 
-    if (!filePath.startsWith(uploadsRoot)) {
+    if (!filePath.startsWith(uploadsRoot + path.sep) && filePath !== uploadsRoot) {
       return reply.status(400).send({ error: 'Caminho inválido' })
     }
 
@@ -185,19 +221,6 @@ const start = async () => {
   })
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
-
-  app.get('/setup-admin', async (request, reply) => {
-    const secret = (request.query as any).secret
-    if (secret !== 'ea-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
-    const bcrypt = require('bcryptjs')
-    const hash = await bcrypt.hash('Admin@123', 12)
-    const user = await app.prisma.user.upsert({
-      where: { email: 'admin@estheticaligner.com.br' },
-      update: {},
-      create: { name: 'Administrador', email: 'admin@estheticaligner.com.br', password: hash, role: 'ADMIN', status: 'ACTIVE', emailVerified: true },
-    })
-    return { ok: true, email: user.email, role: user.role }
-  })
 
   const port = parseInt(process.env.PORT || '3001')
   await app.listen({ port, host: '0.0.0.0' })
