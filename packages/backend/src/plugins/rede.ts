@@ -115,6 +115,8 @@ class RedeService {
 
     if (!response.ok || (data.returnCode && data.returnCode !== '00')) {
       const msg = data.returnMessage || `Erro Rede HTTP ${response.status}`
+      console.error('[Rede Card] request body:', JSON.stringify({ ...body, cardNumber: '****', securityCode: '***' }))
+      console.error('[Rede Card] response:', JSON.stringify(data))
       throw new Error(`Rede: ${data.returnCode || response.status} - ${msg}`)
     }
 
@@ -129,7 +131,8 @@ class RedeService {
 
     const amountInCents = Math.round(params.amount * 100)
     const expiresAt = new Date(Date.now() + (params.expiresInMinutes ?? 30) * 60 * 1000)
-    const datetimeExpiration = expiresAt.toISOString().replace('Z', '')
+    // Rede exige formato sem milissegundos e sem Z: "2023-09-30T13:15:59"
+    const datetimeExpiration = expiresAt.toISOString().replace('Z', '').replace(/\.\d{3}$/, '')
 
     const body = {
       kind: 'pix',
@@ -151,6 +154,9 @@ class RedeService {
 
     if (!response.ok || (data.returnCode && data.returnCode !== '00')) {
       const msg = data.returnMessage || `Erro Rede HTTP ${response.status}`
+      // Log completo para diagnóstico
+      console.error('[Rede PIX] request body:', JSON.stringify(body))
+      console.error('[Rede PIX] response:', JSON.stringify(data))
       throw new Error(`Rede PIX: ${data.returnCode || response.status} - ${msg}`)
     }
 
