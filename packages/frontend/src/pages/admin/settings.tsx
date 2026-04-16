@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
 import { Settings, Mail, Link2, Webhook } from 'lucide-react'
-import { api } from '@/lib/api'
+import api from '@/lib/api'
 
 export default function AdminSettingsPage() {
   const [registeringWebhook, setRegisteringWebhook] = useState(false)
