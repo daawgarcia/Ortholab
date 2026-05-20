@@ -158,18 +158,20 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     return { payment }
   })
 
-  // Webhook de pagamento — valida assinatura HMAC-SHA256
+  // Webhook de pagamento — se PAYMENT_WEBHOOK_SECRET não estiver configurado, rejeita
   fastify.post('/webhook/:provider', {
     config: { rawBody: true },
   }, async (request, reply) => {
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET
-    if (webhookSecret) {
-      const signature = (request.headers['x-webhook-signature'] || request.headers['x-rede-signature'] || '') as string
-      const rawBody = (request as any).rawBody as string | undefined
+    if (!webhookSecret) {
+      return reply.status(503).send({ error: 'Webhook não configurado' })
+    }
 
-      if (!signature || !rawBody || !verifyWebhookSignature(webhookSecret, rawBody, signature)) {
-        return reply.status(401).send({ error: 'Invalid webhook signature' })
-      }
+    const signature = (request.headers['x-webhook-signature'] || request.headers['x-rede-signature'] || '') as string
+    const rawBody = (request as any).rawBody as string | undefined
+
+    if (!signature || !rawBody || !verifyWebhookSignature(webhookSecret, rawBody, signature)) {
+      return reply.status(401).send({ error: 'Invalid webhook signature' })
     }
 
     const body = request.body as any

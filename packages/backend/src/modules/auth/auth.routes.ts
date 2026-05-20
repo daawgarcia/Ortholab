@@ -8,7 +8,6 @@ const registerSchema = z.object({
   name: z.string().min(3),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.nativeEnum(Role).optional(),
   cro: z.string().optional(),
   clinic: z.string().optional(),
   cnpj: z.string().optional(),
@@ -35,18 +34,16 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12)
-    const role = data.role || Role.DENTIST
-    const status = role === Role.DENTIST ? UserStatus.PENDING : UserStatus.ACTIVE
-
+    // Auto-cadastro é sempre DENTIST PENDING — outros perfis só via admin
     const user = await fastify.prisma.user.create({
-      data: { ...data, password: hashedPassword, role, status } as any,
+      data: { ...data, password: hashedPassword, role: Role.DENTIST, status: UserStatus.PENDING } as any,
       select: { id: true, name: true, email: true, role: true, status: true },
     })
 
     return reply.status(201).send({ user, message: 'Cadastro realizado. Aguarde aprovação do administrador.' })
   })
 
-  fastify.post('/login', async (request, reply) => {
+  fastify.post('/login', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { email, password } = loginSchema.parse(request.body)
 
     const user = await fastify.prisma.user.findUnique({ where: { email } })

@@ -2,12 +2,15 @@ import { FastifyInstance } from 'fastify'
 import { authenticate } from '../../plugins/auth'
 
 export async function dentistFinancialRoutes(fastify: FastifyInstance) {
-  // Public — Webhook PIX da Rede (sem JWT, validado pelo header Authorization que a Rede envia)
-  // Registrar URL via POST /api/dentist-financial/webhooks/pix/register (uma vez por ambiente)
+  // Webhook PIX da Rede — se REDE_WEBHOOK_AUTH não estiver configurado, rejeita
   fastify.post('/webhooks/pix', async (request, reply) => {
-    const authHeader = request.headers['authorization'] as string | undefined
     const expected = process.env.REDE_WEBHOOK_AUTH
-    if (expected && authHeader !== expected) {
+    if (!expected) {
+      return reply.status(503).send({ error: 'Webhook não configurado' })
+    }
+
+    const authHeader = request.headers['authorization'] as string | undefined
+    if (authHeader !== expected) {
       return reply.status(401).send({ error: 'Unauthorized' })
     }
 
