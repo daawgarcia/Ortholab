@@ -13,9 +13,10 @@ const baseSchema = z.object({
 
   DATABASE_URL: z.string().url(),
 
-  // Segredos: em prod precisam ter mínimo 32 chars; em dev só não podem estar vazios.
-  JWT_SECRET: isProd ? z.string().min(32) : z.string().min(1),
-  JWT_REFRESH_SECRET: isProd ? z.string().min(32) : z.string().min(1),
+  // Segredos: mínimo 16 chars em qualquer ambiente (o Render gera valores curtos).
+  // Recomendamos 32+ em produção, mas não bloqueamos o boot por isso.
+  JWT_SECRET: z.string().min(16),
+  JWT_REFRESH_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
@@ -37,8 +38,8 @@ const baseSchema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_REGION: z.string().optional(),
 
-  // Webhooks — em produção precisam de segredo. Sem isso, o handler bloqueia.
-  PAYMENT_WEBHOOK_SECRET: isProd ? z.string().min(16) : z.string().optional(),
+  // Webhooks — opcionais. Sem segredo, os handlers rejeitam com 503.
+  PAYMENT_WEBHOOK_SECRET: z.string().optional(),
   REDE_WEBHOOK_AUTH: z.string().optional(),
 
   REDE_PV: z.string().optional(),
