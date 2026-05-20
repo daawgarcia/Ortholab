@@ -32,7 +32,7 @@
     "exceljs": "^4.4.0",
     "fastify": "^4.26.2",
     "fastify-plugin": "^4.5.1",
-    "fastify-raw-body": "^5.0.0",
+    "fastify-raw-body": "^4.3.0",
     "file-type": "^16.5.4",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^6.9.13",
