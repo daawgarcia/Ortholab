@@ -3,8 +3,8 @@ services:
     name: ortholab-backend
     runtime: node
     plan: standard
-    buildCommand: cd packages/backend && npm install && npm run db:generate && npm run build
-    startCommand: cd packages/backend && npm run db:deploy && node dist/server.js
+    buildCommand: npm install && cd packages/backend && npm run db:generate && npm run build
+    startCommand: cd packages/backend && npx prisma migrate deploy && node dist/server.js
     envVars:
       - key: DATABASE_URL
         fromDatabase:
