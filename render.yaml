@@ -2,9 +2,9 @@ services:
   - type: web
     name: ortholab-backend
     runtime: node
-    plan: standard
-    buildCommand: npm install && cd packages/backend && npm run db:generate && npm run build
-    startCommand: cd packages/backend && npx prisma migrate deploy && node dist/server.js
+    plan: free
+    buildCommand: npm install && npm run db:generate && npm run build:backend
+    startCommand: npm run db:deploy --workspace=packages/backend && npm run start --workspace=packages/backend
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -26,6 +26,11 @@ services:
         value: https://ortholab-frontend.vercel.app
       - key: APP_URL
         value: https://ortholab-frontend.vercel.app
+      - key: API_PUBLIC_URL
+        fromService:
+          name: ortholab-backend
+          type: web
+          property: url
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -63,11 +68,11 @@ services:
 
   - type: pserv
     name: ortholab-postgres
-    plan: standard
+    plan: free
     ipAllowList: []
     postgresMajorVersion: 15
 
   - type: redis
     name: ortholab-redis
-    plan: standard
+    plan: free
     ipAllowList: []
