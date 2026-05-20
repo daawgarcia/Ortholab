@@ -2,7 +2,7 @@ services:
   - type: web
     name: ortholab-backend
     runtime: node
-    plan: free
+    plan: standard
     buildCommand: cd packages/backend && npm install && npm run db:generate && npm run build
     startCommand: cd packages/backend && npm run db:deploy && node dist/server.js
     envVars:
@@ -18,10 +18,14 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
       - key: FRONTEND_URL
-        value: https://ortholab-frontend.onrender.com
+        value: https://ortholab-frontend.vercel.app
       - key: APP_URL
-        value: https://ortholab-frontend.onrender.com
+        value: https://ortholab-frontend.vercel.app
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -31,7 +35,7 @@ services:
       - key: SMTP_PASS
         sync: false
       - key: SMTP_FROM
-        value: noreply@estheticaligner.com.br
+        value: Esthetic Aligner <noreply@estheticaligner.com.br>
       - key: S3_ENDPOINT
         value: s3.amazonaws.com
       - key: S3_ACCESS_KEY
@@ -40,26 +44,30 @@ services:
         sync: false
       - key: S3_BUCKET
         value: ortholab-files
+      - key: S3_REGION
+        value: us-east-1
+      - key: PAYMENT_WEBHOOK_SECRET
+        sync: false
+      - key: REDE_WEBHOOK_AUTH
+        sync: false
+      - key: REDE_PV
+        sync: false
+      - key: REDE_TOKEN
+        sync: false
+      - key: REDE_ENV
+        value: sandbox
       - key: TOTVS_ENABLED
         value: "false"
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
 
   - type: pserv
     name: ortholab-postgres
-    plan: free
+    plan: standard
     ipAllowList: []
     postgresMajorVersion: 15
 
-  - type: web
-    name: ortholab-frontend
-    runtime: static
-    plan: free
-    buildCommand: cd packages/frontend && npm install && npm run build
-    staticPublishPath: packages/frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://ortholab-backend.onrender.com
-
   - type: redis
     name: ortholab-redis
-    plan: free
+    plan: standard
     ipAllowList: []

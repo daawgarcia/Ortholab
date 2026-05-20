@@ -77,6 +77,26 @@ class S3Service {
     return getSignedUrl(this.client, command, { expiresIn })
   }
 
+  /**
+   * Recebe a URL armazenada (pode ser S3 público OU /api/uploads/...) e devolve
+   * uma URL temporária autenticada apropriada para o frontend.
+   */
+  async signedUrlForUrl(url: string, expiresIn: number = 600): Promise<string> {
+    if (!url) return url
+
+    // Local fallback: já autenticado pelo /api/uploads/*
+    if (url.includes('/api/uploads/')) return url
+
+    // Tenta extrair a key do bucket S3
+    const bucketMarker = `/${this.bucket}/`
+    const idx = url.indexOf(bucketMarker)
+    if (idx >= 0 && this.s3Enabled) {
+      const key = url.slice(idx + bucketMarker.length)
+      return this.getSignedUrl(key, expiresIn)
+    }
+    return url
+  }
+
   async delete(key: string): Promise<void> {
     if (key.startsWith('local/')) {
       const localPath = path.resolve(this.uploadsRoot, key.replace(/^local\//, ''))

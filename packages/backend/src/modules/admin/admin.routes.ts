@@ -71,9 +71,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const { status } = request.body as { status: UserStatus }
     const user = await fastify.prisma.user.update({
       where: { id },
-      data: { status },
+      data: { status, ...(status === 'INACTIVE' ? { tokenVersion: { increment: 1 } } : {}) },
       select: { id: true, name: true, email: true, status: true },
     })
+    await fastify.audit.log(request, { action: 'admin.user_status', resource: 'User', resourceId: id, metadata: { status } })
     return { user }
   })
 
@@ -82,9 +83,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const { role } = request.body as { role: Role }
     const user = await fastify.prisma.user.update({
       where: { id },
-      data: { role },
+      data: { role, tokenVersion: { increment: 1 } },
       select: { id: true, name: true, email: true, role: true },
     })
+    await fastify.audit.log(request, { action: 'admin.user_role', resource: 'User', resourceId: id, metadata: { role } })
     return { user }
   })
 
@@ -115,23 +117,34 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, role: true, status: true },
+      select: { id: true, name: true, email: true, role: true, status: true, tokenVersion: true },
     })
     if (!user) return reply.status(404).send({ error: 'Usuário não encontrado' })
     if (user.status !== UserStatus.ACTIVE) return reply.status(400).send({ error: 'Usuário inativo' })
 
-    fastify.log.warn({
-      event: 'impersonation',
-      adminId: admin.id,
-      adminEmail: admin.email,
-      targetUserId: user.id,
-      targetEmail: user.email,
-      ip: request.ip,
-      at: new Date().toISOString(),
-    }, 'Admin impersonation started')
+    const accessToken = fastify.tokens.signAccess(user, '30m')
+
+    await fastify.audit.log(request, {
+      action: 'admin.impersonate',
+      resource: 'User',
+      resourceId: user.id,
+      metadata: { adminId: admin.id, adminEmail: admin.email, targetEmail: user.email },
+    })
+
+    fastify.log.warn(
+      {
+        event: 'impersonation',
+        adminId: admin.id,
+        adminEmail: admin.email,
+        targetUserId: user.id,
+        targetEmail: user.email,
+        ip: request.ip,
+        at: new Date().toISOString(),
+      },
+      'Admin impersonation started'
+    )
 
     const payload = { id: user.id, email: user.email, role: user.role, name: user.name }
-    const accessToken = fastify.jwt.sign(payload, { expiresIn: '30m' })
     return { accessToken, user: payload, impersonated: true }
   })
 

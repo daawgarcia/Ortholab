@@ -39,11 +39,12 @@ interface RedePixTransactionResponse {
 interface RedeCreateTransactionParams {
   amount: number           // em reais (ex: 199.90)
   installments: number     // 1 = à vista, 2-21 = parcelado
-  cardNumber: string
-  cardHolder: string
-  expirationMonth: string  // "01"-"12"
-  expirationYear: string   // "2027"
-  securityCode: string
+  cardNumber?: string
+  cardHolder?: string
+  expirationMonth?: string  // "01"-"12"
+  expirationYear?: string   // "2027"
+  securityCode?: string
+  cardToken?: string        // tokenização e-Rede.js (preferido)
   softDescriptor?: string
   reference: string        // ID interno (paymentId ou invoicePaymentId)
   capture?: boolean        // default true
@@ -93,13 +94,22 @@ class RedeService {
       reference: this.shortRef(params.reference),
       amount: amountInCents,
       installments: params.installments,
-      kind: 'credit',                                    // obrigatório para cartão de crédito
-      cardholderName: params.cardHolder,
-      cardNumber: params.cardNumber.replace(/\s/g, ''),
-      expirationMonth: params.expirationMonth.padStart(2, '0'),
-      expirationYear: params.expirationYear,
-      securityCode: params.securityCode,
+      kind: 'credit',
       softDescriptor: (params.softDescriptor || 'ESTHETIC ALIG').substring(0, 13),
+    }
+
+    if (params.cardToken) {
+      // Caminho preferido (PCI-DSS): tokenização via e-Rede.js
+      body.cardToken = params.cardToken
+    } else if (params.cardNumber && params.cardHolder && params.expirationMonth && params.expirationYear && params.securityCode) {
+      // Fallback legado — manter apenas até a migração do front concluir
+      body.cardholderName = params.cardHolder
+      body.cardNumber = params.cardNumber.replace(/\s/g, '')
+      body.expirationMonth = params.expirationMonth.padStart(2, '0')
+      body.expirationYear = params.expirationYear
+      body.securityCode = params.securityCode
+    } else {
+      throw new Error('Dados de cartão ausentes (informe cardToken ou cardData completo)')
     }
 
     const response = await fetch(`${this.baseUrl}/transactions`, {
@@ -115,8 +125,10 @@ class RedeService {
 
     if (!response.ok || (data.returnCode && data.returnCode !== '00')) {
       const msg = data.returnMessage || `Erro Rede HTTP ${response.status}`
-      console.error('[Rede Card] request body:', JSON.stringify({ ...body, cardNumber: '****', securityCode: '***' }))
-      console.error('[Rede Card] response:', JSON.stringify(data))
+      // Nunca logar PAN/CVV/token completo
+      const safeBody = { ...body, cardNumber: '****', securityCode: '***', cardToken: body.cardToken ? '***' : undefined }
+      console.error('[Rede Card] request body:', JSON.stringify(safeBody))
+      console.error('[Rede Card] response code:', data.returnCode, 'msg:', msg)
       throw new Error(`Rede: ${data.returnCode || response.status} - ${msg}`)
     }
 

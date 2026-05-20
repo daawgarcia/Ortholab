@@ -25,14 +25,15 @@ function verifyWebhookSignature(secret: string, rawBody: string, signature: stri
 export async function paymentRoutes(fastify: FastifyInstance) {
   const mailer = new EventMailer(fastify)
 
-  // Cria pagamento e cobra via Rede
-  // AVISO: dados de cartão ainda trafegam pelo backend. Para conformidade PCI-DSS
-  // completa, use tokenização direto no frontend via SDK da Rede (e-Rede.js).
+  // Cria pagamento e cobra via Rede.
+  // PCI-DSS: aceita `cardToken` gerado pelo frontend (e-Rede.js). O `cardData` raw fica
+  // disponível como fallback enquanto a migração não termina, mas será removido em breve.
   fastify.post('/create', { preHandler: authenticate }, async (request, reply) => {
-    const { caseId, provider, cardData } = request.body as {
+    const { caseId, provider, cardData, cardToken } = request.body as {
       caseId: string
       provider: 'REDE' | 'SAUDE_SERVICE'
       cardData?: { number: string; holder: string; expiry: string; cvv: string }
+      cardToken?: string
     }
 
     const user = request.user as JwtPayload
@@ -82,22 +83,30 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       },
     })
 
-    if (provider === 'REDE' && cardData && fastify.rede.isConfigured) {
-      const [expMonth, expYear] = cardData.expiry.replace(/\s/g, '').split('/')
-      const fullYear = expYear.length === 2 ? `20${expYear}` : expYear
-
-      try {
-        const redeResult = await fastify.rede.createTransaction({
-          amount: pricing.finalAmount,
-          installments,
+    if (provider === 'REDE' && (cardToken || cardData) && fastify.rede.isConfigured) {
+      let txParams: Parameters<typeof fastify.rede.createTransaction>[0] = {
+        amount: pricing.finalAmount,
+        installments,
+        reference: payment.id,
+        capture: true,
+      }
+      if (cardToken) {
+        txParams.cardToken = cardToken
+      } else if (cardData) {
+        const [expMonth, expYear] = cardData.expiry.replace(/\s/g, '').split('/')
+        const fullYear = expYear.length === 2 ? `20${expYear}` : expYear
+        txParams = {
+          ...txParams,
           cardNumber: cardData.number,
           cardHolder: cardData.holder,
           expirationMonth: expMonth,
           expirationYear: fullYear,
           securityCode: cardData.cvv,
-          reference: payment.id,
-          capture: true,
-        })
+        }
+      }
+
+      try {
+        const redeResult = await fastify.rede.createTransaction(txParams)
 
         await fastify.prisma.payment.update({
           where: { id: payment.id },
@@ -158,18 +167,22 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     return { payment }
   })
 
-  // Webhook de pagamento — valida assinatura HMAC-SHA256
+  // Webhook de pagamento — exige PAYMENT_WEBHOOK_SECRET configurada e assinatura HMAC válida.
   fastify.post('/webhook/:provider', {
-    config: { rawBody: true },
+    config: { rawBody: true, rateLimit: { max: 120, timeWindow: '1 minute' } },
   }, async (request, reply) => {
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET
-    if (webhookSecret) {
-      const signature = (request.headers['x-webhook-signature'] || request.headers['x-rede-signature'] || '') as string
-      const rawBody = (request as any).rawBody as string | undefined
+    if (!webhookSecret) {
+      fastify.log.error('PAYMENT_WEBHOOK_SECRET ausente — webhook rejeitado')
+      return reply.status(503).send({ error: 'Webhook não configurado' })
+    }
 
-      if (!signature || !rawBody || !verifyWebhookSignature(webhookSecret, rawBody, signature)) {
-        return reply.status(401).send({ error: 'Invalid webhook signature' })
-      }
+    const signature = (request.headers['x-webhook-signature'] || request.headers['x-rede-signature'] || '') as string
+    const rawBody = (request as any).rawBody as string | undefined
+
+    if (!signature || !rawBody || !verifyWebhookSignature(webhookSecret, rawBody, signature)) {
+      await fastify.audit.log(request, { action: 'payment.webhook', status: 'DENIED', metadata: { reason: 'invalid_signature' } })
+      return reply.status(401).send({ error: 'Invalid webhook signature' })
     }
 
     const body = request.body as any

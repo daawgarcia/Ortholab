@@ -6,7 +6,8 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
-  const adminPassword = await bcrypt.hash('Admin@123', 12)
+  const adminPasswordPlain = process.env.SEED_ADMIN_PASSWORD || 'ChangeMe!Now#2026'
+  const adminPassword = await bcrypt.hash(adminPasswordPlain, 12)
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@estheticaligner.com.br' },
@@ -18,9 +19,14 @@ async function main() {
       role: Role.ADMIN,
       status: UserStatus.ACTIVE,
       emailVerified: true,
+      mustChangePassword: true,
     },
   })
   console.log('Admin created:', admin.email)
+  if (!process.env.SEED_ADMIN_PASSWORD) {
+    console.log('⚠️  Senha temporária do admin: ' + adminPasswordPlain)
+    console.log('⚠️  Defina SEED_ADMIN_PASSWORD no .env e rode novamente em produção.')
+  }
 
   const existingModule = await prisma.appModule.findUnique({ where: { slug: 'agenda' } })
   if (!existingModule) {

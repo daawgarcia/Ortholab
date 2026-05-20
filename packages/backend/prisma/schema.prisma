@@ -88,116 +88,121 @@ enum AppModuleStatus {
 }
 
 model User {
-  id                  String     @id @default(uuid())
-  name                String
-  email               String     @unique
-  password            String
-  role                Role       @default(DENTIST)
-  status              UserStatus @default(PENDING)
-  cro                 String?
-  clinic              String?
-  cnpj                String?
-  phone               String?
-  address             String?
-  city                String?
-  state               String?
-  zipCode             String?
-  country             String?    @default("BR")
-  deliveryStreet      String?
-  deliveryNumber      String?
-  deliveryComplement  String?
-  deliveryNeighborhood String?
-  deliveryCity        String?
-  deliveryState       String?
-  deliveryZip         String?
-  deliveryPhone       String?
-  deliveryMobile      String?
-  totvsCode           String?
-  totvsChave          String?
-  totvsLoja           String?
-  totvsProteusClient  String?
-  firstCaseCouponEligible Boolean @default(false)
-  emailVerified       Boolean    @default(false)
-  emailVerifyToken    String?
-  resetPasswordToken  String?
-  resetPasswordExpiry DateTime?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  id                      String     @id @default(uuid())
+  name                    String
+  email                   String     @unique
+  password                String
+  role                    Role       @default(DENTIST)
+  status                  UserStatus @default(PENDING)
+  cro                     String?
+  clinic                  String?
+  cnpj                    String?
+  phone                   String?
+  address                 String?
+  city                    String?
+  state                   String?
+  zipCode                 String?
+  country                 String?    @default("BR")
+  deliveryStreet          String?
+  deliveryNumber          String?
+  deliveryComplement      String?
+  deliveryNeighborhood    String?
+  deliveryCity            String?
+  deliveryState           String?
+  deliveryZip             String?
+  deliveryPhone           String?
+  deliveryMobile          String?
+  totvsCode               String?
+  totvsChave              String?
+  totvsLoja               String?
+  totvsProteusClient      String?
+  firstCaseCouponEligible Boolean    @default(false)
+  emailVerified           Boolean    @default(false)
+  emailVerifyToken        String?
+  resetPasswordToken      String?
+  resetPasswordExpiry     DateTime?
+  failedLoginAttempts     Int        @default(0)
+  lockedUntil             DateTime?
+  tokenVersion            Int        @default(0)
+  passwordChangedAt       DateTime?
+  mustChangePassword      Boolean    @default(false)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
 
-  cases               Case[]     @relation("DentistCases")
-  patients            Patient[]  @relation("DentistPatients")
-  plannings           Planning[] @relation("LabTechPlannings")
-  revisions           Revision[] @relation("RevisionRequester")
-  payments            Payment[]
-  notifications       Notification[]
-  pushReads           PushRead[]
-  pushNotifications   PushNotification[] @relation("PushCreator")
-  emailLogs           EmailLog[]
-  sellerClients       SellerClient[] @relation("SellerRelation")
-  clientSellers       SellerClient[] @relation("ClientRelation")
-  sentMessages        ChatMessage[]  @relation("ChatSent")
-  receivedMessages    ChatMessage[]  @relation("ChatReceived")
-  financials          Financial[]    @relation("BilledBy")
-  planningForms       PlanningForm[] @relation("DentistPlanningForms")
-  completionForms     CompletionForm[] @relation("DentistCompletionForms")
-  otherServicesForms  OtherServicesForm[] @relation("DentistOtherServicesForms")
-  clinicalRecords     ClinicalRecord[] @relation("DentistClinicalRecords")
-  workflowEvents      WorkflowEvent[] @relation("WorkflowEventPerformer")
-  dentistInvoices     DentistInvoice[] @relation("DentistInvoices")
+  cases              Case[]              @relation("DentistCases")
+  patients           Patient[]           @relation("DentistPatients")
+  plannings          Planning[]          @relation("LabTechPlannings")
+  revisions          Revision[]          @relation("RevisionRequester")
+  payments           Payment[]
+  notifications      Notification[]
+  pushReads          PushRead[]
+  pushNotifications  PushNotification[]  @relation("PushCreator")
+  emailLogs          EmailLog[]
+  sellerClients      SellerClient[]      @relation("SellerRelation")
+  clientSellers      SellerClient[]      @relation("ClientRelation")
+  sentMessages       ChatMessage[]       @relation("ChatSent")
+  receivedMessages   ChatMessage[]       @relation("ChatReceived")
+  financials         Financial[]         @relation("BilledBy")
+  planningForms      PlanningForm[]      @relation("DentistPlanningForms")
+  completionForms    CompletionForm[]    @relation("DentistCompletionForms")
+  otherServicesForms OtherServicesForm[] @relation("DentistOtherServicesForms")
+  clinicalRecords    ClinicalRecord[]    @relation("DentistClinicalRecords")
+  workflowEvents     WorkflowEvent[]     @relation("WorkflowEventPerformer")
+  dentistInvoices    DentistInvoice[]    @relation("DentistInvoices")
 }
 
 model Case {
-  id               String      @id @default(uuid())
-  caseNumber       Int         @default(autoincrement())
-  dentistId        String
-  patientId        String?
-  serviceId        String?
-  productType      ProductType?
-  patientName      String
-  patientDob       DateTime?
-  gender           String?
-  notes            String?
-  planningFormData Json?
-  status           CaseStatus  @default(DRAFT)
-  billingType      String?
+  id                String       @id @default(uuid())
+  caseNumber        Int          @default(autoincrement())
+  dentistId         String
+  patientId         String?
+  serviceId         String?
+  productType       ProductType?
+  patientName       String
+  patientDob        DateTime?
+  gender            String?
+  notes             String?
+  planningFormData  Json?
+  status            CaseStatus   @default(DRAFT)
+  billingType       String?
   installmentOption String?
-  dropoutInsurance Boolean     @default(false)
-  discountCoupon   String?
-  packActive       Boolean     @default(false)
-  totvsOrderId     String?
-  isRefinement     Boolean     @default(false)
-  parentCaseId     String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  dropoutInsurance  Boolean      @default(false)
+  discountCoupon    String?
+  packActive        Boolean      @default(false)
+  totvsOrderId      String?
+  isRefinement      Boolean      @default(false)
+  parentCaseId      String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
-  dentist          User        @relation("DentistCases", fields: [dentistId], references: [id])
-  patient          Patient?    @relation(fields: [patientId], references: [id])
-  service          Service?    @relation(fields: [serviceId], references: [id])
-  parentCase       Case?       @relation("CaseRefinements", fields: [parentCaseId], references: [id])
-  refinements      Case[]      @relation("CaseRefinements")
-  documents        CaseDocument[]
-  plannings        Planning[]
-  production       Production?
-  payment          Payment?
-  financial        Financial?
-  activities       CaseActivity[]
-  emailLogs        EmailLog[]
-  workflowEvents   WorkflowEvent[]
+  dentist        User            @relation("DentistCases", fields: [dentistId], references: [id])
+  patient        Patient?        @relation(fields: [patientId], references: [id])
+  service        Service?        @relation(fields: [serviceId], references: [id])
+  parentCase     Case?           @relation("CaseRefinements", fields: [parentCaseId], references: [id])
+  refinements    Case[]          @relation("CaseRefinements")
+  documents      CaseDocument[]
+  plannings      Planning[]
+  production     Production?
+  payment        Payment?
+  financial      Financial?
+  activities     CaseActivity[]
+  emailLogs      EmailLog[]
+  workflowEvents WorkflowEvent[]
 }
 
 model Patient {
-  id        String    @id @default(uuid())
-  name      String
-  gender    String?
-  dob       DateTime?
-  dentistId String
-  active    Boolean   @default(true)
+  id             String    @id @default(uuid())
+  name           String
+  gender         String?
+  dob            DateTime?
+  dentistId      String
+  active         Boolean   @default(true)
   importantNotes String?
-  teethData Json?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  teethData      Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  dentist            User               @relation("DentistPatients", fields: [dentistId], references: [id])
+  dentist            User                @relation("DentistPatients", fields: [dentistId], references: [id])
   cases              Case[]
   photos             Photo[]
   digitalModels      DigitalModel[]
@@ -207,16 +212,18 @@ model Patient {
   otherServicesForms OtherServicesForm[]
   clinicalRecords    ClinicalRecord[]
 }
+
 model Coupon {
-  id            String   @id @default(uuid())
-  code          String   @unique
-  description   String?
-  type          String   // 'PERCENT' ou 'AMOUNT'
-  value         Float
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(uuid())
+  code        String   @unique
+  description String?
+  type        String // 'PERCENT' ou 'AMOUNT'
+  value       Float
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
+
 model CaseDocument {
   id         String       @id @default(uuid())
   caseId     String
@@ -226,36 +233,36 @@ model CaseDocument {
   size       Int
   uploadedAt DateTime     @default(now())
 
-  case       Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
 }
 
 model Planning {
-  id              String    @id @default(uuid())
-  caseId          String
-  labTechId       String
-  notes           String?
-  alignerUpper    Int?
-  alignerLower    Int?
-  setupUrl        String?
-  setupFileName   String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String   @id @default(uuid())
+  caseId        String
+  labTechId     String
+  notes         String?
+  alignerUpper  Int?
+  alignerLower  Int?
+  setupUrl      String?
+  setupFileName String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  case            Case      @relation(fields: [caseId], references: [id])
-  labTech         User      @relation("LabTechPlannings", fields: [labTechId], references: [id])
-  revisions       Revision[]
+  case      Case       @relation(fields: [caseId], references: [id])
+  labTech   User       @relation("LabTechPlannings", fields: [labTechId], references: [id])
+  revisions Revision[]
 }
 
 model Revision {
-  id           String    @id @default(uuid())
-  planningId   String
-  requestedBy  String
-  notes        String
-  status       String    @default("PENDING")
-  createdAt    DateTime  @default(now())
+  id          String   @id @default(uuid())
+  planningId  String
+  requestedBy String
+  notes       String
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
 
-  planning     Planning  @relation(fields: [planningId], references: [id])
-  requester    User      @relation("RevisionRequester", fields: [requestedBy], references: [id])
+  planning  Planning @relation(fields: [planningId], references: [id])
+  requester User     @relation("RevisionRequester", fields: [requestedBy], references: [id])
 }
 
 model Production {
@@ -267,34 +274,34 @@ model Production {
   completedAt  DateTime?
   createdAt    DateTime  @default(now())
 
-  case         Case      @relation(fields: [caseId], references: [id])
+  case Case @relation(fields: [caseId], references: [id])
 }
 
 model Service {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?
-  type            String
-  productionDays  Int      @default(15)
-  maxRevisions    Int      @default(2)
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  type           String
+  productionDays Int      @default(15)
+  maxRevisions   Int      @default(2)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  prices          Price[]
-  cases           Case[]
+  prices Price[]
+  cases  Case[]
 }
 
 model Price {
-  id          String   @id @default(uuid())
-  serviceId   String
-  price       Decimal  @db.Decimal(10, 2)
-  groupId     String?
-  dentistId   String?
-  validFrom   DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  serviceId String
+  price     Decimal  @db.Decimal(10, 2)
+  groupId   String?
+  dentistId String?
+  validFrom DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  service     Service  @relation(fields: [serviceId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
 }
 
 model Payment {
@@ -310,8 +317,8 @@ model Payment {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  case          Case            @relation(fields: [caseId], references: [id])
-  dentist       User            @relation(fields: [dentistId], references: [id])
+  case    Case @relation(fields: [caseId], references: [id])
+  dentist User @relation(fields: [dentistId], references: [id])
 }
 
 model Financial {
@@ -324,17 +331,17 @@ model Financial {
   notes         String?
   createdAt     DateTime  @default(now())
 
-  case          Case      @relation(fields: [caseId], references: [id])
-  billedBy      User?     @relation("BilledBy", fields: [billedById], references: [id])
+  case     Case  @relation(fields: [caseId], references: [id])
+  billedBy User? @relation("BilledBy", fields: [billedById], references: [id])
 }
 
 model SellerClient {
-  sellerId   String
-  clientId   String
-  createdAt  DateTime @default(now())
+  sellerId  String
+  clientId  String
+  createdAt DateTime @default(now())
 
-  seller     User     @relation("SellerRelation", fields: [sellerId], references: [id])
-  client     User     @relation("ClientRelation", fields: [clientId], references: [id])
+  seller User @relation("SellerRelation", fields: [sellerId], references: [id])
+  client User @relation("ClientRelation", fields: [clientId], references: [id])
 
   @@id([sellerId, clientId])
 }
@@ -348,7 +355,7 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PushNotification {
@@ -363,34 +370,34 @@ model PushNotification {
   expiresAt   DateTime?
   createdAt   DateTime       @default(now())
 
-  createdBy   User           @relation("PushCreator", fields: [createdById], references: [id])
-  reads       PushRead[]
+  createdBy User       @relation("PushCreator", fields: [createdById], references: [id])
+  reads     PushRead[]
 }
 
 model PushRead {
-  id       String           @id @default(uuid())
-  pushId   String
-  userId   String
-  readAt   DateTime         @default(now())
+  id     String   @id @default(uuid())
+  pushId String
+  userId String
+  readAt DateTime @default(now())
 
-  push     PushNotification @relation(fields: [pushId], references: [id], onDelete: Cascade)
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  push PushNotification @relation(fields: [pushId], references: [id], onDelete: Cascade)
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([pushId, userId])
 }
 
 model AppModule {
-  id          String          @id @default(uuid())
-  name        String
-  slug        String          @unique
-  icon        String?
-  url         String
-  roles       Role[]
-  status      AppModuleStatus @default(ACTIVE)
-  openInNewTab Boolean        @default(false)
-  order       Int             @default(0)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id           String          @id @default(uuid())
+  name         String
+  slug         String          @unique
+  icon         String?
+  url          String
+  roles        Role[]
+  status       AppModuleStatus @default(ACTIVE)
+  openInNewTab Boolean         @default(false)
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }
 
 model CaseActivity {
@@ -402,7 +409,7 @@ model CaseActivity {
   metadata    Json?
   createdAt   DateTime @default(now())
 
-  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
 }
 
 model EmailLog {
@@ -416,18 +423,18 @@ model EmailLog {
   error      String?
   sentAt     DateTime @default(now())
 
-  case       Case?    @relation(fields: [caseId], references: [id])
-  user       User?    @relation(fields: [userId], references: [id])
+  case Case? @relation(fields: [caseId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 }
 
 model TotvsLog {
-  id         String   @id @default(uuid())
-  direction  String
-  endpoint   String
-  payload    Json?
-  response   Json?
-  status     String
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  direction String
+  endpoint  String
+  payload   Json?
+  response  Json?
+  status    String
+  createdAt DateTime @default(now())
 }
 
 model SystemSetting {
@@ -446,7 +453,7 @@ model Photo {
   isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model DigitalModel {
@@ -458,7 +465,7 @@ model DigitalModel {
   kind      String
   createdAt DateTime @default(now())
 
-  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model WorkFile {
@@ -469,7 +476,7 @@ model WorkFile {
   size      Int?
   createdAt DateTime @default(now())
 
-  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model PlanningForm {
@@ -480,8 +487,8 @@ model PlanningForm {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  patient   Patient  @relation(fields: [patientId], references: [id])
-  dentist   User     @relation("DentistPlanningForms", fields: [dentistId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  dentist User    @relation("DentistPlanningForms", fields: [dentistId], references: [id])
 }
 
 model CompletionForm {
@@ -495,8 +502,8 @@ model CompletionForm {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  patient         Patient  @relation(fields: [patientId], references: [id])
-  dentist         User     @relation("DentistCompletionForms", fields: [dentistId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  dentist User    @relation("DentistCompletionForms", fields: [dentistId], references: [id])
 }
 
 model OtherServicesForm {
@@ -511,8 +518,8 @@ model OtherServicesForm {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  patient      Patient  @relation(fields: [patientId], references: [id])
-  dentist      User     @relation("DentistOtherServicesForms", fields: [dentistId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  dentist User    @relation("DentistOtherServicesForms", fields: [dentistId], references: [id])
 }
 
 model ClinicalRecord {
@@ -526,8 +533,8 @@ model ClinicalRecord {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  patient        Patient  @relation(fields: [patientId], references: [id])
-  dentist        User     @relation("DentistClinicalRecords", fields: [dentistId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  dentist User    @relation("DentistClinicalRecords", fields: [dentistId], references: [id])
 }
 
 model WorkflowEvent {
@@ -539,8 +546,8 @@ model WorkflowEvent {
   notes       String?
   createdAt   DateTime @default(now())
 
-  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  performer   User?    @relation("WorkflowEventPerformer", fields: [performedBy], references: [id])
+  case      Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  performer User? @relation("WorkflowEventPerformer", fields: [performedBy], references: [id])
 }
 
 enum VideoCategory {
@@ -575,20 +582,20 @@ model ContentPage {
 }
 
 model DentistInvoice {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   dentistId     String
   caseId        String?
-  totvsId       String?  @unique
+  totvsId       String?   @unique
   invoiceNumber String
   description   String
-  amount        Decimal  @db.Decimal(10, 2)
+  amount        Decimal   @db.Decimal(10, 2)
   dueDate       DateTime
   paidAt        DateTime?
-  status        String   @default("OPEN")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        String    @default("OPEN")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  dentist       User     @relation("DentistInvoices", fields: [dentistId], references: [id], onDelete: Cascade)
+  dentist User @relation("DentistInvoices", fields: [dentistId], references: [id], onDelete: Cascade)
 }
 
 model ChatMessage {
@@ -599,22 +606,41 @@ model ChatMessage {
   read       Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  sender     User     @relation("ChatSent", fields: [senderId], references: [id])
-  receiver   User     @relation("ChatReceived", fields: [receiverId], references: [id])
+  sender   User @relation("ChatSent", fields: [senderId], references: [id])
+  receiver User @relation("ChatReceived", fields: [receiverId], references: [id])
 }
 
 model InvoicePayment {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   dentistId     String
   invoiceIds    String[]
-  totalAmount   Decimal  @db.Decimal(10, 2)
+  totalAmount   Decimal   @db.Decimal(10, 2)
   method        String
-  status        String   @default("PENDING")
+  status        String    @default("PENDING")
   pixCode       String?
   pixExpiry     DateTime?
   cardLast4     String?
   transactionId String?
   paidAt        DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorEmail String?
+  actorRole  String?
+  action     String
+  resource   String?
+  resourceId String?
+  ip         String?
+  userAgent  String?
+  status     String   @default("OK")
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId])
+  @@index([action, createdAt])
 }
