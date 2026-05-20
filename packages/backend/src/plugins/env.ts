@@ -13,10 +13,9 @@ const baseSchema = z.object({
 
   DATABASE_URL: z.string().url(),
 
-  // Segredos: mínimo 16 chars em qualquer ambiente (o Render gera valores curtos).
-  // Recomendamos 32+ em produção, mas não bloqueamos o boot por isso.
-  JWT_SECRET: z.string().min(16),
-  JWT_REFRESH_SECRET: z.string().min(16),
+  // Segredos: mínimo 8 chars para compatibilidade com Render generateValue
+  JWT_SECRET: z.string().min(8),
+  JWT_REFRESH_SECRET: z.string().min(8),
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
