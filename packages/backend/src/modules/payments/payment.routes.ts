@@ -219,4 +219,29 @@ export async function paymentRoutes(fastify: FastifyInstance) {
 
     return { received: true }
   })
+
+  // Admin: listar todos os pagamentos por cartão
+  fastify.get('/admin/list', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    if (user.role !== Role.ADMIN && user.role !== Role.FINANCIAL) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
+    const { status, page = '1', limit = '50' } = request.query as { status?: string; page?: string; limit?: string }
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const where = status ? { status: status as any } : {}
+    const [payments, total] = await Promise.all([
+      fastify.prisma.payment.findMany({
+        where,
+        include: {
+          case: { select: { caseNumber: true, patientName: true } },
+          dentist: { select: { name: true, clinic: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: parseInt(limit),
+      }),
+      fastify.prisma.payment.count({ where }),
+    ])
+    return { payments, total, page: parseInt(page), limit: parseInt(limit) }
+  })
 }
