@@ -27,8 +27,8 @@ class WhatsAppService {
     try {
       const cleanPhone = phone.replace(/\D/g, '')
       const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
-      const url = `${this.config.baseUrl}/api/${this.config.sessionName}/sendText`
-      const response = await axios.post(url, { chatId: `${formattedPhone}@c.us`, text: message }, { timeout: 30000, headers: this.headers() })
+      const url = `${this.config.baseUrl}/api/sendText`
+      const response = await axios.post(url, { session: this.config.sessionName, chatId: `${formattedPhone}@c.us`, text: message }, { timeout: 30000, headers: this.headers() })
       if (response.status === 200 || response.status === 201) {
         console.log(`[WhatsApp] Mensagem enviada para ${formattedPhone}`)
         return true
@@ -46,42 +46,38 @@ class WhatsAppService {
 
   async checkSession(): Promise<boolean> {
     const { baseUrl, sessionName } = this.config
-    // WAHA 2024+: GET /api/sessions/{name}
     try {
       const res = await axios.get(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() })
       const s = res.data?.status || res.data?.state || ''
       return s === 'WORKING' || s === 'CONNECTED'
     } catch {
-      // fallback API antiga
-      try {
-        const res = await axios.get(`${baseUrl}/api/${sessionName}/status`, { timeout: 10000, headers: this.headers() })
-        return res.data?.state === 'CONNECTED'
-      } catch {
-        return false
-      }
+      return false
     }
   }
 
   async startSession(): Promise<any> {
     const { baseUrl, sessionName } = this.config
-    // WAHA 2024+: criar sessão primeiro se não existir, depois iniciar
+    // Tenta criar a sessão com start:true (cria e inicia em uma chamada)
     try {
-      await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, config: {} }, { timeout: 15000, headers: this.headers() })
+      const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
+      return res.data
     } catch (err: any) {
-      // 422 = sessão já existe — tudo bem, continua
-      if (err.response?.status !== 422) {
-        // API antiga: tentar direto
-        console.warn('[WhatsApp] POST /api/sessions falhou, tentando API antiga:', err.message)
+      const status = err.response?.status
+      // Sessão já existe (422/409) → apenas inicia
+      if (status === 422 || status === 409) {
+        try {
+          const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
+          return res.data
+        } catch (startErr: any) {
+          // Já está iniciando — não é erro
+          if (startErr.response?.status === 422 || startErr.response?.status === 400) {
+            return { status: 'already_starting' }
+          }
+          throw startErr
+        }
       }
-    }
-    // Iniciar a sessão (nova API: /api/sessions/{name}/start  |  antiga: /api/{name}/start)
-    try {
-      const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
-      return res.data
-    } catch (err: any) {
-      // fallback API antiga
-      const res = await axios.post(`${baseUrl}/api/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
-      return res.data
+      console.error('[WhatsApp] Erro ao criar sessão:', err.response?.data || err.message)
+      throw err
     }
   }
 
@@ -91,36 +87,27 @@ class WhatsAppService {
       await axios.post(`${baseUrl}/api/sessions/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() })
       return true
     } catch {
-      try {
-        await axios.post(`${baseUrl}/api/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() })
-        return true
-      } catch {
-        return false
-      }
+      return false
     }
   }
 
   async getQrCode(): Promise<string | null> {
     const { baseUrl, sessionName } = this.config
-    // Tenta obter QR como imagem binária
-    for (const url of [
-      `${baseUrl}/api/sessions/${sessionName}/auth/qr`,
-      `${baseUrl}/api/${sessionName}/auth/qr`,
-    ]) {
-      try {
-        const res = await axios.get(url, { timeout: 10000, responseType: 'arraybuffer', headers: this.headers() })
-        const mime = res.headers['content-type'] || 'image/png'
-        if (mime.startsWith('image/')) {
-          return `data:${mime};base64,${Buffer.from(res.data).toString('base64')}`
-        }
-      } catch { /* tenta próximo */ }
-      // Tenta como JSON
-      try {
-        const res = await axios.get(url, { timeout: 10000, headers: this.headers() })
-        if (res.data?.value) return res.data.value
-        if (res.data?.qr) return res.data.qr
-      } catch { /* tenta próximo */ }
-    }
+    const url = `${baseUrl}/api/${sessionName}/auth/qr`
+    // Tenta como imagem binária
+    try {
+      const res = await axios.get(url, { timeout: 10000, responseType: 'arraybuffer', headers: this.headers() })
+      const mime = res.headers['content-type'] || 'image/png'
+      if (mime.startsWith('image/')) {
+        return `data:${mime};base64,${Buffer.from(res.data).toString('base64')}`
+      }
+    } catch { /* tenta JSON */ }
+    // Tenta como JSON
+    try {
+      const res = await axios.get(url, { timeout: 10000, headers: this.headers() })
+      if (res.data?.value) return res.data.value
+      if (res.data?.qr) return res.data.qr
+    } catch { /* sem QR disponível */ }
     return null
   }
 
