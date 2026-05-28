@@ -15,7 +15,6 @@ export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
   const handleClose = () => onOpenChange?.(false)
 
   if (!open) {
-    // Only keep DialogTrigger children in the DOM; hide content/title
     return <>
       {React.Children.map(children, child => {
         if (!React.isValidElement(child)) return null
@@ -38,7 +37,6 @@ export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
 }
 
 export function DialogTrigger({ asChild, children }: DialogTriggerProps) {
-  // In this implementation we expect parent handles the open state.
   return asChild ? React.cloneElement(children, {}) : <>{children}</>
 }
 
@@ -52,4 +50,8 @@ export function DialogHeader({ children }: { children: React.ReactNode }) {
 
 export function DialogTitle({ children }: { children: React.ReactNode }) {
   return <h3 className="text-lg font-semibold">{children}</h3>
+}
+
+export function DialogDescription({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm text-muted-foreground">{children}</p>
 }
