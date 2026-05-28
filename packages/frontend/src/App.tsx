@@ -47,6 +47,7 @@ import AdminCouponsPage from '@/pages/admin/coupons'
 import AdminPixPaymentsPage from '@/pages/admin/pix-payments'
 import AdminWhatsAppPage from '@/pages/admin/whatsapp'
 import AdminReportsPage from '@/pages/admin/reports'
+import AdminCardPaymentsPage from '@/pages/admin/card-payments'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
@@ -128,6 +129,7 @@ export default function App() {
           <Route path="admin/settings" element={<ProtectedRoute roles={['ADMIN']}><AdminSettingsPage /></ProtectedRoute>} />
           <Route path="admin/coupons" element={<ProtectedRoute roles={['ADMIN']}><AdminCouponsPage /></ProtectedRoute>} />
           <Route path="admin/pix-payments" element={<ProtectedRoute roles={['ADMIN','FINANCIAL']}><AdminPixPaymentsPage /></ProtectedRoute>} />
+          <Route path="admin/card-payments" element={<ProtectedRoute roles={['ADMIN','FINANCIAL']}><AdminCardPaymentsPage /></ProtectedRoute>} />
           <Route path="admin/whatsapp" element={<ProtectedRoute roles={['ADMIN']}><AdminWhatsAppPage /></ProtectedRoute>} />
           <Route path="admin/reports" element={<ProtectedRoute roles={['ADMIN']}><AdminReportsPage /></ProtectedRoute>} />
 

@@ -410,7 +410,7 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
     formData.append('isPrivate', String(!!isPrivate))
     Array.from(files).forEach(f => formData.append('files', f))
     try {
-      await api.post(`/patients/${patientId}/photos`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      await api.post(`/patients/${patientId}/photos`, formData)
       qc.invalidateQueries({ queryKey: ['patient-photos', patientId] })
       toast({ title: isPrivate ? 'Mídias restritas enviadas' : 'Mídias enviadas' })
     } catch { toast({ variant: 'destructive', title: 'Erro ao enviar mídias' }) }
@@ -453,7 +453,7 @@ function FilesTab({ patientId, type }: { patientId: string; type: 'stl' | 'work'
     formData.append('file', file)
     if (type === 'stl') formData.append('kind', kind)
     try {
-      await api.post(`/patients/${patientId}/${endpoint}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      await api.post(`/patients/${patientId}/${endpoint}`, formData)
       qc.invalidateQueries({ queryKey: ['patient-files', patientId, type] })
     } catch { toast({ variant: 'destructive', title: 'Erro ao enviar arquivo' }) }
     finally { setUploading(false) }
@@ -513,7 +513,7 @@ function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] })
     const formData = new FormData()
     formData.append('file', file)
     try {
-      await api.post(`/cases/${uploadCaseId}/upload-pdf`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      await api.post(`/cases/${uploadCaseId}/upload-pdf`, formData)
       toast({ title: 'Relatório enviado com sucesso!' })
       refetch()
     } catch (err: any) {
@@ -590,7 +590,6 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
     formData.append('file', file)
     try {
       await api.post(`/cases/${uploadCaseId}/upload-video`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (evt: any) => setProgress(Math.round((evt.loaded / (evt.total || 1)) * 100)),
       })
       toast({ title: 'Vídeo enviado com sucesso!' })

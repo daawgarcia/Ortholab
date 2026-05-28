@@ -21,6 +21,8 @@ export function AdminWhatsAppPage() {
   const qc = useQueryClient()
   const [showQRDialog, setShowQRDialog] = useState(false)
   const [qrCode, setQrCode] = useState<string | null>(null)
+  const [qrFailed, setQrFailed] = useState(false)
+  const qrAttempts = useRef(0)
   const [testPhone, setTestPhone] = useState('')
   const [testMessage, setTestMessage] = useState('')
   const [defaultMessage, setDefaultMessage] = useState(
@@ -48,12 +50,21 @@ export function AdminWhatsAppPage() {
   const fetchQr = async () => {
     try {
       const res = await api.get('/whatsapp/qr')
-      if (res.data?.qrCode) setQrCode(res.data.qrCode)
-    } catch { /* QR ainda não disponível */ }
+      if (res.data?.qrCode) {
+        setQrCode(res.data.qrCode)
+        setQrFailed(false)
+        qrAttempts.current = 0
+      }
+    } catch {
+      qrAttempts.current += 1
+      if (qrAttempts.current >= 8) setQrFailed(true)
+    }
   }
 
   const startQrPoll = () => {
     stopQrPoll()
+    qrAttempts.current = 0
+    setQrFailed(false)
     fetchQr()
     qrPollRef.current = setInterval(async () => {
       // Para de buscar se conectou
@@ -78,6 +89,7 @@ export function AdminWhatsAppPage() {
     onSuccess: () => {
       toast({ title: 'Sessão iniciada', description: 'Escaneie o QR Code abaixo' })
       setQrCode(null)
+      setQrFailed(false)
       setShowQRDialog(true)
       startQrPoll()
       qc.invalidateQueries({ queryKey: ['whatsapp-status'] })
@@ -234,6 +246,12 @@ export function AdminWhatsAppPage() {
           <div className="flex flex-col items-center py-4">
             {qrCode ? (
               <img src={qrCode} alt="QR Code" className="w-64 h-64 border rounded-lg" />
+            ) : qrFailed ? (
+              <div className="w-64 bg-red-50 border border-red-200 rounded-lg flex flex-col items-center justify-center gap-2 p-6 text-center">
+                <AlertCircle className="w-8 h-8 text-red-400" />
+                <p className="text-sm font-medium text-red-700">QR Code indisponível</p>
+                <p className="text-xs text-red-500">Verifique se o WAHA está rodando na VPS e se a variável <code className="bg-red-100 px-1 rounded">WAHA_API_URL</code> está configurada no Railway.</p>
+              </div>
             ) : (
               <div className="w-64 h-64 bg-gray-100 rounded-lg flex flex-col items-center justify-center gap-2">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -244,7 +262,7 @@ export function AdminWhatsAppPage() {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { stopQrPoll(); setShowQRDialog(false) }}>Fechar</Button>
-            <Button onClick={() => { setQrCode(null); startMutation.mutate() }}><RefreshCw className="w-4 h-4 mr-1" />Gerar Novo QR</Button>
+            <Button onClick={() => { setQrCode(null); setQrFailed(false); startMutation.mutate() }}><RefreshCw className="w-4 h-4 mr-1" />Gerar Novo QR</Button>
           </div>
         </DialogContent>
       </Dialog>

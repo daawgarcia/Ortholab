@@ -37,6 +37,7 @@ const adminNav = [
   { label: 'Gestão de Carteira', href: '/admin/seller-clients', icon: Briefcase },
   { label: 'Serviços e Preços', href: '/admin/services', icon: Package },
   { label: 'Pagamentos PIX', href: '/admin/pix-payments', icon: CreditCard },
+  { label: 'Pagamentos Cartão', href: '/admin/card-payments', icon: CreditCard },
   { label: 'Cupons', href: '/admin/coupons', icon: CreditCard },
   { label: 'WhatsApp', href: '/admin/whatsapp', icon: Smartphone },
   { label: 'Relatórios', href: '/admin/reports', icon: BarChart3 },
