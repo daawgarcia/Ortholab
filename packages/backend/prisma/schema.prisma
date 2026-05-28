@@ -13,6 +13,7 @@ enum Role {
   ADMIN
   FINANCIAL
   SELLER
+  EXPEDITION
 }
 
 enum UserStatus {
@@ -144,6 +145,10 @@ model User {
   clinicalRecords     ClinicalRecord[] @relation("DentistClinicalRecords")
   workflowEvents      WorkflowEvent[] @relation("WorkflowEventPerformer")
   dentistInvoices     DentistInvoice[] @relation("DentistInvoices")
+  entries             Entry[]         @relation("EntryDentist")
+  processedEntries    Entry[]         @relation("EntryProcessor")
+  approvalVideos      CaseApprovalVideo[] @relation("ApprovalVideoUploader")
+  approvalDocs        CaseApprovalDocument[] @relation("ApprovalDocUploader")
 }
 
 model Case {
@@ -183,6 +188,9 @@ model Case {
   activities       CaseActivity[]
   emailLogs        EmailLog[]
   workflowEvents   WorkflowEvent[]
+  entries          Entry[]
+  approvalVideos   CaseApprovalVideo[]
+  approvalDocs     CaseApprovalDocument[]
 }
 
 model Patient {
@@ -206,6 +214,7 @@ model Patient {
   completionForms    CompletionForm[]
   otherServicesForms OtherServicesForm[]
   clinicalRecords    ClinicalRecord[]
+  entries            Entry[]
 }
 model Coupon {
   id            String   @id @default(uuid())
@@ -543,6 +552,50 @@ model WorkflowEvent {
   performer   User?    @relation("WorkflowEventPerformer", fields: [performedBy], references: [id])
 }
 
+// Modelo para rastrear entradas de novos pacientes/arquivos no workflow
+model Entry {
+  id            String    @id @default(uuid())
+  patientId     String
+  dentistId     String
+  caseId        String?
+  entryType     EntryType // Tipo de entrada: NEW_PATIENT, PLANNING_FORM, COMPLETION_FORM, OTHER_SERVICES_FORM, STL_FILE
+  sourceId      String?   // ID do registro relacionado (form ou arquivo)
+  sourceType    String?   // Tipo do registro relacionado
+  boxNumber     String?   // Número da caixa (CAIXA-{caseNumber})
+  lastStlDate   DateTime? // Data do último STL enviado
+  status        EntryStatus @default(PENDING)
+  processedAt   DateTime? // Quando foi processado/movido para workflow
+  processedBy   String?   // Quem processou
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  patient       Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  dentist       User      @relation("EntryDentist", fields: [dentistId], references: [id])
+  case          Case?     @relation(fields: [caseId], references: [id])
+  processor     User?     @relation("EntryProcessor", fields: [processedBy], references: [id])
+
+  @@index([patientId])
+  @@index([dentistId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum EntryType {
+  NEW_PATIENT
+  PLANNING_FORM
+  COMPLETION_FORM
+  OTHER_SERVICES_FORM
+  STL_FILE
+}
+
+enum EntryStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  ARCHIVED
+}
+
 enum VideoCategory {
   VIDEO_AULA
   WEBINAR
@@ -617,4 +670,68 @@ model InvoicePayment {
   paidAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// Modelo para vídeos de aprovação do caso
+model CaseApprovalVideo {
+  id          String   @id @default(uuid())
+  caseId      String
+  uploadedBy  String
+  title       String
+  description String?
+  videoUrl    String
+  thumbnailUrl String?
+  fileSize    Int?
+  duration    Int?     // Duração em segundos
+  status      ApprovalVideoStatus @default(PENDING)
+  viewedAt    DateTime?
+  downloadedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploader    User     @relation("ApprovalVideoUploader", fields: [uploadedBy], references: [id])
+
+  @@index([caseId])
+  @@index([status])
+}
+
+enum ApprovalVideoStatus {
+  PENDING      // Aguardando visualização do dentista
+  VIEWED       // Dentista visualizou
+  APPROVED     // Dentista aprovou
+  REJECTED     // Dentista rejeitou
+  DOWNLOADED   // Foi baixado
+}
+
+// Modelo para arquivos PDF de aprovação
+model CaseApprovalDocument {
+  id          String   @id @default(uuid())
+  caseId      String
+  uploadedBy  String
+  title       String
+  description String?
+  fileUrl     String
+  fileName    String
+  fileSize    Int?
+  fileType    String   @default("application/pdf")
+  status      ApprovalDocStatus @default(PENDING)
+  viewedAt    DateTime?
+  downloadedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploader    User     @relation("ApprovalDocUploader", fields: [uploadedBy], references: [id])
+
+  @@index([caseId])
+  @@index([status])
+}
+
+enum ApprovalDocStatus {
+  PENDING
+  VIEWED
+  APPROVED
+  REJECTED
+  DOWNLOADED
 }

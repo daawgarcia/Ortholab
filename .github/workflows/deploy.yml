@@ -1,0 +1,92 @@
+name: Deploy Ortholab
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  # Deploy Backend to Render
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./packages/backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: ./packages/backend
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: ./packages/backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma migrate deploy
+
+      - name: Build backend
+        working-directory: ./packages/backend
+        run: npm run build
+
+      - name: Deploy to Render
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl -X POST "$RENDER_DEPLOY_HOOK"
+            echo "✅ Backend deploy triggered on Render"
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK not set, skipping backend deploy"
+          fi
+
+  # Deploy Frontend to Vercel
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel
+        working-directory: ./packages/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            vercel --token="$VERCEL_TOKEN" --prod --yes
+            echo "✅ Frontend deployed to Vercel"
+          else
+            echo "⚠️ Vercel secrets not set, skipping frontend deploy"
+          fi
+
+  # Notify on success/failure
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+    steps:
+      - name: Notify success
+        if: needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success'
+        run: echo "🎉 Deploy completed successfully!"
+
+      - name: Notify failure
+        if: needs.deploy-backend.result == 'failure' || needs.deploy-frontend.result == 'failure'
+        run: echo "❌ Deploy failed, check logs above"

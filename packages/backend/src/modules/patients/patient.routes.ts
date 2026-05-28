@@ -1,8 +1,9 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
-import { Role, CaseStatus, UserStatus } from '@prisma/client'
+import { Role, CaseStatus, UserStatus, EntryType } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
+import { createEntry } from '../entries/entry.routes'
 
 function extractStorageKey(url: string) {
   if (!url) return null
@@ -328,6 +329,15 @@ export async function patientRoutes(fastify: FastifyInstance) {
       })
     }
 
+    // Criar entrada no workflow
+    await createEntry(fastify, {
+      patientId: patient.id,
+      dentistId,
+      caseId: createdCase.id,
+      entryType: EntryType.NEW_PATIENT,
+      boxNumber: `CAIXA-${createdCase.caseNumber}`,
+    }).catch(console.error)
+
     return reply.status(201).send({ ...patient, initialCaseId: createdCase.id })
   })
 
@@ -581,6 +591,16 @@ export async function patientRoutes(fastify: FastifyInstance) {
               })),
             })
           }
+          
+          // Criar entrada no workflow
+          await createEntry(fastify, {
+            patientId: id,
+            dentistId: patient.dentistId,
+            entryType: EntryType.STL_FILE,
+            sourceId: file.id,
+            sourceType: 'DigitalModel',
+          }).catch(console.error)
+          
           return reply.status(201).send(file)
         } catch {
           return reply.status(500).send({ filename: part.filename, kind, error: 'Falha ao enviar arquivo STL' })

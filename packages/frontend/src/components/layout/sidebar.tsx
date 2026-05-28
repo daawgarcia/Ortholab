@@ -9,13 +9,15 @@ import {
   Users, Settings, Package, Bell, Wrench, Grid3X3,
   Briefcase, ExternalLink, ChevronRight, ChevronDown,
   FlaskConical, Printer, Beaker, Send, UserCircle,
-  CreditCard, BookOpen, Radio, PlaySquare, FileText, Video, MessageCircle
+  CreditCard, BookOpen, Radio, PlaySquare, FileText, Video, MessageCircle,
+  Inbox, Smartphone, BarChart3
 } from 'lucide-react'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
 
 const workflowItems = [
+  { label: 'Entradas', href: '/workflow/entries', icon: Inbox },
   { label: 'Planning Center', href: '/workflow/planning-center', icon: FlaskConical },
   { label: 'Impressão 3D', href: '/workflow/printing', icon: Printer },
   { label: 'Recorte', href: '/workflow/laboratory', icon: Beaker },
@@ -36,6 +38,8 @@ const adminNav = [
   { label: 'Serviços e Preços', href: '/admin/services', icon: Package },
   { label: 'Pagamentos PIX', href: '/admin/pix-payments', icon: CreditCard },
   { label: 'Cupons', href: '/admin/coupons', icon: CreditCard },
+  { label: 'WhatsApp', href: '/admin/whatsapp', icon: Smartphone },
+  { label: 'Relatórios', href: '/admin/reports', icon: BarChart3 },
   { label: 'Conteúdo', href: '/admin/content', icon: FileText },
   { label: 'Vídeos', href: '/admin/videos', icon: PlaySquare },
   { label: 'Push / Avisos', href: '/admin/push', icon: Bell },

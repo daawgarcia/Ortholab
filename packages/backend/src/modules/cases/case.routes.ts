@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { CaseStatus, Role } from '@prisma/client'
 import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { EventMailer } from '../mailer/event-mailer'
+import { whatsappService } from '../../services/whatsapp.service'
 
 const createCaseSchema = z.object({
   patientName: z.string().min(2),
@@ -264,6 +265,9 @@ export async function caseRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string }
     const { status, trackingCode, carrier } = request.body as { status: CaseStatus; trackingCode?: string; carrier?: string }
 
+    // Transportadora padrão: Correios
+    const defaultCarrier = carrier || 'Correios'
+
     const caseData = await fastify.prisma.case.findUnique({
       where: { id },
       include: { dentist: true },
@@ -279,10 +283,30 @@ export async function caseRoutes(fastify: FastifyInstance) {
     if (status === CaseStatus.SHIPPED && trackingCode) {
       await fastify.prisma.production.upsert({
         where: { caseId: id },
-        update: { trackingCode, carrier, shippedAt: new Date() },
-        create: { caseId: id, trackingCode, carrier, shippedAt: new Date() },
+        update: { trackingCode, carrier: defaultCarrier, shippedAt: new Date() },
+        create: { caseId: id, trackingCode, carrier: defaultCarrier, shippedAt: new Date() },
       })
       await mailer.onCaseShipped(caseData, trackingCode)
+      
+      // Enviar WhatsApp para o dentista
+      if (caseData.dentist?.phone) {
+        try {
+          await whatsappService.sendCaseShippedNotification(
+            caseData.dentist.phone,
+            caseData.dentist.name,
+            caseData.caseNumber,
+            caseData.patientName,
+            trackingCode,
+            defaultCarrier
+          )
+          
+          // Log do envio
+          console.log(`[WhatsApp] Notificação de envio enviada para ${caseData.dentist.phone}`)
+        } catch (e) {
+          console.error('[WhatsApp] Erro ao enviar notificação de envio:', e)
+          // Não falha o processo se o WhatsApp falhar
+        }
+      }
     } else if (status === CaseStatus.IN_PRODUCTION) {
       await mailer.onCaseInProduction(caseData)
     } else if (status === CaseStatus.COMPLETED) {

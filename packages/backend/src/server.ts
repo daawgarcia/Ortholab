@@ -37,6 +37,11 @@ import { formsRoutes } from './modules/forms/forms.routes'
 import { videoRoutes } from './modules/videos/video.routes'
 import { contentRoutes } from './modules/content/content.routes'
 import { dentistFinancialRoutes } from './modules/dentist-financial/dentist-financial.routes'
+import { entryRoutes } from './modules/entries/entry.routes'
+import { caseApprovalRoutes } from './modules/cases/case-approval.routes'
+import { whatsappRoutes } from './modules/whatsapp/whatsapp.routes'
+import { reportsRoutes } from './modules/reports/reports.routes'
+import { startStalledCasesJob } from './modules/jobs/stalled-cases.job'
 
 // Fail fast if required secrets are missing
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is required')
@@ -195,6 +200,13 @@ const start = async () => {
   await app.register(videoRoutes, { prefix: '/api/videos' })
   await app.register(contentRoutes, { prefix: '/api/content' })
   await app.register(dentistFinancialRoutes, { prefix: '/api/dentist-financial' })
+  await app.register(entryRoutes, { prefix: '/api/entries' })
+  await app.register(caseApprovalRoutes, { prefix: '/api/cases' })
+  await app.register(whatsappRoutes, { prefix: '/api/whatsapp' })
+  await app.register(reportsRoutes, { prefix: '/api/reports' })
+
+  // Iniciar job de verificação de casos parados
+  startStalledCasesJob(app)
 
   app.get('/api/uploads/*', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (request, reply) => {
     try {

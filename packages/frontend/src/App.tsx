@@ -26,6 +26,8 @@ import AdminSettingsPage from '@/pages/admin/settings'
 import ProfilePage from '@/pages/profile'
 import PlanningCenterPage from '@/pages/workflow/planning-center'
 import { PrintingPage, LaboratoryPage, ExpeditionPage } from '@/pages/workflow/workflow-stages'
+import { EntriesPage } from '@/pages/workflow/entries'
+import { CaseApprovalPage } from '@/pages/cases/approval'
 import PatientsPage from '@/pages/patients'
 import NewPatientPage from '@/pages/patients/new'
 import PatientDetailPage from '@/pages/patients/detail'
@@ -43,6 +45,8 @@ import AdminVideosPage from '@/pages/admin/videos'
 import AdminContentPage from '@/pages/admin/content'
 import AdminCouponsPage from '@/pages/admin/coupons'
 import AdminPixPaymentsPage from '@/pages/admin/pix-payments'
+import AdminWhatsAppPage from '@/pages/admin/whatsapp'
+import AdminReportsPage from '@/pages/admin/reports'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
@@ -102,8 +106,10 @@ export default function App() {
           <Route path="cases" element={<Navigate to="/patients" replace />} />
           <Route path="cases/new" element={<Navigate to="/patients/new" replace />} />
           <Route path="cases/:id" element={<CaseDetailPage />} />
+          <Route path="cases/:id/approval" element={<ProtectedRoute roles={['DENTIST','ADMIN','LAB_TECH']}><CaseApprovalPage /></ProtectedRoute>} />
 
           <Route path="workflow/planning-center" element={<ProtectedRoute roles={WORKFLOW_ROLES}><PlanningCenterPage /></ProtectedRoute>} />
+          <Route path="workflow/entries" element={<ProtectedRoute roles={WORKFLOW_ROLES}><EntriesPage /></ProtectedRoute>} />
           <Route path="workflow/printing" element={<ProtectedRoute roles={WORKFLOW_ROLES}><PrintingPage /></ProtectedRoute>} />
           <Route path="workflow/laboratory" element={<ProtectedRoute roles={WORKFLOW_ROLES}><LaboratoryPage /></ProtectedRoute>} />
           <Route path="workflow/expedition" element={<ProtectedRoute roles={WORKFLOW_ROLES}><ExpeditionPage /></ProtectedRoute>} />
@@ -122,6 +128,8 @@ export default function App() {
           <Route path="admin/settings" element={<ProtectedRoute roles={['ADMIN']}><AdminSettingsPage /></ProtectedRoute>} />
           <Route path="admin/coupons" element={<ProtectedRoute roles={['ADMIN']}><AdminCouponsPage /></ProtectedRoute>} />
           <Route path="admin/pix-payments" element={<ProtectedRoute roles={['ADMIN','FINANCIAL']}><AdminPixPaymentsPage /></ProtectedRoute>} />
+          <Route path="admin/whatsapp" element={<ProtectedRoute roles={['ADMIN']}><AdminWhatsAppPage /></ProtectedRoute>} />
+          <Route path="admin/reports" element={<ProtectedRoute roles={['ADMIN']}><AdminReportsPage /></ProtectedRoute>} />
 
           <Route path="dentist-financial" element={<ProtectedRoute roles={['DENTIST']}><DentistFinancialPage /></ProtectedRoute>} />
           <Route path="prices-rules" element={<PricesRulesPage />} />

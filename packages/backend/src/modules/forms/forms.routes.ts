@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
-import { Role } from '@prisma/client'
+import { Role, EntryType } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
+import { createEntry } from '../entries/entry.routes'
 
 export async function formsRoutes(fastify: FastifyInstance) {
   const mailer = new EventMailer(fastify)
@@ -46,6 +47,15 @@ export async function formsRoutes(fastify: FastifyInstance) {
     if (patient) {
       mailer.onPatientFormSubmitted(patient, 'Ficha de Planejamento').catch(console.error)
       await notifyInternalUsers(patient.id, patient.dentistId, 'Ficha de planejamento enviada', `${patient.name} recebeu uma nova ficha de planejamento.`)
+      
+      // Criar entrada no workflow
+      await createEntry(fastify, {
+        patientId,
+        dentistId: patient.dentistId,
+        entryType: EntryType.PLANNING_FORM,
+        sourceId: form.id,
+        sourceType: 'PlanningForm',
+      }).catch(console.error)
     }
 
     return reply.status(201).send(form)
@@ -71,6 +81,15 @@ export async function formsRoutes(fastify: FastifyInstance) {
     if (patient) {
       mailer.onPatientFormSubmitted(patient, 'Ficha de Finalização').catch(console.error)
       await notifyInternalUsers(patient.id, patient.dentistId, 'Ficha de finalização enviada', `${patient.name} recebeu uma nova ficha de finalização.`)
+      
+      // Criar entrada no workflow
+      await createEntry(fastify, {
+        patientId,
+        dentistId: patient.dentistId,
+        entryType: EntryType.COMPLETION_FORM,
+        sourceId: form.id,
+        sourceType: 'CompletionForm',
+      }).catch(console.error)
     }
 
     return reply.status(201).send(form)
@@ -96,6 +115,15 @@ export async function formsRoutes(fastify: FastifyInstance) {
     if (patient) {
       mailer.onPatientFormSubmitted(patient, 'Ficha de Outros Serviços').catch(console.error)
       await notifyInternalUsers(patient.id, patient.dentistId, 'Ficha de outros serviços enviada', `${patient.name} recebeu uma nova ficha de outros serviços.`)
+      
+      // Criar entrada no workflow
+      await createEntry(fastify, {
+        patientId,
+        dentistId: patient.dentistId,
+        entryType: EntryType.OTHER_SERVICES_FORM,
+        sourceId: form.id,
+        sourceType: 'OtherServicesForm',
+      }).catch(console.error)
     }
 
     return reply.status(201).send(form)

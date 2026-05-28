@@ -106,7 +106,8 @@ function ShipRow({ c, onShipped }: { c: any; onShipped: () => void }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [trackingCode, setTrackingCode] = useState('')
-  const [carrier, setCarrier] = useState('')
+  // Transportadora padrão: Correios
+  const [carrier, setCarrier] = useState('Correios')
 
   const shipMutation = useMutation({
     mutationFn: () => api.post(`/workflow/case/${c.id}/ship`, { trackingCode, carrier }),
@@ -158,10 +159,10 @@ function ShipRow({ c, onShipped }: { c: any; onShipped: () => void }) {
             <div>
               <label className="text-xs text-gray-500 block mb-1">Transportadora</label>
               <input
-                className="w-full border rounded px-2 py-1.5 text-sm"
-                placeholder="Correios, Jadlog..."
+                className="w-full border rounded px-2 py-1.5 text-sm bg-gray-100"
                 value={carrier}
-                onChange={e => setCarrier(e.target.value)}
+                readOnly
+                title="Transportadora padrão: Correios"
               />
             </div>
           </div>
