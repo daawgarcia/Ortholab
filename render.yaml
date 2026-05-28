@@ -69,6 +69,8 @@ services:
         value: http://187.127.28.216:3001
       - key: WAHA_SESSION_NAME
         value: ortholab
+      - key: WAHA_API_KEY
+        sync: false
 
   - type: pserv
     name: ortholab-postgres

@@ -3,6 +3,7 @@ import axios from 'axios'
 interface WhatsAppConfig {
   baseUrl: string
   sessionName: string
+  apiKey: string
 }
 
 class WhatsAppService {
@@ -12,7 +13,14 @@ class WhatsAppService {
     this.config = {
       baseUrl: process.env.WAHA_API_URL || 'http://localhost:3000',
       sessionName: process.env.WAHA_SESSION_NAME || 'ortholab',
+      apiKey: process.env.WAHA_API_KEY || '',
     }
+  }
+
+  private headers() {
+    const h: Record<string, string> = {}
+    if (this.config.apiKey) h['X-Api-Key'] = this.config.apiKey
+    return h
   }
 
   async sendTextMessage(phone: string, message: string): Promise<boolean> {
@@ -20,7 +28,7 @@ class WhatsAppService {
       const cleanPhone = phone.replace(/\D/g, '')
       const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
       const url = `${this.config.baseUrl}/api/${this.config.sessionName}/sendText`
-      const response = await axios.post(url, { chatId: `${formattedPhone}@c.us`, text: message }, { timeout: 30000 })
+      const response = await axios.post(url, { chatId: `${formattedPhone}@c.us`, text: message }, { timeout: 30000, headers: this.headers() })
       if (response.status === 200 || response.status === 201) {
         console.log(`[WhatsApp] Mensagem enviada para ${formattedPhone}`)
         return true
@@ -39,7 +47,7 @@ class WhatsAppService {
   async checkSession(): Promise<boolean> {
     try {
       const url = `${this.config.baseUrl}/api/${this.config.sessionName}/status`
-      const response = await axios.get(url, { timeout: 10000 })
+      const response = await axios.get(url, { timeout: 10000, headers: this.headers() })
       return response.data?.state === 'CONNECTED'
     } catch {
       return false
@@ -49,7 +57,7 @@ class WhatsAppService {
   async startSession(): Promise<any> {
     try {
       const url = `${this.config.baseUrl}/api/${this.config.sessionName}/start`
-      const response = await axios.post(url, {}, { timeout: 10000 })
+      const response = await axios.post(url, {}, { timeout: 10000, headers: this.headers() })
       return response.data
     } catch (error: any) {
       console.error('[WhatsApp] Erro ao iniciar sessão:', error.message)
@@ -60,7 +68,7 @@ class WhatsAppService {
   async stopSession(): Promise<boolean> {
     try {
       const url = `${this.config.baseUrl}/api/${this.config.sessionName}/stop`
-      await axios.post(url, {}, { timeout: 10000 })
+      await axios.post(url, {}, { timeout: 10000, headers: this.headers() })
       return true
     } catch {
       return false
@@ -69,17 +77,15 @@ class WhatsAppService {
 
   async getQrCode(): Promise<string | null> {
     try {
-      // WAHA returns QR as base64 image via /auth/qr endpoint
       const url = `${this.config.baseUrl}/api/${this.config.sessionName}/auth/qr`
-      const response = await axios.get(url, { timeout: 10000, responseType: 'arraybuffer' })
+      const response = await axios.get(url, { timeout: 10000, responseType: 'arraybuffer', headers: this.headers() })
       const base64 = Buffer.from(response.data).toString('base64')
       const mimeType = response.headers['content-type'] || 'image/png'
       return `data:${mimeType};base64,${base64}`
     } catch {
       try {
-        // Fallback: some WAHA versions return JSON with value field
         const url = `${this.config.baseUrl}/api/${this.config.sessionName}/auth/qr`
-        const response = await axios.get(url, { timeout: 10000 })
+        const response = await axios.get(url, { timeout: 10000, headers: this.headers() })
         if (response.data?.value) return response.data.value
         if (response.data?.qr) return response.data.qr
         return null

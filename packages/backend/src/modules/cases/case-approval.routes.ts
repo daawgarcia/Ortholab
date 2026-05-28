@@ -394,6 +394,44 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     return reply.redirect(videoUrl, 307)
   })
 
+  // Apagar vídeo (admin, lab_tech)
+  fastify.delete('/video/:videoId', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { videoId } = request.params as { videoId: string }
+
+    const allowedRoles = [Role.ADMIN, Role.LAB_TECH]
+    if (!(allowedRoles as Role[]).includes(user.role)) {
+      return reply.status(403).send({ error: 'Apenas Admin e Lab Tech podem apagar vídeos' })
+    }
+
+    const video = await fastify.prisma.caseApprovalVideo.findUnique({
+      where: { id: videoId },
+      select: { id: true, videoUrl: true },
+    })
+
+    if (!video) return reply.status(404).send({ error: 'Vídeo não encontrado' })
+
+    await fastify.prisma.caseApprovalVideo.delete({ where: { id: videoId } })
+
+    // Remove arquivo do S3/local se existir
+    if (video.videoUrl) {
+      try {
+        const bucketMarker = `/${process.env.S3_BUCKET || 'ortholab-files'}/`
+        const s3idx = video.videoUrl.indexOf(bucketMarker)
+        if (s3idx >= 0) {
+          const key = video.videoUrl.slice(s3idx + bucketMarker.length)
+          await fastify.s3.delete(key)
+        } else if (video.videoUrl.includes('/api/uploads/')) {
+          const marker = '/api/uploads/'
+          const rel = video.videoUrl.slice(video.videoUrl.indexOf(marker) + marker.length)
+          await fastify.s3.delete(`local/${rel}`)
+        }
+      } catch { /* remoção de arquivo é best-effort */ }
+    }
+
+    return reply.status(204).send()
+  })
+
   // Marcar vídeo como visualizado
   fastify.post('/video/:videoId/view', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload

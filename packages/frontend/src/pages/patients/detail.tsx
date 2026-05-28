@@ -576,6 +576,8 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
   const { user, accessToken } = useAuthStore()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const canDelete = ['ADMIN', 'LAB_TECH'].includes(user?.role || '')
   const isLabOrAdmin = ['ADMIN', 'LAB_TECH', 'EXPEDITION'].includes(user?.role || '')
   const uploadCaseId = cases.find(c => !['COMPLETED', 'DRAFT', 'SUBMITTED'].includes(c.status))?.id || cases[0]?.id
 
@@ -612,6 +614,17 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
     try { await api.post(`/cases/video/${videoId}/view`) } catch { /* silent */ }
   }
 
+  const handleDelete = async (videoId: string) => {
+    try {
+      await api.delete(`/cases/video/${videoId}`)
+      toast({ title: 'Vídeo apagado' })
+      setConfirmDelete(null)
+      refetch()
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erro ao apagar vídeo', description: err?.response?.data?.error })
+    }
+  }
+
   return (
     <div className="space-y-5">
       {isLabOrAdmin && (
@@ -642,9 +655,23 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
                     Caso #{video.case?.caseNumber} · Enviado por {video.uploader?.name} · {new Date(video.createdAt).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${video.status === 'VIEWED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                  {video.status === 'VIEWED' ? 'Visualizado' : 'Novo'}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${video.status === 'VIEWED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {video.status === 'VIEWED' ? 'Visualizado' : 'Novo'}
+                  </span>
+                  {canDelete && (
+                    confirmDelete === video.id ? (
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleDelete(video.id)} className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700">Confirmar</button>
+                        <button onClick={() => setConfirmDelete(null)} className="text-xs px-2 py-1 border rounded hover:bg-gray-100">Cancelar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmDelete(video.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Apagar vídeo">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
               <video
                 src={`${VIDEO_API_BASE}/cases/video/${video.id}/stream?token=${encodeURIComponent(accessToken || '')}`}
