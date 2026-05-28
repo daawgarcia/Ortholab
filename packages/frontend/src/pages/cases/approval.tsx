@@ -227,14 +227,14 @@ export function CaseApprovalPage() {
                         onClick={() => handleDownload(video)}
                         disabled={downloadMutation.isPending}
                       >
-                        <Download className="w-4 h-4 mr-1" /
+                        <Download className="w-4 h-4 mr-1" />
                         Baixar
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => handlePlayVideo(video)}
                       >
-                        <Play className="w-4 h-4 mr-1" /
+                        <Play className="w-4 h-4 mr-1" />
                         Assistir
                       </Button>
                     </div>
