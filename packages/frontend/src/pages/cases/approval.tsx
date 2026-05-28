@@ -273,7 +273,7 @@ export function CaseApprovalPage() {
                     size="sm"
                     onClick={() => window.open(doc.fileUrl, '_blank')}
                   >
-                    <Eye className="w-4 h-4 mr-1" /
+                    <Eye className="w-4 h-4 mr-1" />
                     Visualizar
                   </Button>
                 </CardContent>
