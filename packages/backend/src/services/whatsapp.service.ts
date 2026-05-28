@@ -70,79 +70,56 @@ class WhatsAppService {
     }
   }
 
-  async startSession(): Promise<any> {
+  private async doStart(): Promise<any> {
     const { baseUrl, sessionName } = this.config
-
-    const state = await this.getSessionState()
-    console.log(`[WhatsApp] Estado atual da sessão: ${state}`)
-
-    if (state === 'WORKING' || state === 'CONNECTED') {
-      return { status: 'already_connected' }
-    }
-
-    if (state === 'SCAN_QR_CODE' || state === 'STARTING') {
-      return { status: 'already_starting', state }
-    }
-
-    if (state === 'STOPPED' || state === 'FAILED') {
-      try {
-        const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
-        return res.data
-      } catch (startErr: any) {
-        if (startErr.response?.status === 422 || startErr.response?.status === 400) {
-          return { status: 'already_starting' }
-        }
-        throw startErr
-      }
-    }
-
-    // Sessão não existe → cria e inicia
     try {
-      const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
+      const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
       return res.data
     } catch (err: any) {
-      const status = err.response?.status
-      if (status === 422 || status === 409) {
-        try {
-          const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
-          return res.data
-        } catch (startErr: any) {
-          if (startErr.response?.status === 422 || startErr.response?.status === 400) {
-            return { status: 'already_starting' }
-          }
-          throw startErr
-        }
-      }
-      console.error('[WhatsApp] Erro ao criar sessão:', err.response?.data || err.message)
+      if (err.response?.status === 422 || err.response?.status === 400) return { status: 'already_starting' }
       throw err
     }
   }
 
+  async startSession(): Promise<any> {
+    const { baseUrl, sessionName } = this.config
+    const state = await this.getSessionState()
+    console.log(`[WhatsApp] Estado atual da sessão: ${state}`)
+
+    if (state === 'WORKING' || state === 'CONNECTED') return { status: 'already_connected' }
+    if (state === 'SCAN_QR_CODE' || state === 'STARTING') return { status: 'already_starting', state }
+
+    if (state === 'NOT_FOUND') {
+      // Cria a sessão (sem start:true — não suportado em todas as versões)
+      try {
+        await axios.post(`${baseUrl}/api/sessions`, { name: sessionName }, { timeout: 15000, headers: this.headers() })
+      } catch (err: any) {
+        if (err.response?.status !== 422 && err.response?.status !== 409) {
+          console.error('[WhatsApp] Erro ao criar sessão:', err.response?.data || err.message)
+          throw err
+        }
+      }
+    }
+
+    // STOPPED / FAILED / recém-criada → inicia
+    return this.doStart()
+  }
+
   async forceRestartSession(): Promise<any> {
     const { baseUrl, sessionName } = this.config
-    // Para a sessão atual (ignora erros)
+    // Para (ignora erros)
     try { await axios.post(`${baseUrl}/api/sessions/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() }) } catch { /* silent */ }
     // Tenta deletar (WAHA Plus) — ignora se não suportado
     try { await axios.delete(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() }) } catch { /* silent */ }
-    // Tenta criar e iniciar
-    try {
-      const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
-      return res.data
-    } catch (err: any) {
-      // Sessão ainda existe (delete não suportado no WAHA free) → apenas inicia
-      if (err.response?.status === 422 || err.response?.status === 409) {
-        try {
-          const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
-          return res.data
-        } catch (startErr: any) {
-          if (startErr.response?.status === 422 || startErr.response?.status === 400) {
-            return { status: 'already_starting' }
-          }
-          throw startErr
-        }
-      }
-      throw err
+
+    const stateAfter = await this.getSessionState()
+    console.log(`[WhatsApp] Estado após stop/delete: ${stateAfter}`)
+
+    if (stateAfter === 'NOT_FOUND') {
+      await axios.post(`${baseUrl}/api/sessions`, { name: sessionName }, { timeout: 15000, headers: this.headers() })
     }
+
+    return this.doStart()
   }
 
   async stopSession(): Promise<boolean> {
