@@ -1,14 +1,33 @@
 import { FastifyInstance } from 'fastify'
+import { timingSafeEqual } from 'crypto'
 import { authenticate } from '../../plugins/auth'
 
+function safeStringEq(a: string, b: string): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false
+  const ba = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ba.length !== bb.length) return false
+  return timingSafeEqual(ba, bb)
+}
+
 export async function dentistFinancialRoutes(fastify: FastifyInstance) {
-  // Public — Webhook PIX da Rede (sem JWT, validado pelo header Authorization que a Rede envia)
-  // Registrar URL via POST /api/dentist-financial/webhooks/pix/register (uma vez por ambiente)
-  fastify.post('/webhooks/pix', async (request, reply) => {
-    const authHeader = request.headers['authorization'] as string | undefined
+  // Webhook PIX da Rede — em produção exige REDE_WEBHOOK_AUTH (Basic Auth) configurada.
+  // Em dev (NODE_ENV !== 'production') aceita sem header para facilitar testes locais.
+  fastify.post('/webhooks/pix', { config: { rateLimit: { max: 120, timeWindow: '1 minute' } } }, async (request, reply) => {
     const expected = process.env.REDE_WEBHOOK_AUTH
-    if (expected && authHeader !== expected) {
-      return reply.status(401).send({ error: 'Unauthorized' })
+    const isProd = process.env.NODE_ENV === 'production'
+
+    if (!expected) {
+      if (isProd) {
+        fastify.log.error('REDE_WEBHOOK_AUTH ausente em produção — webhook rejeitado')
+        return reply.status(503).send({ error: 'Webhook não configurado' })
+      }
+    } else {
+      const authHeader = (request.headers['authorization'] as string | undefined) || ''
+      if (!safeStringEq(authHeader, expected)) {
+        await fastify.audit.log(request, { action: 'pix.webhook', status: 'DENIED', metadata: { reason: 'invalid_auth' } })
+        return reply.status(401).send({ error: 'Unauthorized' })
+      }
     }
 
     const body = request.body as any

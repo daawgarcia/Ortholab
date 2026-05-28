@@ -143,16 +143,27 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
       return reply.status(400).send({ error: 'Conteúdo da mensagem não pode ser vazio' })
     }
 
-    const peer = await fastify.prisma.user.findUnique({ where: { id: peerId } })
-    if (!peer) {
+    const peer = await fastify.prisma.user.findUnique({
+      where: { id: peerId },
+      select: { id: true, name: true, role: true, status: true },
+    })
+    if (!peer || peer.status !== 'ACTIVE') {
       return reply.status(404).send({ error: 'Usuário não encontrado' })
     }
+
+    // ACL por role — espelha o filtro de /contacts
+    const allowed = await isChatAllowed(fastify, user, peer)
+    if (!allowed) {
+      return reply.status(403).send({ error: 'Conversa não permitida' })
+    }
+
+    const safeContent = String(content).slice(0, 4000)
 
     const message = await fastify.prisma.chatMessage.create({
       data: {
         senderId: user.id,
         receiverId: peerId,
-        content,
+        content: safeContent,
       },
     })
 
@@ -171,4 +182,28 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
 
     return { message }
   })
+}
+
+async function isChatAllowed(
+  fastify: FastifyInstance,
+  sender: { id: string; role: Role },
+  receiver: { id: string; role: string }
+): Promise<boolean> {
+  if (sender.id === receiver.id) return false
+  const elevated = ['ADMIN', 'FINANCIAL', 'LAB_TECH']
+  if (elevated.includes(sender.role) || elevated.includes(receiver.role)) return true
+
+  if (sender.role === Role.SELLER && receiver.role === 'DENTIST') {
+    const link = await fastify.prisma.sellerClient.findUnique({
+      where: { sellerId_clientId: { sellerId: sender.id, clientId: receiver.id } },
+    })
+    return !!link
+  }
+  if (sender.role === Role.DENTIST && receiver.role === 'SELLER') {
+    const link = await fastify.prisma.sellerClient.findUnique({
+      where: { sellerId_clientId: { sellerId: receiver.id, clientId: sender.id } },
+    })
+    return !!link
+  }
+  return false
 }
