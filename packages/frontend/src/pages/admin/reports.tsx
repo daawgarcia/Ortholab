@@ -179,7 +179,7 @@ export function ReportsPage() {
                     <span className="font-medium">{stage}</span>
                     <div className="text-right">
                       <p className="text-lg font-bold">{data.avg.toFixed(1)}h</p>
-                      <p className="text-xs text-gray-500">{média de {data.count} casos}</p>
+                      <p className="text-xs text-gray-500">média de {data.count} casos</p>
                     </div>
                   </div>
                 ))}
