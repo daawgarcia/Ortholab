@@ -211,7 +211,7 @@ export function CaseApprovalPage() {
                     <div className="flex items-center gap-4">
                       <span>{formatFileSize(video.fileSize)}</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" /
+                        <Clock className="w-4 h-4" />
                         {new Date(video.createdAt).toLocaleDateString('pt-BR')}
                       </span>
                       {video.viewedAt && (
