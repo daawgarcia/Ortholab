@@ -68,7 +68,7 @@ services:
       - key: WAHA_API_URL
         value: http://187.127.28.216:3001
       - key: WAHA_SESSION_NAME
-        value: ortholab
+        value: default
       - key: WAHA_API_KEY
         sync: false
 
