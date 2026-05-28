@@ -445,3 +445,5 @@ export function AdminWhatsAppPage() {
     </div>
   )
 }
+
+export default AdminWhatsAppPage
