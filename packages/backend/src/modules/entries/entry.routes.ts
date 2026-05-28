@@ -91,7 +91,7 @@ export async function entryRoutes(fastify: FastifyInstance) {
 
     // Apenas roles internos podem processar
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Acesso negado' })
     }
 
@@ -157,7 +157,7 @@ export async function entryRoutes(fastify: FastifyInstance) {
     const { entryId } = request.params as { entryId: string }
 
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Acesso negado' })
     }
 
@@ -176,7 +176,7 @@ export async function entryRoutes(fastify: FastifyInstance) {
 
     // Apenas expedição e roles internos podem criar caixa
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Apenas equipe de expedição e interna podem criar caixas' })
     }
 
@@ -262,7 +262,7 @@ export async function entryRoutes(fastify: FastifyInstance) {
 
     // Apenas expedição e roles internos podem iniciar workflow
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Acesso negado' })
     }
 

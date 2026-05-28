@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Role, CaseStatus, PushLevel } from '@prisma/client'
+import { authenticate } from '../../plugins/auth'
 
 const STALLED_DAYS = 2
 const CHECK_INTERVAL_MS = 60 * 60 * 1000 // 1 hora
@@ -115,7 +116,7 @@ async function checkStalledCases(fastify: FastifyInstance) {
 
 // Endpoint para verificar manualmente (admin only)
 export async function stalledCasesRoutes(fastify: FastifyInstance) {
-  fastify.get('/check-stalled', { preHandler: fastify.authenticate }, async (request, reply) => {
+  fastify.get('/check-stalled', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as any
     if (user.role !== Role.ADMIN && user.role !== Role.LAB_TECH) {
       return reply.status(403).send({ error: 'Acesso negado' })
@@ -149,9 +150,10 @@ export async function stalledCasesRoutes(fastify: FastifyInstance) {
       ORDER BY we."createdAt" ASC NULLS FIRST
     `
 
-    return { 
-      stalledCases,
-      total: stalledCases.length,
+    const stalledList = stalledCases as StalledCase[]
+    return {
+      stalledCases: stalledList,
+      total: stalledList.length,
       thresholdDays: STALLED_DAYS,
       checkedAt: new Date().toISOString(),
     }

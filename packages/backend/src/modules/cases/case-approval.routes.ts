@@ -11,7 +11,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
 
     // Apenas LAB_TECH, ADMIN e EXPEDITION podem subir vídeos
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Apenas equipe técnica pode subir vídeos de aprovação' })
     }
 
@@ -80,7 +80,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     // Notificar dentista via Email
     if (caseData.dentist?.email) {
       try {
-        await fastify.sendMail({
+        await fastify.mailer.send({
           to: caseData.dentist.email,
           subject: `Vídeo de Aprovação - ${caseData.patient?.name || 'Paciente'}`,
           html: `
@@ -101,7 +101,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     // Buscar vendedor do dentista para notificar
     const sellerClient = await fastify.prisma.sellerClient.findFirst({
       where: { clientId: caseData.dentistId },
-      include: { seller: { select: { id: true, name: true } } },
+      include: { seller: { select: { id: true, name: true, email: true } } },
     })
 
     if (sellerClient?.seller) {
@@ -121,7 +121,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
       // Notificar vendedor via Email
       if (sellerClient.seller.email) {
         try {
-          await fastify.sendMail({
+          await fastify.mailer.send({
             to: sellerClient.seller.email,
             subject: `Caso em Aprovação - ${caseData.patient?.name || 'Paciente'}`,
             html: `
@@ -164,7 +164,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
 
     // Apenas LAB_TECH, ADMIN e EXPEDITION podem subir PDFs
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Apenas equipe técnica pode subir documentos de aprovação' })
     }
 
@@ -232,7 +232,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     // Email para dentista
     if (caseData.dentist?.email) {
       try {
-        await fastify.sendMail({
+        await fastify.mailer.send({
           to: caseData.dentist.email,
           subject: `Documento de Aprovação - ${caseData.patient?.name || 'Paciente'}`,
           html: `
@@ -441,7 +441,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     const user = request.user as JwtPayload
     const { caseId } = request.params as { caseId: string }
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Apenas equipe técnica pode fazer upload' })
     }
     const caseData = await fastify.prisma.case.findUnique({ where: { id: caseId }, select: { id: true } })
@@ -473,7 +473,7 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     const user = request.user as JwtPayload
     const { caseId } = request.params as { caseId: string }
     const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.EXPEDITION]
-    if (!allowedRoles.includes(user.role)) {
+    if (!(allowedRoles as Role[]).includes(user.role)) {
       return reply.status(403).send({ error: 'Apenas equipe técnica pode fazer upload' })
     }
     const caseData = await fastify.prisma.case.findUnique({ where: { id: caseId }, select: { id: true } })

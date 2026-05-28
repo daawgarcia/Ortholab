@@ -76,8 +76,8 @@ export async function contentRoutes(fastify: FastifyInstance) {
 
     const page = await fastify.prisma.contentPage.upsert({
       where: { slug },
-      update: { fileUrl, fileName, fileMime, fileData, updatedById: user.id },
-      create: { slug, title, fileUrl, fileName, fileMime, fileData, updatedById: user.id },
+      update: { fileUrl, fileName, fileMime, fileData: new Uint8Array(fileData), updatedById: user.id },
+      create: { slug, title, fileUrl, fileName, fileMime, fileData: new Uint8Array(fileData), updatedById: user.id },
     })
     return { page: { id: page.id, slug: page.slug, title: page.title, body: page.body, fileUrl: page.fileUrl, fileName: page.fileName, fileMime: page.fileMime, updatedAt: page.updatedAt } }
   })
