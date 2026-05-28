@@ -55,21 +55,54 @@ class WhatsAppService {
     }
   }
 
+  async getSessionState(): Promise<string> {
+    const { baseUrl, sessionName } = this.config
+    try {
+      const res = await axios.get(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() })
+      return res.data?.status || res.data?.state || 'UNKNOWN'
+    } catch (e: any) {
+      if (e.response?.status === 404) return 'NOT_FOUND'
+      return 'ERROR'
+    }
+  }
+
   async startSession(): Promise<any> {
     const { baseUrl, sessionName } = this.config
-    // Tenta criar a sessão com start:true (cria e inicia em uma chamada)
+
+    const state = await this.getSessionState()
+    console.log(`[WhatsApp] Estado atual da sessão: ${state}`)
+
+    if (state === 'WORKING' || state === 'CONNECTED') {
+      return { status: 'already_connected' }
+    }
+
+    if (state === 'SCAN_QR_CODE' || state === 'STARTING') {
+      return { status: 'already_starting', state }
+    }
+
+    if (state === 'STOPPED' || state === 'FAILED') {
+      try {
+        const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
+        return res.data
+      } catch (startErr: any) {
+        if (startErr.response?.status === 422 || startErr.response?.status === 400) {
+          return { status: 'already_starting' }
+        }
+        throw startErr
+      }
+    }
+
+    // Sessão não existe → cria e inicia
     try {
       const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
       return res.data
     } catch (err: any) {
       const status = err.response?.status
-      // Sessão já existe (422/409) → apenas inicia
       if (status === 422 || status === 409) {
         try {
           const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
           return res.data
         } catch (startErr: any) {
-          // Já está iniciando — não é erro
           if (startErr.response?.status === 422 || startErr.response?.status === 400) {
             return { status: 'already_starting' }
           }
@@ -79,6 +112,17 @@ class WhatsAppService {
       console.error('[WhatsApp] Erro ao criar sessão:', err.response?.data || err.message)
       throw err
     }
+  }
+
+  async forceRestartSession(): Promise<any> {
+    const { baseUrl, sessionName } = this.config
+    // Para a sessão atual (ignora erros)
+    try { await axios.post(`${baseUrl}/api/sessions/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() }) } catch { /* silent */ }
+    // Deleta a sessão (ignora erros)
+    try { await axios.delete(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() }) } catch { /* silent */ }
+    // Cria e inicia novamente
+    const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
+    return res.data
   }
 
   async stopSession(): Promise<boolean> {

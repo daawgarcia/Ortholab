@@ -7,9 +7,13 @@ export async function whatsappRoutes(fastify: FastifyInstance) {
   fastify.get('/status', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     if (user.role !== Role.ADMIN) return reply.status(403).send({ error: 'Acesso negado' })
-    const isConnected = await whatsappService.checkSession()
+    const [isConnected, sessionState] = await Promise.all([
+      whatsappService.checkSession(),
+      whatsappService.getSessionState(),
+    ])
     return {
       connected: isConnected,
+      sessionState,
       session: process.env.WAHA_SESSION_NAME || 'ortholab',
       wahaUrl: process.env.WAHA_API_URL || 'http://localhost:3000',
       timestamp: new Date().toISOString(),
@@ -32,6 +36,17 @@ export async function whatsappRoutes(fastify: FastifyInstance) {
     if (user.role !== Role.ADMIN) return reply.status(403).send({ error: 'Acesso negado' })
     const success = await whatsappService.stopSession()
     return { success, message: success ? 'Sessão parada' : 'Erro ao parar sessão' }
+  })
+
+  fastify.post('/restart', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    if (user.role !== Role.ADMIN) return reply.status(403).send({ error: 'Acesso negado' })
+    try {
+      const result = await whatsappService.forceRestartSession()
+      return { success: true, message: 'Sessão reiniciada. Escaneie o novo QR code.', data: result }
+    } catch (error: any) {
+      return reply.status(500).send({ error: 'Erro ao reiniciar sessão', details: error.message })
+    }
   })
 
   fastify.get('/qr', { preHandler: authenticate }, async (request, reply) => {

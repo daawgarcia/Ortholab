@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 interface WhatsAppStatus {
   connected: boolean
   session: string
+  sessionState?: string
+  wahaUrl?: string
   state?: string
   timestamp: string
 }
@@ -108,6 +110,23 @@ export function AdminWhatsAppPage() {
     onSuccess: () => { toast({ title: 'Sessão parada' }); qc.invalidateQueries({ queryKey: ['whatsapp-status'] }) },
   })
 
+  const restartMutation = useMutation({
+    mutationFn: () => api.post('/whatsapp/restart').then(r => r.data),
+    onSuccess: () => {
+      toast({ title: 'Reiniciando sessão', description: 'Escaneie o novo QR Code abaixo' })
+      setQrCode(null)
+      setQrFailed(false)
+      setShowQRDialog(true)
+      startQrPoll()
+      qc.invalidateQueries({ queryKey: ['whatsapp-status'] })
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error || 'Falha ao reiniciar sessão'
+      const details = err?.response?.data?.details
+      toast({ variant: 'destructive', title: msg, description: details || undefined })
+    },
+  })
+
   const testMutation = useMutation({
     mutationFn: () => api.post('/whatsapp/test', { phone: testPhone, message: testMessage }).then(r => r.data),
     onSuccess: () => { toast({ title: 'Mensagem de teste enviada!' }); setTestPhone(''); setTestMessage('') },
@@ -155,14 +174,20 @@ export function AdminWhatsAppPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {[['Status', isConnected ? 'CONECTADO' : 'DESCONECTADO'],['Sessão', status?.session || 'ortholab'],['WAHA URL', status?.wahaUrl || 'N/A'],['Última Verificação', status?.timestamp ? new Date(status.timestamp).toLocaleString('pt-BR') : '-']].map(([label, value]) => (
+              {([
+                ['Status', isConnected ? 'CONECTADO' : 'DESCONECTADO'],
+                ['Estado WAHA', status?.sessionState || 'N/A'],
+                ['Sessão', status?.session || 'ortholab'],
+                ['WAHA URL', status?.wahaUrl || 'N/A'],
+                ['Última Verificação', status?.timestamp ? new Date(status.timestamp).toLocaleString('pt-BR') : '-'],
+              ] as [string, string][]).map(([label, value]) => (
                 <div key={label} className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-500">{label}</p>
                   <p className={`font-semibold text-sm break-all ${label === 'Status' ? (isConnected ? 'text-green-600' : 'text-amber-600') : ''}`}>{value}</p>
                 </div>
               ))}
             </div>
-            <div className="flex gap-2 mt-6">
+            <div className="flex gap-2 mt-6 flex-wrap">
               {!isConnected ? (
                 <Button onClick={() => startMutation.mutate()} disabled={startMutation.isPending} className="bg-green-600 hover:bg-green-700">
                   {startMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 mr-1" />}
@@ -173,6 +198,10 @@ export function AdminWhatsAppPage() {
                   <StopCircle className="w-4 h-4 mr-1" />Parar Sessão
                 </Button>
               )}
+              <Button variant="outline" onClick={() => restartMutation.mutate()} disabled={restartMutation.isPending} title="Apaga a sessão atual e cria uma nova — use se o QR não aparecer">
+                {restartMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-4 h-4 mr-1" />}
+                Forçar Reinício
+              </Button>
             </div>
           </CardContent>
         </Card>
