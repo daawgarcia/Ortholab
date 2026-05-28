@@ -57,7 +57,7 @@ export function AdminWhatsAppPage() {
       }
     } catch {
       qrAttempts.current += 1
-      if (qrAttempts.current >= 8) setQrFailed(true)
+      if (qrAttempts.current >= 20) setQrFailed(true)
     }
   }
 
@@ -65,21 +65,23 @@ export function AdminWhatsAppPage() {
     stopQrPoll()
     qrAttempts.current = 0
     setQrFailed(false)
-    fetchQr()
-    qrPollRef.current = setInterval(async () => {
-      // Para de buscar se conectou
-      try {
-        const s = await api.get('/whatsapp/status')
-        if (s.data?.connected) {
-          stopQrPoll()
-          setShowQRDialog(false)
-          qc.invalidateQueries({ queryKey: ['whatsapp-status'] })
-          toast({ title: 'WhatsApp conectado!' })
-          return
-        }
-      } catch { /* silent */ }
+    // Aguarda 5s para o WAHA (WebJS/Chrome) inicializar antes de buscar o QR
+    setTimeout(() => {
       fetchQr()
-    }, 4000)
+      qrPollRef.current = setInterval(async () => {
+        try {
+          const s = await api.get('/whatsapp/status')
+          if (s.data?.connected) {
+            stopQrPoll()
+            setShowQRDialog(false)
+            qc.invalidateQueries({ queryKey: ['whatsapp-status'] })
+            toast({ title: 'WhatsApp conectado!' })
+            return
+          }
+        } catch { /* silent */ }
+        fetchQr()
+      }, 5000)
+    }, 5000)
   }
 
   useEffect(() => () => stopQrPoll(), [])
@@ -255,9 +257,10 @@ export function AdminWhatsAppPage() {
                 <p className="text-xs text-red-500">Verifique se o WAHA está rodando na VPS e se a variável <code className="bg-red-100 px-1 rounded">WAHA_API_URL</code> está configurada no Render.</p>
               </div>
             ) : (
-              <div className="w-64 h-64 bg-gray-100 rounded-lg flex flex-col items-center justify-center gap-2">
+              <div className="w-64 h-64 bg-gray-100 rounded-lg flex flex-col items-center justify-center gap-2 p-4 text-center">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                <p className="text-sm text-gray-500">Aguardando QR Code...</p>
+                <p className="text-sm text-gray-500">Inicializando WAHA...</p>
+                <p className="text-xs text-gray-400">Pode levar até 30 segundos na primeira vez</p>
               </div>
             )}
             <p className="text-sm text-gray-500 mt-4 text-center">1. Abra o WhatsApp no celular<br />2. Toque em ⋮ ou Configurações<br />3. Aparelhos Conectados → Conectar<br />4. Aponte a câmera para o QR Code</p>
