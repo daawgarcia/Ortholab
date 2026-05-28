@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { ensureSelectedServiceInList, filterServicesForProduct, getAllowedInstallments, getServiceDisplayName, inferProductType, isAlignerType, normalizeServiceKind, sortBillingServices } from '@/lib/billing'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRightLeft, ChevronLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, ChevronLeft, FileText, Plus, Trash2 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { StatusBadge } from '@/components/status-badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -15,7 +15,8 @@ function isVideoFile(filename: string) {
   return /\.(mp4|webm|mov)$/i.test(filename)
 }
 
-const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Fichas', 'Ficha Clínica', 'Informações Importantes']
+const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Checagem Virtual 3D', 'Fichas', 'Ficha Clínica', 'Informações Importantes']
+const DENTIST_TABS = ['Workflow', 'Fotos', 'Modelos Digitais', 'Relatório', 'Checagem Virtual 3D', 'Fichas', 'Ficha Clínica']
 const IMPORTANT_NOTES_POPUP_ROLES = ['ADMIN', 'LAB_TECH', 'FINANCIAL']
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   ALINHADORES: 'Alinhadores',
@@ -83,7 +84,6 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
     enabled: workflowTab === 'Em Aberto' && !!selectedCase,
   })
 
-  // keep selected in sync with open cases list
   useEffect(() => {
     if (workflowTab === 'Em Aberto' && openCases.length && !openCases.some(c => c.id === selectedCase)) {
       setSelectedCase(openCases[0].id)
@@ -170,19 +170,16 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
     setBillingForm((prev: any) => {
       const currentServiceId = caseData.service?.id || ''
       const prevServiceId = prev?.serviceId || ''
-
       const preferredServiceId =
         (prevServiceId && serviceOptions.some((service: any) => service.id === prevServiceId) && prevServiceId)
         || (currentServiceId && serviceOptions.some((service: any) => service.id === currentServiceId) && currentServiceId)
         || serviceOptions[0]?.id
         || currentServiceId
         || ''
-
       const preferredService =
         serviceOptions.find((service: any) => service.id === preferredServiceId)
         || availableServices.find((service: any) => service.id === preferredServiceId)
         || caseData.service
-
       const nextInstallments = getAllowedInstallments(preferredService)
       const installmentFromCase = caseData.installmentOption || ''
       const prevInstallment = prev?.installmentOption || ''
@@ -191,9 +188,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
         || (installmentFromCase && nextInstallments.includes(installmentFromCase) && installmentFromCase)
         || nextInstallments[0]
         || '1x'
-
       const couponEnabled = isAlignerType(preferredService)
-
       return {
         serviceId: preferredServiceId,
         billingType: preferredService?.name || prev?.billingType || caseData.billingType || '',
@@ -209,16 +204,12 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
     <div className="space-y-4">
       <div className="flex gap-2">
         {['Em Aberto', 'Concluídos'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setWorkflowTab(tab as 'Em Aberto' | 'Concluídos')}
-            className={`px-4 py-2 text-sm rounded-lg font-medium border transition ${workflowTab === tab ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-100'}`}
-          >
+          <button key={tab} onClick={() => setWorkflowTab(tab as 'Em Aberto' | 'Concluídos')}
+            className={`px-4 py-2 text-sm rounded-lg font-medium border transition ${workflowTab === tab ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
             {tab}
           </button>
         ))}
       </div>
-
       {workflowTab === 'Concluídos' ? (
         <div className="space-y-3">
           {completedCases.length === 0 ? (
@@ -259,12 +250,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg text-blue-700 p-4">Nenhum fluxo em aberto. Registre o recebimento dos modelos para iniciar o processo.</div>
               )}
               {canStartWorkflow ? (
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => startWorkflowMutation.mutate()}
-                  disabled={startWorkflowMutation.isLoading}
-                >
+                <Button size="sm" className="w-full" onClick={() => startWorkflowMutation.mutate()} disabled={startWorkflowMutation.isLoading}>
                   {startWorkflowMutation.isLoading ? 'Registrando...' : 'Registrar recebimento e iniciar fluxo'}
                 </Button>
               ) : (
@@ -276,17 +262,13 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
               {openCases.length > 1 && (
                 <div className="flex gap-2 flex-wrap">
                   {openCases.map((c: any) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedCase(c.id)}
-                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${selectedCase === c.id ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:border-primary/50'}`}
-                    >
+                    <button key={c.id} onClick={() => setSelectedCase(c.id)}
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${selectedCase === c.id ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:border-primary/50'}`}>
                       #{c.caseNumber} — {c.productType || c.service?.name || 'Caso'}
                     </button>
                   ))}
                 </div>
               )}
-
               {caseData && (
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:items-start">
                   <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
@@ -310,23 +292,15 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         )
                       })}
                     </div>
-
                     {isAdmin && currentStage < WORKFLOW_STAGES.length && (
                       <div className="p-4 space-y-2 border-t bg-gray-50">
-                        <textarea
-                          value={notes}
-                          onChange={e => setNotes(e.target.value)}
-                          className="w-full border rounded text-xs px-3 py-2 resize-none"
-                          rows={2}
-                          placeholder="Observações (opcional)"
-                        />
+                        <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border rounded text-xs px-3 py-2 resize-none" rows={2} placeholder="Observações (opcional)" />
                         <Button size="sm" className="w-full" onClick={() => advanceMutation.mutate()} disabled={advanceMutation.isPending}>
                           {advanceMutation.isPending ? 'Avançando...' : `Avançar: ${WORKFLOW_STAGES.find(s => s.n === currentStage + 1)?.label || 'Próxima Etapa'}`}
                         </Button>
                       </div>
                     )}
                   </div>
-
                   <div className="space-y-3">
                     {caseData?.status === 'WAITING_APPROVAL' && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
@@ -337,13 +311,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         <div className="p-4 space-y-3">
                           {user?.role === 'DENTIST' && (
                             <>
-                              <textarea
-                                value={revisionNotes}
-                                onChange={e => setRevisionNotes(e.target.value)}
-                                className="w-full border rounded text-xs px-3 py-2 resize-none"
-                                rows={3}
-                                placeholder="Se precisar, descreva aqui o pedido de revisão"
-                              />
+                              <textarea value={revisionNotes} onChange={e => setRevisionNotes(e.target.value)} className="w-full border rounded text-xs px-3 py-2 resize-none" rows={3} placeholder="Se precisar, descreva aqui o pedido de revisão" />
                               <div className="grid grid-cols-2 gap-2">
                                 <Button variant="outline" size="sm" onClick={() => revisionMutation.mutate()} disabled={!revisionNotes.trim() || revisionMutation.isPending}>
                                   {revisionMutation.isPending ? 'Enviando...' : 'Solicitar revisão'}
@@ -365,7 +333,6 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         </div>
                       </div>
                     )}
-
                     {showBillingSection && canManageBilling && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-gray-50">
@@ -375,40 +342,22 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         <div className="p-4 space-y-3">
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Tipo de produto/pacote</label>
-                            <select
-                              className="w-full border rounded px-2 py-1.5 text-sm"
-                              value={billingForm.serviceId || ''}
+                            <select className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.serviceId || ''}
                               onChange={e => {
-                                const nextService = orderedServices.find((service: any) => service.id === e.target.value)
-                                  || availableServices.find((service: any) => service.id === e.target.value)
+                                const nextService = orderedServices.find((service: any) => service.id === e.target.value) || availableServices.find((service: any) => service.id === e.target.value)
                                 const nextInstallments = getAllowedInstallments(nextService)
-                                setBillingForm((f: any) => ({
-                                  ...f,
-                                  serviceId: e.target.value,
-                                  billingType: nextService?.name || '',
-                                  installmentOption: nextInstallments[0] || '1x',
-                                  discountCoupon: isAlignerType(nextService) ? f.discountCoupon : '',
-                                }))
-                              }}
-                            >
+                                setBillingForm((f: any) => ({ ...f, serviceId: e.target.value, billingType: nextService?.name || '', installmentOption: nextInstallments[0] || '1x', discountCoupon: isAlignerType(nextService) ? f.discountCoupon : '' }))
+                              }}>
                               <option value="">Selecione o produto/pacote</option>
-                                  {serviceOptions.map((service: any) => (
-                                    <option key={service.id} value={service.id}>{getServiceDisplayName(service)}</option>
-                              ))}
+                              {serviceOptions.map((service: any) => <option key={service.id} value={service.id}>{getServiceDisplayName(service)}</option>)}
                             </select>
-                            {serviceOptions.length === 0 && (
-                              <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>
-                            )}
-                            {effectiveProductType === 'ALINHADORES' && !hasUnidadeOption && (
-                              <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo. Cadastre um serviço com tipo UNIDADE em Admin &gt; Serviços.</p>
-                            )}
+                            {serviceOptions.length === 0 && <p className="text-xs text-gray-400 mt-1">Nenhum produto/pacote compatível foi configurado para este tipo de tratamento.</p>}
+                            {effectiveProductType === 'ALINHADORES' && !hasUnidadeOption && <p className="text-xs text-amber-600 mt-1">Produto UNIDADE não encontrado no catálogo ativo.</p>}
                           </div>
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Parcelas</label>
                             <select className="w-full border rounded px-2 py-1.5 text-sm" value={billingForm.installmentOption || ''} onChange={e => setBillingForm((f: any) => ({ ...f, installmentOption: e.target.value }))}>
-                              {allowedInstallments.map(option => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
+                              {allowedInstallments.map(option => <option key={option} value={option}>{option}</option>)}
                             </select>
                           </div>
                           <div className="flex items-center gap-6">
@@ -423,13 +372,9 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                           </div>
                           <div>
                             <label className="text-xs text-gray-500 block mb-1">Cupom de Desconto</label>
-                            <input
-                              className="w-full border rounded px-2 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                              value={billingForm.discountCoupon || ''}
-                              onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value.toUpperCase() }))}
-                              placeholder={couponAllowed ? 'CUPOM' : 'Disponível apenas para alinhadores'}
-                              disabled={!couponAllowed}
-                            />
+                            <input className="w-full border rounded px-2 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                              value={billingForm.discountCoupon || ''} onChange={e => setBillingForm((f: any) => ({ ...f, discountCoupon: e.target.value.toUpperCase() }))}
+                              placeholder={couponAllowed ? 'CUPOM' : 'Disponível apenas para alinhadores'} disabled={!couponAllowed} />
                             {!couponAllowed && <p className="text-xs text-gray-400 mt-1">Cupons não podem ser aplicados em placas e outros serviços não alinhadores.</p>}
                           </div>
                           <Button size="sm" className="w-full" onClick={() => billingMutation.mutate()} disabled={billingMutation.isPending}>
@@ -439,7 +384,6 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         </div>
                       </div>
                     )}
-
                   </div>
                 </div>
               )}
@@ -458,7 +402,6 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
     queryKey: ['patient-photos', patientId, isPrivate],
     queryFn: () => api.get(`/patients/${patientId}/photos?isPrivate=${!!isPrivate}`).then(r => r.data),
   })
-
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files?.length) return
@@ -473,9 +416,7 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
     } catch { toast({ variant: 'destructive', title: 'Erro ao enviar mídias' }) }
     finally { setUploading(false) }
   }
-
   const photos = data?.photos || []
-
   return (
     <div className="space-y-4">
       <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors hover:bg-gray-50 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -486,13 +427,8 @@ function PhotosTab({ patientId, isPrivate }: { patientId: string; isPrivate?: bo
       {photos.length === 0 && <p className="text-sm text-gray-400 py-4">Nenhuma mídia</p>}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {photos.map((p: any) => (
-          <a key={p.id} href={p.url} target="_blank" rel="noreferrer"
-            className="aspect-square rounded-lg overflow-hidden border bg-gray-100 hover:opacity-90 transition-opacity">
-            {isVideoFile(p.filename) ? (
-              <video src={p.url} className="w-full h-full object-cover" controls />
-            ) : (
-              <img src={p.url} alt={p.filename} className="w-full h-full object-cover" />
-            )}
+          <a key={p.id} href={p.url} target="_blank" rel="noreferrer" className="aspect-square rounded-lg overflow-hidden border bg-gray-100 hover:opacity-90 transition-opacity">
+            {isVideoFile(p.filename) ? <video src={p.url} className="w-full h-full object-cover" controls /> : <img src={p.url} alt={p.filename} className="w-full h-full object-cover" />}
           </a>
         ))}
       </div>
@@ -505,12 +441,10 @@ function FilesTab({ patientId, type }: { patientId: string; type: 'stl' | 'work'
   const endpoint = type === 'stl' ? 'digital-models' : 'work-files'
   const [uploading, setUploading] = useState(false)
   const [kind, setKind] = useState('upper')
-
   const { data } = useQuery({
     queryKey: ['patient-files', patientId, type],
     queryFn: () => api.get(`/patients/${patientId}/${endpoint}`).then(r => r.data),
   })
-
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -524,9 +458,7 @@ function FilesTab({ patientId, type }: { patientId: string; type: 'stl' | 'work'
     } catch { toast({ variant: 'destructive', title: 'Erro ao enviar arquivo' }) }
     finally { setUploading(false) }
   }
-
   const files = data?.files || []
-
   return (
     <div className="space-y-4">
       {type === 'stl' && (
@@ -547,8 +479,7 @@ function FilesTab({ patientId, type }: { patientId: string; type: 'stl' | 'work'
       {files.length === 0 && <p className="text-sm text-gray-400 py-4">Nenhum arquivo</p>}
       <div className="space-y-2">
         {files.map((f: any) => (
-          <a key={f.id} href={f.url} target="_blank" rel="noreferrer"
-            className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+          <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
             <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-xs font-bold text-primary">
               {type === 'stl' ? (f.kind === 'upper' ? 'SUP' : 'INF') : 'ARQ'}
             </div>
@@ -563,21 +494,174 @@ function FilesTab({ patientId, type }: { patientId: string; type: 'stl' | 'work'
   )
 }
 
+function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] }) {
+  const { user } = useAuthStore()
+  const [uploading, setUploading] = useState(false)
+  const isLabOrAdmin = ['ADMIN', 'LAB_TECH', 'EXPEDITION'].includes(user?.role || '')
+  const uploadCaseId = cases.find(c => !['COMPLETED', 'DRAFT', 'SUBMITTED'].includes(c.status))?.id || cases[0]?.id
+
+  const { data, refetch } = useQuery({
+    queryKey: ['patient-approvals', patientId],
+    queryFn: () => api.get(`/cases/patient/${patientId}/approvals`).then(r => r.data),
+  })
+  const documents = data?.documents || []
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !uploadCaseId) return
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      await api.post(`/cases/${uploadCaseId}/upload-pdf`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      toast({ title: 'Relatório enviado com sucesso!' })
+      refetch()
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erro ao enviar PDF', description: err?.response?.data?.error })
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleView = async (docId: string) => {
+    try { await api.post(`/cases/document/${docId}/view`) } catch { /* silent */ }
+  }
+
+  return (
+    <div className="space-y-4">
+      {isLabOrAdmin && (
+        <div>
+          {!uploadCaseId && <p className="text-xs text-amber-600 mb-2">Nenhum caso ativo encontrado para este paciente.</p>}
+          <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium hover:bg-gray-50 ${uploading || !uploadCaseId ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Plus className="w-4 h-4" />
+            {uploading ? 'Enviando...' : 'Enviar PDF de Relatório'}
+            <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleUpload} disabled={uploading || !uploadCaseId} />
+          </label>
+        </div>
+      )}
+      {documents.length === 0 ? (
+        <p className="text-sm text-gray-400 py-4">Nenhum relatório disponível</p>
+      ) : (
+        <div className="space-y-2">
+          {documents.map((doc: any) => (
+            <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
+              onClick={() => handleView(doc.id)}
+              className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0 border border-red-100">
+                <FileText className="w-5 h-5 text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{doc.title || doc.fileName}</p>
+                <p className="text-xs text-gray-400">
+                  Caso #{doc.case?.caseNumber} · {doc.uploader?.name} · {new Date(doc.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${doc.status === 'VIEWED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                {doc.status === 'VIEWED' ? 'Visualizado' : 'Novo'}
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases: any[] }) {
+  const { user } = useAuthStore()
+  const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const isLabOrAdmin = ['ADMIN', 'LAB_TECH', 'EXPEDITION'].includes(user?.role || '')
+  const uploadCaseId = cases.find(c => !['COMPLETED', 'DRAFT', 'SUBMITTED'].includes(c.status))?.id || cases[0]?.id
+
+  const { data, refetch } = useQuery({
+    queryKey: ['patient-approvals', patientId],
+    queryFn: () => api.get(`/cases/patient/${patientId}/approvals`).then(r => r.data),
+  })
+  const videos = data?.videos || []
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !uploadCaseId) return
+    setUploading(true)
+    setProgress(0)
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      await api.post(`/cases/${uploadCaseId}/upload-video`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (evt: any) => setProgress(Math.round((evt.loaded / (evt.total || 1)) * 100)),
+      })
+      toast({ title: 'Vídeo enviado com sucesso!' })
+      refetch()
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Erro ao enviar vídeo', description: err?.response?.data?.error })
+    } finally {
+      setUploading(false)
+      setProgress(0)
+      e.target.value = ''
+    }
+  }
+
+  const handleView = async (videoId: string) => {
+    try { await api.post(`/cases/video/${videoId}/view`) } catch { /* silent */ }
+  }
+
+  return (
+    <div className="space-y-5">
+      {isLabOrAdmin && (
+        <div className="space-y-2">
+          {!uploadCaseId && <p className="text-xs text-amber-600">Nenhum caso ativo encontrado para este paciente.</p>}
+          <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium hover:bg-gray-50 ${uploading || !uploadCaseId ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Plus className="w-4 h-4" />
+            {uploading ? `Enviando... ${progress}%` : 'Enviar Vídeo MP4'}
+            <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.mov" className="hidden" onChange={handleUpload} disabled={uploading || !uploadCaseId} />
+          </label>
+          {uploading && (
+            <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1">
+              <div className="bg-primary h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+            </div>
+          )}
+        </div>
+      )}
+      {videos.length === 0 ? (
+        <p className="text-sm text-gray-400 py-4">Nenhum vídeo de checagem disponível</p>
+      ) : (
+        <div className="space-y-5">
+          {videos.map((video: any) => (
+            <div key={video.id} className="border rounded-xl overflow-hidden bg-white shadow-sm">
+              <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold">{video.title}</p>
+                  <p className="text-xs text-gray-400">
+                    Caso #{video.case?.caseNumber} · Enviado por {video.uploader?.name} · {new Date(video.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${video.status === 'VIEWED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                  {video.status === 'VIEWED' ? 'Visualizado' : 'Novo'}
+                </span>
+              </div>
+              <video
+                src={video.videoUrl}
+                controls
+                className="w-full max-h-[500px] bg-black"
+                onPlay={() => handleView(video.id)}
+                playsInline
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FormsTab({ patientId }: { patientId: string }) {
   const navigate = useNavigate()
-  const { data: planning } = useQuery({
-    queryKey: ['forms-planning', patientId],
-    queryFn: () => api.get(`/forms/planning/${patientId}`).then(r => r.data),
-  })
-  const { data: completion } = useQuery({
-    queryKey: ['forms-completion', patientId],
-    queryFn: () => api.get(`/forms/completion/${patientId}`).then(r => r.data),
-  })
-  const { data: otherServices } = useQuery({
-    queryKey: ['forms-other-services', patientId],
-    queryFn: () => api.get(`/forms/other-services/${patientId}`).then(r => r.data),
-  })
-
+  const { data: planning } = useQuery({ queryKey: ['forms-planning', patientId], queryFn: () => api.get(`/forms/planning/${patientId}`).then(r => r.data) })
+  const { data: completion } = useQuery({ queryKey: ['forms-completion', patientId], queryFn: () => api.get(`/forms/completion/${patientId}`).then(r => r.data) })
+  const { data: otherServices } = useQuery({ queryKey: ['forms-other-services', patientId], queryFn: () => api.get(`/forms/other-services/${patientId}`).then(r => r.data) })
   return (
     <div className="space-y-6">
       <FormSection title="Fichas de Planejamento" items={planning} onAdd={() => navigate(`/patients/${patientId}/forms/planning/new`)} />
@@ -595,9 +679,7 @@ function FormSection({ title, items, onAdd }: { title: string; items: any[]; onA
         <Button size="sm" variant="outline" onClick={onAdd} className="gap-1"><Plus className="w-3 h-3" /> Nova Ficha</Button>
       </div>
       <div className="divide-y">
-        {(!items || items.length === 0) && (
-          <p className="px-5 py-4 text-sm text-gray-400">Nenhuma ficha</p>
-        )}
+        {(!items || items.length === 0) && <p className="px-5 py-4 text-sm text-gray-400">Nenhuma ficha</p>}
         {items?.map((f: any) => (
           <div key={f.id} className="px-5 py-3 flex items-center justify-between text-sm">
             <span className="text-gray-700">{new Date(f.createdAt).toLocaleDateString('pt-BR')} — {f.dentist?.name}</span>
@@ -610,12 +692,8 @@ function FormSection({ title, items, onAdd }: { title: string; items: any[]; onA
 
 function ClinicalRecordsTab({ patientId }: { patientId: string }) {
   const navigate = useNavigate()
-  const { data } = useQuery({
-    queryKey: ['clinical-records', patientId],
-    queryFn: () => api.get(`/clinical-records?patientId=${patientId}`).then(r => r.data),
-  })
+  const { data } = useQuery({ queryKey: ['clinical-records', patientId], queryFn: () => api.get(`/clinical-records?patientId=${patientId}`).then(r => r.data) })
   const records = data?.records || []
-
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
@@ -643,11 +721,7 @@ function ClinicalRecordsTab({ patientId }: { patientId: string }) {
 function ImportantNotesTab({ patientId, initialValue }: { patientId: string; initialValue?: string | null }) {
   const qc = useQueryClient()
   const [notes, setNotes] = useState(initialValue || '')
-
-  useEffect(() => {
-    setNotes(initialValue || '')
-  }, [initialValue])
-
+  useEffect(() => { setNotes(initialValue || '') }, [initialValue])
   const saveMutation = useMutation({
     mutationFn: () => api.patch(`/patients/${patientId}/important-notes`, { importantNotes: notes }),
     onSuccess: () => {
@@ -659,7 +733,6 @@ function ImportantNotesTab({ patientId, initialValue }: { patientId: string; ini
       toast({ variant: 'destructive', title: 'Erro ao salvar', description: error?.response?.data?.error || 'Falha ao salvar informações importantes' })
     },
   })
-
   return (
     <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
       <div className="px-5 py-3 border-b bg-gray-50">
@@ -667,13 +740,9 @@ function ImportantNotesTab({ patientId, initialValue }: { patientId: string; ini
         <p className="text-xs text-gray-500 mt-1">Esse conteúdo é visível apenas para a equipe interna e nunca para o dentista.</p>
       </div>
       <div className="p-5 space-y-4">
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={8}
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={8}
           className="w-full border rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
-          placeholder="Adicione aqui orientações importantes para o time que prepara e movimenta o caso..."
-        />
+          placeholder="Adicione aqui orientações importantes para o time que prepara e movimenta o caso..." />
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setNotes(initialValue || '')} disabled={saveMutation.isPending}>Restaurar</Button>
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || notes === (initialValue || '')}>
@@ -735,9 +804,7 @@ export default function PatientDetailPage() {
   const shouldOpenImportantNotesPopup = IMPORTANT_NOTES_POPUP_ROLES.includes(user?.role || '') && !!patient?.importantNotes?.trim()
 
   useEffect(() => {
-    if (shouldOpenImportantNotesPopup) {
-      setImportantNotesOpen(true)
-    }
+    if (shouldOpenImportantNotesPopup) setImportantNotesOpen(true)
   }, [patient?.id, patient?.updatedAt, shouldOpenImportantNotesPopup])
 
   if (isLoading) return <div className="p-6 text-gray-400">Carregando...</div>
@@ -751,10 +818,10 @@ export default function PatientDetailPage() {
   const tabs = isAdminOrSupport
     ? TABS
     : isCreatorDentist
-      ? ['Workflow', 'Fotos', 'Modelos Digitais', 'Fichas', 'Ficha Clínica']
+      ? DENTIST_TABS
       : ['Workflow', 'Fotos', 'Fichas', 'Ficha Clínica']
 
-  const activeCase = patient.cases?.find(c => c.totvsOrderId)
+  const activeCase = patient.cases?.find((c: any) => c.totvsOrderId)
   const caseForServiceBadge = activeCase || patient.cases?.[0]
   const treatmentLabel = caseForServiceBadge?.productType
     ? PRODUCT_TYPE_LABELS[caseForServiceBadge.productType] || caseForServiceBadge.productType
@@ -765,15 +832,11 @@ export default function PatientDetailPage() {
       {canRenderImportantNotesPopup && importantNotesOpen && (
         <Dialog open={importantNotesOpen} onOpenChange={setImportantNotesOpen}>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Informações Importantes</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Informações Importantes</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <p className="text-sm text-gray-500">Este paciente possui instruções internas para a equipe de preparo e movimentação.</p>
               <div className="rounded-lg border bg-amber-50 border-amber-200 p-4 text-sm text-amber-950 whitespace-pre-wrap">{patient.importantNotes}</div>
-              <div className="flex justify-end">
-                <Button onClick={() => setImportantNotesOpen(false)}>Fechar</Button>
-              </div>
+              <div className="flex justify-end"><Button onClick={() => setImportantNotesOpen(false)}>Fechar</Button></div>
             </div>
           </DialogContent>
         </Dialog>
@@ -800,37 +863,20 @@ export default function PatientDetailPage() {
             <p className="text-sm font-semibold text-gray-800">Ações administrativas</p>
             <p className="text-xs text-gray-500">Você pode transferir este paciente para outro dentista ou apagar o cadastro junto com os arquivos e histórico relacionados.</p>
             <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={transferDentistId}
-                onChange={(e) => setTransferDentistId(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white min-w-[260px]"
-              >
+              <select value={transferDentistId} onChange={(e) => setTransferDentistId(e.target.value)} className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white min-w-[260px]">
                 <option value="">Selecione o dentista de destino</option>
                 {availableDentists.map((dentist: any) => (
                   <option key={dentist.id} value={dentist.id}>{dentist.name}{dentist.clinic ? ` - ${dentist.clinic}` : ''}</option>
                 ))}
               </select>
-              <Button
-                variant="outline"
-                className="gap-2"
-                disabled={!transferDentistId || transferMutation.isPending}
-                onClick={() => transferMutation.mutate()}
-              >
+              <Button variant="outline" className="gap-2" disabled={!transferDentistId || transferMutation.isPending} onClick={() => transferMutation.mutate()}>
                 <ArrowRightLeft className="w-4 h-4" />
                 {transferMutation.isPending ? 'Transferindo...' : 'Transferir paciente'}
               </Button>
             </div>
           </div>
-          <Button
-            variant="destructive"
-            className="gap-2"
-            disabled={deleteMutation.isPending}
-            onClick={() => {
-              if (window.confirm('Isso apagará o paciente e todo o histórico relacionado. Deseja continuar?')) {
-                deleteMutation.mutate()
-              }
-            }}
-          >
+          <Button variant="destructive" className="gap-2" disabled={deleteMutation.isPending}
+            onClick={() => { if (window.confirm('Isso apagará o paciente e todo o histórico relacionado. Deseja continuar?')) deleteMutation.mutate() }}>
             <Trash2 className="w-4 h-4" />
             {deleteMutation.isPending ? 'Apagando...' : 'Apagar paciente'}
           </Button>
@@ -840,9 +886,7 @@ export default function PatientDetailPage() {
       <div className="border-b flex gap-0 overflow-x-auto">
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors inline-flex items-center gap-2 ${
-              activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}>
+            className={`px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors inline-flex items-center gap-2 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {tab}
             {tab === 'Informações Importantes' && hasImportantNotes && (
               <Badge variant="warning" className="px-2 py-0 text-[10px] leading-5">Aviso</Badge>
@@ -856,7 +900,8 @@ export default function PatientDetailPage() {
         {activeTab === 'Fotos' && <PhotosTab patientId={id!} />}
         {activeTab === 'Fotos Restritas' && <PhotosTab patientId={id!} isPrivate />}
         {activeTab === 'Modelos Digitais' && <FilesTab patientId={id!} type="stl" />}
-        {activeTab === 'Relatório' && <FilesTab patientId={id!} type="work" />}
+        {activeTab === 'Relatório' && <RelatorioTab patientId={id!} cases={patient.cases || []} />}
+        {activeTab === 'Checagem Virtual 3D' && <CheckagemVirtual3DTab patientId={id!} cases={patient.cases || []} />}
         {activeTab === 'Fichas' && <FormsTab patientId={id!} />}
         {activeTab === 'Ficha Clínica' && <ClinicalRecordsTab patientId={id!} />}
         {activeTab === 'Informações Importantes' && isAdminOrSupport && <ImportantNotesTab patientId={id!} initialValue={patient.importantNotes} />}
