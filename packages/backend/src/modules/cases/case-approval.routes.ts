@@ -435,4 +435,114 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
       message: approved ? 'Caso aprovado com sucesso!' : 'Revisão solicitada.' 
     }
   })
+
+  // Upload direto de PDF para Relatório (multipart)
+  fastify.post('/:caseId/upload-pdf', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { caseId } = request.params as { caseId: string }
+    const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.EXPEDITION]
+    if (!allowedRoles.includes(user.role)) {
+      return reply.status(403).send({ error: 'Apenas equipe técnica pode fazer upload' })
+    }
+    const caseData = await fastify.prisma.case.findUnique({ where: { id: caseId }, select: { id: true } })
+    if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
+
+    const mp = await request.file({ limits: { fileSize: 50 * 1024 * 1024 } })
+    if (!mp) return reply.status(400).send({ error: 'Arquivo não fornecido' })
+    if (mp.mimetype !== 'application/pdf') return reply.status(400).send({ error: 'Apenas PDFs são aceitos' })
+
+    const buffer = await mp.toBuffer()
+    const { url } = await fastify.s3.upload(buffer, mp.filename || 'relatorio.pdf', mp.mimetype, `cases/${caseId}/reports`)
+
+    const doc = await fastify.prisma.caseApprovalDocument.create({
+      data: {
+        caseId,
+        uploadedBy: user.id,
+        title: mp.filename || 'Relatório',
+        fileUrl: url,
+        fileName: mp.filename || 'relatorio.pdf',
+        fileSize: buffer.length,
+        fileType: 'application/pdf',
+      },
+    })
+    return reply.status(201).send({ document: doc })
+  })
+
+  // Upload direto de vídeo para Checagem Virtual 3D (multipart)
+  fastify.post('/:caseId/upload-video', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { caseId } = request.params as { caseId: string }
+    const allowedRoles = [Role.ADMIN, Role.LAB_TECH, Role.EXPEDITION]
+    if (!allowedRoles.includes(user.role)) {
+      return reply.status(403).send({ error: 'Apenas equipe técnica pode fazer upload' })
+    }
+    const caseData = await fastify.prisma.case.findUnique({ where: { id: caseId }, select: { id: true } })
+    if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
+
+    const mp = await request.file({ limits: { fileSize: 500 * 1024 * 1024 } })
+    if (!mp) return reply.status(400).send({ error: 'Arquivo não fornecido' })
+    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime']
+    if (!allowedVideoTypes.includes(mp.mimetype)) return reply.status(400).send({ error: 'Apenas MP4/WebM/MOV são aceitos' })
+
+    const buffer = await mp.toBuffer()
+    const { url } = await fastify.s3.upload(buffer, mp.filename || 'checagem3d.mp4', mp.mimetype, `cases/${caseId}/videos`)
+
+    const video = await fastify.prisma.caseApprovalVideo.create({
+      data: {
+        caseId,
+        uploadedBy: user.id,
+        title: mp.filename || 'Checagem Virtual 3D',
+        videoUrl: url,
+        fileSize: buffer.length,
+      },
+    })
+    return reply.status(201).send({ video })
+  })
+
+  // GET /patient/:patientId/approvals — agrega vídeos e docs de todos os casos do paciente
+  fastify.get('/patient/:patientId/approvals', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { patientId } = request.params as { patientId: string }
+
+    const where = user.role === Role.DENTIST
+      ? { patientId, dentistId: user.id }
+      : { patientId }
+
+    const cases = await fastify.prisma.case.findMany({ where, select: { id: true, caseNumber: true } })
+    const caseIds = cases.map(c => c.id)
+    if (caseIds.length === 0) return { videos: [], documents: [] }
+
+    const [videos, documents] = await Promise.all([
+      fastify.prisma.caseApprovalVideo.findMany({
+        where: { caseId: { in: caseIds } },
+        orderBy: { createdAt: 'desc' },
+        include: { uploader: { select: { name: true } }, case: { select: { caseNumber: true } } },
+      }),
+      fastify.prisma.caseApprovalDocument.findMany({
+        where: { caseId: { in: caseIds } },
+        orderBy: { createdAt: 'desc' },
+        include: { uploader: { select: { name: true } }, case: { select: { caseNumber: true } } },
+      }),
+    ])
+    return { videos, documents }
+  })
+
+  // Marcar documento como visualizado
+  fastify.post('/document/:docId/view', { preHandler: authenticate }, async (request, reply) => {
+    const { docId } = request.params as { docId: string }
+    const user = request.user as JwtPayload
+    const doc = await fastify.prisma.caseApprovalDocument.findUnique({
+      where: { id: docId },
+      include: { case: { select: { dentistId: true } } },
+    })
+    if (!doc) return reply.status(404).send({ error: 'Documento não encontrado' })
+    if (user.role === Role.DENTIST && doc.case.dentistId !== user.id) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
+    const updated = await fastify.prisma.caseApprovalDocument.update({
+      where: { id: docId },
+      data: { status: ApprovalDocStatus.VIEWED, viewedAt: new Date() },
+    })
+    return { document: updated }
+  })
 }
