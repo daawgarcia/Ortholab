@@ -1,8 +1,15 @@
-[phases.build]
-cmds = ['cd packages/backend && npm install && npm run db:generate && npm run build']
-
 [phases.setup]
-nixPkgs = ['nodejs_20']
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install"]
+cacheDirectories = ["node_modules"]
+
+[phases.build]
+cmds = [
+  "npx prisma generate --schema=prisma/schema.prisma",
+  "npm run build"
+]
 
 [start]
-cmd = 'cd packages/backend && npm start'
+cmd = "npx prisma migrate deploy && node dist/server.js"
