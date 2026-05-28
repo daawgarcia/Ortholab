@@ -95,7 +95,9 @@ export function AdminWhatsAppPage() {
       qc.invalidateQueries({ queryKey: ['whatsapp-status'] })
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Erro', description: err?.response?.data?.error || 'Falha ao iniciar sessão' })
+      const msg = err?.response?.data?.error || 'Falha ao iniciar sessão'
+      const details = err?.response?.data?.details
+      toast({ variant: 'destructive', title: msg, description: details ? `Detalhe: ${details}` : 'Verifique se o WAHA está rodando e se WAHA_API_URL está correto no Render.' })
     },
   })
 
@@ -151,10 +153,10 @@ export function AdminWhatsAppPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {[['Status', isConnected ? 'CONECTADO' : 'DESCONECTADO'],['Sessão', status?.session || 'ortholab'],['Estado', status?.state || 'N/A'],['Última Verificação', status?.timestamp ? new Date(status.timestamp).toLocaleString('pt-BR') : '-']].map(([label, value]) => (
+              {[['Status', isConnected ? 'CONECTADO' : 'DESCONECTADO'],['Sessão', status?.session || 'ortholab'],['WAHA URL', status?.wahaUrl || 'N/A'],['Última Verificação', status?.timestamp ? new Date(status.timestamp).toLocaleString('pt-BR') : '-']].map(([label, value]) => (
                 <div key={label} className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-500">{label}</p>
-                  <p className={`font-semibold text-sm ${label === 'Status' ? (isConnected ? 'text-green-600' : 'text-amber-600') : ''}`}>{value}</p>
+                  <p className={`font-semibold text-sm break-all ${label === 'Status' ? (isConnected ? 'text-green-600' : 'text-amber-600') : ''}`}>{value}</p>
                 </div>
               ))}
             </div>
@@ -250,7 +252,7 @@ export function AdminWhatsAppPage() {
               <div className="w-64 bg-red-50 border border-red-200 rounded-lg flex flex-col items-center justify-center gap-2 p-6 text-center">
                 <AlertCircle className="w-8 h-8 text-red-400" />
                 <p className="text-sm font-medium text-red-700">QR Code indisponível</p>
-                <p className="text-xs text-red-500">Verifique se o WAHA está rodando na VPS e se a variável <code className="bg-red-100 px-1 rounded">WAHA_API_URL</code> está configurada no Railway.</p>
+                <p className="text-xs text-red-500">Verifique se o WAHA está rodando na VPS e se a variável <code className="bg-red-100 px-1 rounded">WAHA_API_URL</code> está configurada no Render.</p>
               </div>
             ) : (
               <div className="w-64 h-64 bg-gray-100 rounded-lg flex flex-col items-center justify-center gap-2">

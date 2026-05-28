@@ -8,7 +8,12 @@ export async function whatsappRoutes(fastify: FastifyInstance) {
     const user = request.user as JwtPayload
     if (user.role !== Role.ADMIN) return reply.status(403).send({ error: 'Acesso negado' })
     const isConnected = await whatsappService.checkSession()
-    return { connected: isConnected, session: process.env.WAHA_SESSION_NAME || 'ortholab', timestamp: new Date().toISOString() }
+    return {
+      connected: isConnected,
+      session: process.env.WAHA_SESSION_NAME || 'ortholab',
+      wahaUrl: process.env.WAHA_API_URL || 'http://localhost:3000',
+      timestamp: new Date().toISOString(),
+    }
   })
 
   fastify.post('/start', { preHandler: authenticate }, async (request, reply) => {
