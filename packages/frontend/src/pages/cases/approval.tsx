@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
@@ -318,7 +318,7 @@ export function CaseApprovalPage() {
                 variant="outline"
                 onClick={() => selectedVideo && handleDownload(selectedVideo)}
               >
-                <Download className="w-4 h-4 mr-1" /
+                <Download className="w-4 h-4 mr-1" />
                 Baixar Vídeo
               </Button>
             </div>
@@ -329,14 +329,14 @@ export function CaseApprovalPage() {
                   variant="outline"
                   onClick={() => setShowApproveDialog(true)}
                 >
-                  <XCircle className="w-4 h-4 mr-1" /
+                  <XCircle className="w-4 h-4 mr-1" />
                   Solicitar Revisão
                 </Button>
                 <Button
                   onClick={() => setShowApproveDialog(true)}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  <CheckCircle className="w-4 h-4 mr-1" /
+                  <CheckCircle className="w-4 h-4 mr-1" />
                   Aprovar Caso
                 </Button>
               </div>
@@ -387,7 +387,7 @@ export function CaseApprovalPage() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4 mr-1" /
+                    <CheckCircle className="w-4 h-4 mr-1" />
                     Aprovar
                   </>
                 )}
