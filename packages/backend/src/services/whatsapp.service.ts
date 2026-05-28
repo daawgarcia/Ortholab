@@ -45,23 +45,27 @@ class WhatsAppService {
   }
 
   async checkSession(): Promise<boolean> {
-    const { baseUrl, sessionName } = this.config
-    try {
-      const res = await axios.get(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() })
-      const s = res.data?.status || res.data?.state || ''
-      return s === 'WORKING' || s === 'CONNECTED'
-    } catch {
-      return false
-    }
+    const state = await this.getSessionState()
+    return state === 'WORKING' || state === 'CONNECTED'
   }
 
   async getSessionState(): Promise<string> {
     const { baseUrl, sessionName } = this.config
+    // Tenta primeiro GET /api/sessions/{name} (WAHA Plus)
     try {
       const res = await axios.get(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() })
-      return res.data?.status || res.data?.state || 'UNKNOWN'
-    } catch (e: any) {
-      if (e.response?.status === 404) return 'NOT_FOUND'
+      if (res.status === 200 && res.data) {
+        return res.data.status || res.data.state || 'UNKNOWN'
+      }
+    } catch { /* tenta listar todas */ }
+    // Fallback: GET /api/sessions (lista todas - WAHA free)
+    try {
+      const res = await axios.get(`${baseUrl}/api/sessions`, { timeout: 10000, headers: this.headers() })
+      const sessions: any[] = Array.isArray(res.data) ? res.data : []
+      const found = sessions.find((s: any) => s.name === sessionName)
+      if (!found) return 'NOT_FOUND'
+      return found.status || found.state || 'UNKNOWN'
+    } catch {
       return 'ERROR'
     }
   }
@@ -118,11 +122,27 @@ class WhatsAppService {
     const { baseUrl, sessionName } = this.config
     // Para a sessão atual (ignora erros)
     try { await axios.post(`${baseUrl}/api/sessions/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() }) } catch { /* silent */ }
-    // Deleta a sessão (ignora erros)
+    // Tenta deletar (WAHA Plus) — ignora se não suportado
     try { await axios.delete(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() }) } catch { /* silent */ }
-    // Cria e inicia novamente
-    const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
-    return res.data
+    // Tenta criar e iniciar
+    try {
+      const res = await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, start: true }, { timeout: 15000, headers: this.headers() })
+      return res.data
+    } catch (err: any) {
+      // Sessão ainda existe (delete não suportado no WAHA free) → apenas inicia
+      if (err.response?.status === 422 || err.response?.status === 409) {
+        try {
+          const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
+          return res.data
+        } catch (startErr: any) {
+          if (startErr.response?.status === 422 || startErr.response?.status === 400) {
+            return { status: 'already_starting' }
+          }
+          throw startErr
+        }
+      }
+      throw err
+    }
   }
 
   async stopSession(): Promise<boolean> {
