@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role, ApprovalVideoStatus, ApprovalDocStatus, CaseStatus, PushLevel } from '@prisma/client'
 import { whatsappService } from '../../services/whatsapp.service'
+import path from 'path'
+import { promises as fs } from 'fs'
 
 export async function caseApprovalRoutes(fastify: FastifyInstance) {
   // Upload de vídeo de aprovação
@@ -320,6 +322,76 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
     ])
 
     return { videos, documents }
+  })
+
+  // Stream de vídeo — aceita token como query param para uso em <video src>
+  fastify.get('/video/:videoId/stream', async (request, reply) => {
+    const query = request.query as { token?: string }
+    const header = request.headers.authorization
+
+    let rawToken = ''
+    if (header?.startsWith('Bearer ')) rawToken = header.slice('Bearer '.length).trim()
+    else if (query.token) rawToken = query.token
+
+    if (!rawToken) return reply.status(401).send({ error: 'Unauthorized' })
+
+    let userPayload!: JwtPayload
+    try {
+      userPayload = (request.server as any).tokens.verifyAccess(rawToken)
+    } catch {
+      return reply.status(401).send({ error: 'Token inválido' })
+    }
+
+    const { videoId } = request.params as { videoId: string }
+    const video = await fastify.prisma.caseApprovalVideo.findUnique({
+      where: { id: videoId },
+      include: { case: { select: { dentistId: true } } },
+    })
+
+    if (!video) return reply.status(404).send({ error: 'Vídeo não encontrado' })
+
+    if (userPayload.role === Role.DENTIST && video.case.dentistId !== userPayload.id) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
+
+    const videoUrl = video.videoUrl
+
+    // S3: gera presigned URL e redireciona
+    if (!videoUrl.includes('/api/uploads/')) {
+      try {
+        const signed = await fastify.s3.signedUrlForUrl(videoUrl, 3600)
+        return reply.status(307).redirect(signed)
+      } catch {
+        return reply.status(500).send({ error: 'Erro ao gerar URL de streaming' })
+      }
+    }
+
+    // Local: extrai path relativo e faz streaming direto
+    const marker = '/api/uploads/'
+    const idx = videoUrl.indexOf(marker)
+    if (idx >= 0) {
+      const relativePath = videoUrl.slice(idx + marker.length).split('/').filter(Boolean).join(path.sep)
+      const uploadsRoot = path.resolve(process.cwd(), 'uploads')
+      const filePath = path.resolve(uploadsRoot, relativePath)
+
+      if (!filePath.startsWith(uploadsRoot + path.sep)) {
+        return reply.status(400).send({ error: 'Caminho inválido' })
+      }
+
+      try {
+        const file = await fs.readFile(filePath)
+        const ext = path.extname(filePath).toLowerCase()
+        const mimeTypes: Record<string, string> = { '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime' }
+        return reply
+          .header('Content-Type', mimeTypes[ext] || 'video/mp4')
+          .header('Accept-Ranges', 'bytes')
+          .send(file)
+      } catch {
+        return reply.status(404).send({ error: 'Arquivo não encontrado' })
+      }
+    }
+
+    return reply.redirect(videoUrl, 307)
   })
 
   // Marcar vídeo como visualizado

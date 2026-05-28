@@ -2,6 +2,7 @@
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
+import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
@@ -53,9 +54,14 @@ function formatDuration(seconds?: number) {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+const APPROVAL_API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : 'http://localhost:3001/api'
+
 export function CaseApprovalPage() {
   const { caseId } = useParams()
   const qc = useQueryClient()
+  const { accessToken } = useAuthStore()
   const [selectedVideo, setSelectedVideo] = useState<ApprovalVideo | null>(null)
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [approvalNotes, setApprovalNotes] = useState('')
@@ -304,7 +310,7 @@ export function CaseApprovalPage() {
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
             {selectedVideo && (
               <video
-                src={selectedVideo.videoUrl}
+                src={`${APPROVAL_API_BASE}/cases/video/${selectedVideo.id}/stream?token=${encodeURIComponent(accessToken || '')}`}
                 controls
                 className="w-full h-full"
                 autoPlay

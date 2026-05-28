@@ -568,8 +568,12 @@ function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] })
   )
 }
 
+const VIDEO_API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : 'http://localhost:3001/api'
+
 function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases: any[] }) {
-  const { user } = useAuthStore()
+  const { user, accessToken } = useAuthStore()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const isLabOrAdmin = ['ADMIN', 'LAB_TECH', 'EXPEDITION'].includes(user?.role || '')
@@ -643,7 +647,7 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
                 </span>
               </div>
               <video
-                src={video.videoUrl}
+                src={`${VIDEO_API_BASE}/cases/video/${video.id}/stream?token=${encodeURIComponent(accessToken || '')}`}
                 controls
                 className="w-full max-h-[500px] bg-black"
                 onPlay={() => handleView(video.id)}
