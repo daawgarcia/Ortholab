@@ -45,54 +45,83 @@ class WhatsAppService {
   }
 
   async checkSession(): Promise<boolean> {
+    const { baseUrl, sessionName } = this.config
+    // WAHA 2024+: GET /api/sessions/{name}
     try {
-      const url = `${this.config.baseUrl}/api/${this.config.sessionName}/status`
-      const response = await axios.get(url, { timeout: 10000, headers: this.headers() })
-      return response.data?.state === 'CONNECTED'
+      const res = await axios.get(`${baseUrl}/api/sessions/${sessionName}`, { timeout: 10000, headers: this.headers() })
+      const s = res.data?.status || res.data?.state || ''
+      return s === 'WORKING' || s === 'CONNECTED'
     } catch {
-      return false
+      // fallback API antiga
+      try {
+        const res = await axios.get(`${baseUrl}/api/${sessionName}/status`, { timeout: 10000, headers: this.headers() })
+        return res.data?.state === 'CONNECTED'
+      } catch {
+        return false
+      }
     }
   }
 
   async startSession(): Promise<any> {
+    const { baseUrl, sessionName } = this.config
+    // WAHA 2024+: criar sessão primeiro se não existir, depois iniciar
     try {
-      const url = `${this.config.baseUrl}/api/${this.config.sessionName}/start`
-      const response = await axios.post(url, {}, { timeout: 10000, headers: this.headers() })
-      return response.data
-    } catch (error: any) {
-      console.error('[WhatsApp] Erro ao iniciar sessão:', error.message)
-      throw error
+      await axios.post(`${baseUrl}/api/sessions`, { name: sessionName, config: {} }, { timeout: 15000, headers: this.headers() })
+    } catch (err: any) {
+      // 422 = sessão já existe — tudo bem, continua
+      if (err.response?.status !== 422) {
+        // API antiga: tentar direto
+        console.warn('[WhatsApp] POST /api/sessions falhou, tentando API antiga:', err.message)
+      }
+    }
+    // Iniciar a sessão (nova API: /api/sessions/{name}/start  |  antiga: /api/{name}/start)
+    try {
+      const res = await axios.post(`${baseUrl}/api/sessions/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
+      return res.data
+    } catch (err: any) {
+      // fallback API antiga
+      const res = await axios.post(`${baseUrl}/api/${sessionName}/start`, {}, { timeout: 15000, headers: this.headers() })
+      return res.data
     }
   }
 
   async stopSession(): Promise<boolean> {
+    const { baseUrl, sessionName } = this.config
     try {
-      const url = `${this.config.baseUrl}/api/${this.config.sessionName}/stop`
-      await axios.post(url, {}, { timeout: 10000, headers: this.headers() })
+      await axios.post(`${baseUrl}/api/sessions/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() })
       return true
     } catch {
-      return false
+      try {
+        await axios.post(`${baseUrl}/api/${sessionName}/stop`, {}, { timeout: 10000, headers: this.headers() })
+        return true
+      } catch {
+        return false
+      }
     }
   }
 
   async getQrCode(): Promise<string | null> {
-    try {
-      const url = `${this.config.baseUrl}/api/${this.config.sessionName}/auth/qr`
-      const response = await axios.get(url, { timeout: 10000, responseType: 'arraybuffer', headers: this.headers() })
-      const base64 = Buffer.from(response.data).toString('base64')
-      const mimeType = response.headers['content-type'] || 'image/png'
-      return `data:${mimeType};base64,${base64}`
-    } catch {
+    const { baseUrl, sessionName } = this.config
+    // Tenta obter QR como imagem binária
+    for (const url of [
+      `${baseUrl}/api/sessions/${sessionName}/auth/qr`,
+      `${baseUrl}/api/${sessionName}/auth/qr`,
+    ]) {
       try {
-        const url = `${this.config.baseUrl}/api/${this.config.sessionName}/auth/qr`
-        const response = await axios.get(url, { timeout: 10000, headers: this.headers() })
-        if (response.data?.value) return response.data.value
-        if (response.data?.qr) return response.data.qr
-        return null
-      } catch {
-        return null
-      }
+        const res = await axios.get(url, { timeout: 10000, responseType: 'arraybuffer', headers: this.headers() })
+        const mime = res.headers['content-type'] || 'image/png'
+        if (mime.startsWith('image/')) {
+          return `data:${mime};base64,${Buffer.from(res.data).toString('base64')}`
+        }
+      } catch { /* tenta próximo */ }
+      // Tenta como JSON
+      try {
+        const res = await axios.get(url, { timeout: 10000, headers: this.headers() })
+        if (res.data?.value) return res.data.value
+        if (res.data?.qr) return res.data.qr
+      } catch { /* tenta próximo */ }
     }
+    return null
   }
 
   async sendCaseApprovalNotification(phone: string, dentistName: string, caseNumber: number, patientName: string, frontendUrl: string): Promise<boolean> {
