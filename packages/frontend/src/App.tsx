@@ -48,8 +48,9 @@ import AdminPixPaymentsPage from '@/pages/admin/pix-payments'
 import AdminWhatsAppPage from '@/pages/admin/whatsapp'
 import AdminReportsPage from '@/pages/admin/reports'
 import AdminCardPaymentsPage from '@/pages/admin/card-payments'
+import ProjectsPage from '@/pages/projects'
 
-const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
+const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
@@ -93,6 +94,8 @@ export default function App() {
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<DashboardPage />} />
 
+          <Route path="projects" element={<ProtectedRoute roles={['ADMIN','DENTIST','FINANCIAL','SELLER','LAB_TECH']}><ProjectsPage /></ProtectedRoute>} />
+
           <Route path="patients" element={<ProtectedRoute roles={PATIENT_ROLES}><PatientsPage /></ProtectedRoute>} />
           <Route path="patients/new" element={<ProtectedRoute roles={PATIENT_ROLES}><NewPatientPage /></ProtectedRoute>} />
           <Route path="patients/:id" element={<ProtectedRoute roles={PATIENT_ROLES}><PatientDetailPage /></ProtectedRoute>} />
@@ -117,7 +120,7 @@ export default function App() {
 
           <Route path="financial" element={<ProtectedRoute roles={['FINANCIAL','ADMIN']}><FinancialPage /></ProtectedRoute>} />
           <Route path="seller" element={<ProtectedRoute roles={['SELLER']}><SellerPage /></ProtectedRoute>} />
-          <Route path="chat" element={<ProtectedRoute roles={['SELLER','DENTIST','ADMIN','FINANCIAL']}><ChatPage /></ProtectedRoute>} />
+          <Route path="chat" element={<ProtectedRoute roles={['SELLER','DENTIST','ADMIN','FINANCIAL','EXPEDITION']}><ChatPage /></ProtectedRoute>} />
 
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>} />
           <Route path="admin/seller-clients" element={<ProtectedRoute roles={['ADMIN']}><AdminSellerClientsPage /></ProtectedRoute>} />

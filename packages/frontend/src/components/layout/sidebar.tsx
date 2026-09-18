@@ -10,10 +10,10 @@ import {
   Briefcase, ExternalLink, ChevronRight, ChevronDown,
   FlaskConical, Printer, Beaker, Send, UserCircle,
   CreditCard, BookOpen, Radio, PlaySquare, FileText, Video, MessageCircle,
-  Inbox, Smartphone, BarChart3
+  Inbox, Smartphone, BarChart3, FolderKanban
 } from 'lucide-react'
 
-const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL']
+const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION']
 const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
 
 const workflowItems = [
@@ -89,6 +89,10 @@ export function Sidebar() {
 
         {showPatients && (
           <NavItem href="/patients" icon={UserCircle} label="Pacientes" active={isActive('/patients')} />
+        )}
+
+        {(isAdmin || isFinancial || isSeller || isDentist) && (
+          <NavItem href="/projects" icon={FolderKanban} label="Projetos" active={isActive('/projects')} />
         )}
 
         {isAdmin && (

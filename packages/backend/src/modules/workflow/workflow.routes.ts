@@ -277,7 +277,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
   fastify.post('/case/:caseId/advance', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
-    const internalWorkflowRoles: Role[] = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL]
+    const internalWorkflowRoles: Role[] = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL, Role.EXPEDITION]
     if (!internalWorkflowRoles.includes(user.role)) {
       return reply.status(403).send({ error: 'Acesso negado' })
     }
@@ -344,7 +344,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
   fastify.patch('/case/:caseId/billing', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
-    const billingRoles: Role[] = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL]
+    const billingRoles: Role[] = [Role.ADMIN, Role.LAB_TECH, Role.FINANCIAL, Role.EXPEDITION]
     if (!billingRoles.includes(user.role)) {
       return reply.status(403).send({ error: 'Faturamento centralizado no Financeiro' })
     }

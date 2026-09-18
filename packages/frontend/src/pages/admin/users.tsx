@@ -10,9 +10,9 @@ import { formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { CheckCircle, XCircle, Search, Plus, X } from 'lucide-react'
 
-const ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
+const ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER', 'EXPEDITION']
 const ROLE_LABELS: Record<string, string> = {
-  DENTIST: 'Dentista', LAB_TECH: 'Lab Tech', ADMIN: 'Administrador', FINANCIAL: 'Financeiro', SELLER: 'Vendedor'
+  DENTIST: 'Dentista', LAB_TECH: 'Lab Tech', ADMIN: 'Administrador', FINANCIAL: 'Financeiro', SELLER: 'Vendedor', EXPEDITION: 'Expedição'
 }
 
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {

@@ -17,7 +17,7 @@ function isVideoFile(filename: string) {
 
 const TABS = ['Workflow', 'Fotos', 'Fotos Restritas', 'Modelos Digitais', 'Relatório', 'Checagem Virtual 3D', 'Fichas', 'Ficha Clínica', 'Informações Importantes']
 const DENTIST_TABS = ['Workflow', 'Fotos', 'Modelos Digitais', 'Relatório', 'Checagem Virtual 3D', 'Fichas', 'Ficha Clínica']
-const IMPORTANT_NOTES_POPUP_ROLES = ['ADMIN', 'LAB_TECH', 'FINANCIAL']
+const IMPORTANT_NOTES_POPUP_ROLES = ['ADMIN', 'LAB_TECH', 'FINANCIAL', 'EXPEDITION']
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   ALINHADORES: 'Alinhadores',
   FINALIZACAO: 'Contenção',
