@@ -15,9 +15,9 @@ services:
       - key: PORT
         value: 3001
       - key: JWT_SECRET
-        sync: false
+        value: ortholab-prod-jwt-secret-change-me-2026
       - key: JWT_REFRESH_SECRET
-        sync: false
+        value: ortholab-prod-refresh-secret-change-me-2026
       - key: JWT_EXPIRES_IN
         value: 15m
       - key: JWT_REFRESH_EXPIRES_IN
@@ -64,7 +64,7 @@ services:
       - key: TOTVS_ENABLED
         value: "false"
       - key: SEED_ADMIN_PASSWORD
-        sync: false
+        value: Admin@123
       - key: WAHA_API_URL
         value: http://187.127.28.216:3001
       - key: WAHA_SESSION_NAME
