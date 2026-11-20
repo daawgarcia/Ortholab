@@ -17,8 +17,10 @@ add_action('after_setup_theme', function () {
 
 add_action('wp_enqueue_scripts', function () {
     wp_enqueue_style('eapt-fontes', 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap', [], null);
-    wp_enqueue_style('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.css', [], EAPT_VERSION);
-    wp_enqueue_script('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.js', [], EAPT_VERSION, true);
+    // versão = data do arquivo, para o CDN/cache trocar sempre que o arquivo mudar
+    $dir = get_stylesheet_directory();
+    wp_enqueue_style('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.css', [], (string) filemtime($dir . '/assets/portal.css'));
+    wp_enqueue_script('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.js', [], (string) filemtime($dir . '/assets/portal.js'), true);
 }, 100);
 
 /* ------------------------------------------------------------------ acesso: o portal é só para credenciados */
