@@ -158,7 +158,8 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
 
     // Duplo fator para perfis com acesso amplo (admin e financeiro): código por e-mail
-    if (DOIS_FATORES_ROLES.includes(user.role) && process.env.TWO_FACTOR !== 'off') {
+    // Desligado por decisão da Esthetic Aligner; para ligar, TWO_FACTOR=on no .env
+    if (DOIS_FATORES_ROLES.includes(user.role) && process.env.TWO_FACTOR === 'on') {
       const code = String(Math.floor(100000 + Math.random() * 900000))
       const desafio = await fastify.prisma.loginCode.create({
         data: { userId: user.id, codeHash: hashCode(code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) },

@@ -52,10 +52,10 @@ EVENT_STATUS = {
     "movement": "LAB_APPROVAL",                    # Casos a aprovar resp. lab.
     "approval_setup_sent": "WAITING_APPROVAL",
     "change_requests": "REVISION_REQUESTED",
-    "approved_case_for_production": "APPROVED",
-    "printing_3d": "PRINTING_3D",
-    "confection": "LABORATORY",
-    "aligners_shipping": "SHIPPED",
+    "approved_case_for_production": "PRINTING_3D",  # tela Impressão 3D (print_controller)
+    "printing_3d": "LABORATORY",                    # tela Laboratório/recorte
+    "confection": "EXPEDITION",                     # tela Expedição
+    "aligners_shipping": "SHIPPED",                 # postado (sem rastreio ainda = Expedição, ver abaixo)
 }
 
 # O Ortholab 1 grava datas no horário de São Paulo (default_timezone = :local);
@@ -315,10 +315,12 @@ def main():
     # ------------------------------------------------------------------ casos (workflow_orders)
     last_event = {}
     last_event_at = {}
-    for r in q("SELECT e.order_id, e.name, e.date_of_event, e.created_at FROM workflow_events e JOIN "
+    last_event_details = {}
+    for r in q("SELECT e.order_id, e.name, e.date_of_event, e.created_at, e.details FROM workflow_events e JOIN "
                "(SELECT order_id, MAX(id) mid FROM workflow_events GROUP BY order_id) x ON x.mid = e.id"):
         last_event[r["order_id"]] = r["name"]
         last_event_at[r["order_id"]] = r["date_of_event"] or r["created_at"]
+        last_event_details[r["order_id"]] = clean(r["details"])
     # data de aprovação = evento "approved_case_for_production" (base do desconto progressivo do mês)
     approved_at = {r["order_id"]: r["quando"] for r in q(
         "SELECT order_id, MAX(created_at) AS quando FROM workflow_events "
@@ -336,6 +338,9 @@ def main():
         patient_id, dentist_id, pname, pdob, pgender = pt
         ev = last_event.get(o["id"])
         status = EVENT_STATUS.get(ev, "SUBMITTED")
+        # Ortholab 1: "postagem" sem código de rastreio ainda aparece na Expedição
+        if ev == "aligners_shipping" and not last_event_details.get(o["id"]):
+            status = "EXPEDITION"
         notes = clean(o.get("details"))
         if o["id"] in canceled:
             stats["casos_cancelados"] += 1
@@ -369,6 +374,13 @@ def main():
             }, default=str),
             "status": status,
             "approvedAt": approved_at.get(o["id"]),
+            # séries e guias informadas pelo laboratório no Ortholab 1 ao enviar para aprovação
+            "planejamentoLab": json.dumps({
+                "seriesSuperior": o.get("amount_of_upper_aligners") or 0,
+                "seriesInferior": o.get("amount_of_lower_aligners") or 0,
+                "guias": o.get("amount_of_attachments_guide") or 0,
+                "origem": "ortholab1",
+            }) if (o.get("amount_of_upper_aligners") or o.get("amount_of_lower_aligners")) else None,
             "billingType": clean(o.get("billing_type")),
             "installmentOption": clean(o.get("installment")),
             "dropoutInsurance": bool(o.get("has_dropout_insurance")),
@@ -382,7 +394,7 @@ def main():
     updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", "legacyId", "createdAt"))
     tmpl = "(" + ", ".join(
         f'%({c})s::"CaseStatus"' if c == "status" else f'%({c})s::"ProductType"' if c == "productType"
-        else f"%({c})s::jsonb" if c == "planningFormData" else f"%({c})s" for c in cols
+        else f"%({c})s::jsonb" if c in ("planningFormData", "planejamentoLab") else f"%({c})s" for c in cols
     ) + ")"
     psycopg2.extras.execute_values(
         p,

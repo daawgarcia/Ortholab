@@ -29,7 +29,7 @@ function Arcada({ nome, fase, estimativa }: { nome: string; fase?: number; estim
 }
 
 /** Card da Checagem Virtual 3D — indicação lida do PDF do planejamento. */
-export function ChecagemCard({ checagem, aguardandoDesde }: { checagem?: Checagem | null; aguardandoDesde?: string }) {
+export function ChecagemCard({ checagem, aguardandoDesde, planejamentoLab }: { checagem?: Checagem | null; aguardandoDesde?: string; planejamentoLab?: any }) {
   const dias = aguardandoDesde ? Math.floor((Date.now() - new Date(aguardandoDesde).getTime()) / 86400000) : null
 
   return (
@@ -51,6 +51,12 @@ export function ChecagemCard({ checagem, aguardandoDesde }: { checagem?: Checage
             <Arcada nome="Arcada superior" fase={checagem.seriesFaseSuperior} estimativa={checagem.estimativaSuperior ?? checagem.estimativaGeral} />
             <Arcada nome="Arcada inferior" fase={checagem.seriesFaseInferior} estimativa={checagem.estimativaInferior ?? checagem.estimativaGeral} />
           </div>
+          {planejamentoLab && (
+            <p className="mt-3 rounded-md bg-white/70 px-3 py-2 text-xs text-gray-700 ring-1 ring-gray-200">
+              <strong>Produção definida pelo laboratório:</strong> {planejamentoLab.seriesSuperior} séries superiores, {planejamentoLab.seriesInferior} inferiores
+              {Number(planejamentoLab.guias) > 0 ? ` e ${planejamentoLab.guias} guia(s) de attachment` : ', sem guia de attachment'}
+            </p>
+          )}
           <p className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-500">
             <FileText className="w-3.5 h-3.5" />
             Lido do planejamento 3D{checagem.arquivo ? ` "${checagem.arquivo}"` : ''}{checagem.pagina ? `, página ${checagem.pagina}` : ''}

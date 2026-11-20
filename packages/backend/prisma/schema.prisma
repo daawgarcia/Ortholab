@@ -176,6 +176,7 @@ model Case {
   freightAmount     Decimal?  @db.Decimal(10, 2)
   avisoChecagemEm   DateTime? // aviso de 25 dias da checagem já enviado
   approvedAt        DateTime? // data de aprovação do caso (base do desconto progressivo do mês)
+  planejamentoLab   Json?     // preenchido pelo laboratório antes de enviar para aprovação: séries sup/inf e guias
   checagem          Json?     // indicação da Checagem Virtual 3D lida do PDF do planejamento
   status            CaseStatus   @default(DRAFT)
   billingType       String?

@@ -223,15 +223,13 @@ export async function caseRoutes(fastify: FastifyInstance) {
     if (caseData.dentistId !== (request.user as JwtPayload).id) return reply.status(403).send({ error: 'Acesso negado' })
     if (caseData.status !== CaseStatus.WAITING_APPROVAL) return reply.status(400).send({ error: 'Caso não está aguardando aprovação' })
 
-    const lastStage = (caseData as any).workflowEvents[0]?.stage || 5
-
-    // Auto-advance past billing stage (6) directly into PRINTING_3D (7)
+    // Aprovação = etapas 5 (aprovado) e 6 (faturamento) concluídas -> Impressão 3D (como no Ortholab 1)
     await fastify.prisma.$transaction([
       fastify.prisma.workflowEvent.create({
-        data: { caseId: id, stage: lastStage + 1, stageName: 'Tipo de faturamento', performedBy: (request.user as JwtPayload).id },
+        data: { caseId: id, stage: 5, stageName: 'Caso aprovado para produção', performedBy: (request.user as JwtPayload).id },
       }),
       fastify.prisma.workflowEvent.create({
-        data: { caseId: id, stage: lastStage + 2, stageName: 'Impressão 3D', performedBy: (request.user as JwtPayload).id },
+        data: { caseId: id, stage: 6, stageName: 'Tipo de faturamento', performedBy: (request.user as JwtPayload).id },
       }),
       fastify.prisma.case.update({
         where: { id },

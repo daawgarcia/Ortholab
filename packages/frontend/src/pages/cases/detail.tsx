@@ -220,7 +220,7 @@ export default function CaseDetailPage() {
       )}
 
       {(c.status === 'WAITING_APPROVAL' || c.checagem) && (
-        <ChecagemCard checagem={c.checagem} aguardandoDesde={c.status === 'WAITING_APPROVAL' ? c.updatedAt : undefined} />
+        <ChecagemCard checagem={c.checagem} aguardandoDesde={c.status === 'WAITING_APPROVAL' ? c.updatedAt : undefined} planejamentoLab={c.planejamentoLab} />
       )}
 
       <div className="grid grid-cols-3 gap-5">

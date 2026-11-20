@@ -17,6 +17,7 @@ type CaseLike = {
   caseNumber: number
   approvedAt?: Date | null
   checagem?: any
+  planejamentoLab?: any
 }
 
 /**
@@ -51,5 +52,8 @@ export async function getPricingContext(prisma: PrismaClient, c: CaseLike) {
     checagemFee = getChecagemFee(sent?.createdAt, approvedAt)
   }
 
-  return { approvedBefore, quantity: getAlignerQuantity(c.checagem), checagemFee }
+  // quantidade de alinhadores: o que o laboratório informou ao enviar para aprovação; se não houver, o PDF
+  const lab = c.planejamentoLab
+  const quantityLab = lab ? Number(lab.seriesSuperior || 0) + Number(lab.seriesInferior || 0) : 0
+  return { approvedBefore, quantity: quantityLab > 0 ? quantityLab : getAlignerQuantity(c.checagem), checagemFee }
 }

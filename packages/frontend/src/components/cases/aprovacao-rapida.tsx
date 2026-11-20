@@ -58,7 +58,7 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
 
       {aberto && (
         <div className="border-t p-4 space-y-4">
-          <ChecagemCard checagem={caso.checagem} aguardandoDesde={enviadoEm} />
+          <ChecagemCard checagem={caso.checagem} aguardandoDesde={enviadoEm} planejamentoLab={caso.planejamentoLab} />
 
           <div>
             <p className="mb-2 text-sm font-medium text-gray-700">1. Escolha o pacote</p>

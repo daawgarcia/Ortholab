@@ -91,8 +91,9 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
     }
   }, [workflowTab, openCases, selectedCase])
 
+  const [lab, setLab] = useState({ sup: '', inf: '', guias: '0' })
   const advanceMutation = useMutation({
-    mutationFn: () => api.post(`/workflow/case/${selectedCase}/advance`, { notes }),
+    mutationFn: () => api.post(`/workflow/case/${selectedCase}/advance`, { notes, seriesSuperior: Number(lab.sup || 0), seriesInferior: Number(lab.inf || 0), guias: Number(lab.guias || 0) }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workflow', selectedCase] })
       invalidateRelatedQueries()
@@ -296,6 +297,21 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                     </div>
                     {isAdmin && currentStage < WORKFLOW_STAGES.length && (
                       <div className="p-4 space-y-2 border-t bg-gray-50">
+                        {currentStage === 3 && (
+                          <div className="rounded-md bg-white p-2 ring-1 ring-gray-200">
+                            <p className="mb-1 text-xs font-medium text-gray-700">Antes de enviar para aprovação, informe:</p>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[['sup', 'Séries sup.'], ['inf', 'Séries inf.'], ['guias', 'Guias attach.']].map(([k, l]) => (
+                                <label key={k} className="text-[11px] text-gray-500">{l}
+                                  <input value={(lab as any)[k]} inputMode="numeric" onChange={e => setLab({ ...lab, [k]: e.target.value.replace(/\D/g, '') })}
+                                    placeholder={k === 'sup' ? String(caseData?.checagem?.seriesFaseSuperior ?? '') : k === 'inf' ? String(caseData?.checagem?.seriesFaseInferior ?? '') : '0'}
+                                    className="mt-0.5 h-8 w-full rounded border px-2 text-center text-sm" />
+                                </label>
+                              ))}
+                            </div>
+                            {caseData?.checagem?.seriesFaseSuperior != null && <p className="mt-1 text-[11px] text-gray-500">PDF do planejamento: {caseData.checagem.seriesFaseSuperior ?? 0} sup. / {caseData.checagem.seriesFaseInferior ?? 0} inf.</p>}
+                          </div>
+                        )}
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border rounded text-xs px-3 py-2 resize-none" rows={2} placeholder="Observações (opcional)" />
                         <Button size="sm" className="w-full" onClick={() => advanceMutation.mutate()} disabled={advanceMutation.isPending}>
                           {advanceMutation.isPending ? 'Avançando...' : `Avançar: ${WORKFLOW_STAGES.find(s => s.n === currentStage + 1)?.label || 'Próxima Etapa'}`}
@@ -699,7 +715,7 @@ function FormsTab({ patientId }: { patientId: string }) {
     <div className="space-y-6">
       <FormSection title="Fichas de Planejamento" items={planning} onAdd={() => navigate(`/patients/${patientId}/forms/planning/new`)} />
       <FormSection title="Fichas de Finalização" items={completion} onAdd={() => navigate(`/patients/${patientId}/forms/completion/new`)} />
-      <FormSection title="Outros Serviços (Placa Miorrelaxante / AIR)" items={otherServices} onAdd={() => navigate(`/patients/${patientId}/forms/other-services/new`)} />
+      <FormSection title="Novos Produtos (EA MIO / EA AIR²)" items={otherServices} onAdd={() => navigate(`/patients/${patientId}/forms/other-services/new`)} />
     </div>
   )
 }

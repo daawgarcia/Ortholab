@@ -42,9 +42,13 @@ export default function PlanningCenterPage() {
     if (isEquipe) setSidebarHidden(true)
   }, [isEquipe, setSidebarHidden])
 
+  // envio para aprovação: o laboratório informa séries e guias (conferidas com o PDF do planejamento)
+  const [envio, setEnvio] = useState<any>(null)
   const advanceMutation = useMutation({
-    mutationFn: (caseId: string) => api.post(`/workflow/case/${caseId}/advance`, {}),
-    onSuccess: () => {
+    mutationFn: ({ id, body }: { id: string; body?: any }) => api.post(`/workflow/case/${id}/advance`, body || {}),
+    onSuccess: (r: any) => {
+      setEnvio(null)
+      if (r?.data?.avisoSeries) toast({ title: 'Enviado para aprovação', description: r.data.avisoSeries })
       qc.invalidateQueries({ queryKey: ['planning-center'] })
       qc.invalidateQueries({ queryKey: ['cases'] })
       toast({ title: 'Caso avançado para a próxima etapa' })
@@ -158,7 +162,9 @@ export default function PlanningCenterPage() {
                       </button>
                       {isEquipe && (
                         <button
-                          onClick={() => advanceMutation.mutate(c.id)}
+                          onClick={() => col.key === 'LAB_APPROVAL'
+                            ? setEnvio({ caso: c, sup: String(c.checagem?.seriesFaseSuperior ?? ''), inf: String(c.checagem?.seriesFaseInferior ?? ''), guias: '0' })
+                            : advanceMutation.mutate({ id: c.id })}
                           disabled={advanceMutation.isPending}
                           title="Avançar para a próxima etapa"
                           className="absolute right-2 bottom-1.5 hidden group-hover:flex items-center gap-1 rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-white shadow-sm"
@@ -174,6 +180,37 @@ export default function PlanningCenterPage() {
           )
         })}
       </div>
+      {envio && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setEnvio(null)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
+            <div>
+              <h3 className="font-semibold text-gray-900">Enviar para aprovação do dentista</h3>
+              <p className="text-sm text-gray-500">{envio.caso.patientName}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[['sup', 'Séries superiores'], ['inf', 'Séries inferiores'], ['guias', 'Guias de attachment']].map(([k, l]) => (
+                <label key={k} className="text-xs text-gray-600">
+                  {l}
+                  <input value={envio[k]} inputMode="numeric" onChange={e => setEnvio({ ...envio, [k]: e.target.value.replace(/\D/g, '') })}
+                    className="mt-1 h-10 w-full rounded-md border px-2 text-center text-lg font-semibold" />
+                </label>
+              ))}
+            </div>
+            {envio.caso.checagem && (envio.caso.checagem.seriesFaseSuperior != null || envio.caso.checagem.seriesFaseInferior != null) && (
+              (Number(envio.sup) !== Number(envio.caso.checagem.seriesFaseSuperior ?? 0) || Number(envio.inf) !== Number(envio.caso.checagem.seriesFaseInferior ?? 0))
+                ? <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">O PDF do planejamento indica {envio.caso.checagem.seriesFaseSuperior ?? 0} superiores e {envio.caso.checagem.seriesFaseInferior ?? 0} inferiores. Confira antes de enviar.</p>
+                : <p className="rounded-md bg-emerald-50 p-2 text-xs text-emerald-800">Séries conferem com o PDF do planejamento.</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEnvio(null)}>Cancelar</Button>
+              <Button disabled={advanceMutation.isPending || (!Number(envio.sup) && !Number(envio.inf))}
+                onClick={() => advanceMutation.mutate({ id: envio.caso.id, body: { seriesSuperior: Number(envio.sup || 0), seriesInferior: Number(envio.inf || 0), guias: Number(envio.guias || 0) } })}>
+                Enviar para aprovação
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

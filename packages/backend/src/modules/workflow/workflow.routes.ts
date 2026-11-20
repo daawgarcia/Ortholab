@@ -288,7 +288,8 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     }
 
     const { caseId } = request.params as { caseId: string }
-    const { notes } = ((request.body as any) || {}) as { notes?: string }
+    const body = ((request.body as any) || {}) as { notes?: string; seriesSuperior?: number; seriesInferior?: number; guias?: number }
+    const { notes } = body
 
     const caseData = await fastify.prisma.case.findUnique({
       where: { id: caseId },
@@ -302,20 +303,35 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     const stageName = WORKFLOW_STAGES.find(s => s.stage === nextStage)?.name || ''
 
+    // Igual ao Ortholab 1: o evento registra a etapa CONCLUÍDA e o caso vai para a coluna seguinte
     const stageToStatus: Record<number, string> = {
-      1: 'IN_PLANNING',
-      2: 'IN_PLANNING',
-      3: 'IN_MOVEMENT',
-      4: 'LAB_APPROVAL',
-      5: 'WAITING_APPROVAL',
-      6: 'APPROVED',
-      7: 'PRINTING_3D',
-      8: 'LABORATORY',
-      9: 'EXPEDITION',
+      1: 'IN_PLANNING',      // modelos recebidos  -> casos a preparar
+      2: 'IN_MOVEMENT',      // modelos preparados -> casos a movimentar
+      3: 'LAB_APPROVAL',     // movimento feito    -> aprovar resp. lab.
+      4: 'WAITING_APPROVAL', // checagem enviada   -> aguardando o dentista
+      5: 'APPROVED',         // aprovado           -> faturamento
+      6: 'PRINTING_3D',      // faturamento        -> impressão 3D
+      7: 'LABORATORY',       // impresso           -> recorte/acabamento
+      8: 'EXPEDITION',       // recortado          -> expedição
+      9: 'SHIPPED',          // postado
     }
     const newStatus = stageToStatus[nextStage]
 
     const updateData: any = { status: newStatus as any }
+    let avisoSeries: string | null = null
+    // Envio para aprovação: o laboratório informa as séries e as guias de attachment
+    if (nextStage === 4) {
+      const sup = Number(body.seriesSuperior), inf = Number(body.seriesInferior), guias = Number(body.guias ?? 0)
+      if (![sup, inf, guias].every((n) => Number.isInteger(n) && n >= 0) || sup + inf === 0) {
+        return reply.status(400).send({ error: 'Informe o número de séries superiores e inferiores e a quantidade de guias de attachment' })
+      }
+      updateData.planejamentoLab = { seriesSuperior: sup, seriesInferior: inf, guias, preenchidoPor: user.id, em: new Date().toISOString() }
+      const pdf: any = caseData.checagem
+      if (pdf && (pdf.seriesFaseSuperior != null || pdf.seriesFaseInferior != null)
+        && (Number(pdf.seriesFaseSuperior || 0) !== sup || Number(pdf.seriesFaseInferior || 0) !== inf)) {
+        avisoSeries = `Atenção: o PDF do planejamento indica ${pdf.seriesFaseSuperior ?? 0} superiores e ${pdf.seriesFaseInferior ?? 0} inferiores`
+      }
+    }
     if (nextStage === 1 && !caseData.totvsOrderId) {
       updateData.totvsOrderId = `CAIXA-${caseData.caseNumber}`
     }
@@ -344,7 +360,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     mailer.onWorkflowAdvanced(caseData, stageName).catch(() => { /* non-critical */ })
 
-    return { ok: true, stage: nextStage, stageName, newStatus }
+    return { ok: true, stage: nextStage, stageName, newStatus, avisoSeries }
   })
 
   fastify.patch('/case/:caseId/billing', { preHandler: authenticate }, async (request, reply) => {
@@ -432,14 +448,15 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     const operations = [] as any[]
 
+    // Aprovação = etapas 5 (aprovado) e 6 (faturamento) concluídas -> vai para Impressão 3D
+    if (lastStage < 5) {
+      operations.push(fastify.prisma.workflowEvent.create({
+        data: { caseId, stage: 5, stageName: 'Caso aprovado para produção', performedBy: user.id, notes: isDentistOwner ? 'Caso aprovado pelo dentista' : 'Caso aprovado para o dentista pelo time interno' },
+      }))
+    }
     if (lastStage < 6) {
       operations.push(fastify.prisma.workflowEvent.create({
         data: { caseId, stage: 6, stageName: 'Tipo de faturamento', performedBy: user.id, notes: isDentistOwner ? 'Faturamento definido pelo dentista' : 'Faturamento definido pelo time interno' },
-      }))
-    }
-    if (lastStage < 7) {
-      operations.push(fastify.prisma.workflowEvent.create({
-        data: { caseId, stage: 7, stageName: 'Impressão 3D', performedBy: user.id, notes: isDentistOwner ? 'Caso aprovado pelo dentista' : 'Caso aprovado para o dentista pelo time interno' },
       }))
     }
 

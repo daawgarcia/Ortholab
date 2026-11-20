@@ -19,7 +19,7 @@ export default function OtherServicesFormPage() {
   const { patientId } = useParams()
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    eaSplint: false, eaAir: false, observations: '',
+    eaMio: '' as '' | 'upper' | 'lower', eaAir: false, observations: '',
   })
 
   const { data: patient } = useQuery({
@@ -30,9 +30,9 @@ export default function OtherServicesFormPage() {
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
 
   const mutation = useMutation({
-    mutationFn: () => api.post(`/forms/other-services/${patientId}`, form),
+    mutationFn: () => api.post(`/forms/other-services/${patientId}`, { ...form, eaMio: form.eaMio || null }),
     onSuccess: () => {
-      toast({ title: 'Ficha de outros serviços salva' })
+      toast({ title: 'Ficha de novos produtos salva' })
       navigate(`/patients/${patientId}`)
     },
     onError: (e: any) => toast({ variant: 'destructive', title: 'Erro', description: e.response?.data?.error }),
@@ -45,7 +45,7 @@ export default function OtherServicesFormPage() {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-gray-500 uppercase">Outros Serviços</h1>
+          <h1 className="text-xl font-bold text-gray-500 uppercase">Novos Produtos</h1>
           {patient && <p className="text-sm text-gray-400">{patient.name}</p>}
         </div>
       </div>
@@ -55,12 +55,15 @@ export default function OtherServicesFormPage() {
           <p className="text-sm font-semibold text-gray-700">Selecione os serviços solicitados</p>
         </div>
 
-        <Row label="Placa Miorrelaxante">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.eaSplint} onChange={e => set('eaSplint', e.target.checked)}
-              className="w-4 h-4 accent-primary" />
-            <span className="text-sm text-gray-600">Solicitar Placa Miorrelaxante</span>
-          </label>
+        <Row label="EA MIO (placa miorrelaxante)">
+          <div className="flex flex-wrap gap-4">
+            {[['', 'Não solicitar'], ['upper', 'Arcada superior'], ['lower', 'Arcada inferior']].map(([v, l]) => (
+              <label key={v} className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="eaMio" checked={form.eaMio === v} onChange={() => set('eaMio', v)} className="w-4 h-4 accent-primary" />
+                <span className="text-sm text-gray-600">{l}</span>
+              </label>
+            ))}
+          </div>
         </Row>
 
         <Row label="EA Air²">

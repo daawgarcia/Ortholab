@@ -28,7 +28,8 @@ export async function calcularOrcamento(
   let guias = 0
   let valorGuias = 0
   if (servico.type === 'MID') {
-    guias = Number(caso.planningFormData?.guiaAttachments || 0) || Number(caso.checagem?.guias || 0)
+    // guias: informação do laboratório (sem desconto progressivo)
+    guias = Number(caso.planejamentoLab?.guias ?? caso.planningFormData?.guiaAttachments ?? 0)
     if (guias > 0) {
       const unidade = await prisma.service.findFirst({
         where: { type: 'UNIDADE', active: true },
