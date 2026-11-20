@@ -12,7 +12,7 @@ import os
 import re
 import sys
 import uuid
-from datetime import date, datetime, time, timezone
+from datetime import timedelta, date, datetime, time, timezone
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
@@ -44,8 +44,9 @@ def log(m):
 
 
 def utc(v):
+    # Ortholab 1 grava em UTC (servidor em UTC); só datas sem hora viram 12:00 de Brasília
     if isinstance(v, datetime):
-        return (v if v.tzinfo else v.replace(tzinfo=SP)).astimezone(timezone.utc).replace(tzinfo=None)
+        return v.astimezone(timezone.utc).replace(tzinfo=None) if v.tzinfo else v
     if isinstance(v, date):
         return utc(datetime.combine(v, time(12, 0)))
     return v
@@ -98,7 +99,7 @@ def main():
     dentistas_utc = {r[0] for r in p.fetchall()}
 
     def conv(v, dentist_id):
-        return utc_puro(v) if dentist_id in dentistas_utc else utc(v)
+        return utc(v)
     p.execute('SELECT "legacyUserId", id FROM "User" WHERE "legacyUserId" IS NOT NULL')
     user_by_legacy = dict(p.fetchall())
     p.execute('SELECT "legacyDentistId", id FROM "User" WHERE "legacyDentistId" IS NOT NULL')
@@ -224,16 +225,18 @@ def main():
     # ------------------------------------------------------------ histórico do workflow
     rows = []
     for r in q("SELECT id, order_id, user_id, name, details, created_at, "
-               "CONCAT(IFNULL(date_of_event, DATE(created_at)), ' ', IFNULL(TIME(created_at), '12:00:00')) AS quando "
+               "date_of_event "
                "FROM workflow_events"):
         cid = case_by_order.get(r["order_id"])
         if not cid:
             continue
         stage, nome = STAGE.get(r["name"], (0, r["name"] or "Evento"))
-        try:
-            quando = conv(datetime.strptime(str(r["quando"])[:19], "%Y-%m-%d %H:%M:%S"), case_dentist.get(r["order_id"]))
-        except Exception:
-            quando = conv(r["created_at"], case_dentist.get(r["order_id"])) or now
+        # created_at já é UTC; se a data informada no evento for outra (lançado depois), usa essa data ao meio-dia
+        quando = r["created_at"]
+        doe = r.get("date_of_event")
+        if doe and (not quando or doe != (quando - timedelta(hours=3)).date()):
+            quando = utc(doe if not isinstance(doe, datetime) else doe.date())
+        quando = quando or now
         rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-event-{r['id']}", "caseId": cid, "stage": stage,
                      "stageName": nome, "performedBy": user_by_legacy.get(r["user_id"]),
                      "notes": clean(r["details"]), "createdAt": quando})

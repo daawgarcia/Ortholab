@@ -58,14 +58,14 @@ EVENT_STATUS = {
     "aligners_shipping": "SHIPPED",                 # postado (sem rastreio ainda = Expedição, ver abaixo)
 }
 
-# O Ortholab 1 grava datas no horário de São Paulo (default_timezone = :local);
-# o Ortholab 2 (Prisma) guarda em UTC.
+# O Ortholab 1 roda num servidor em UTC (default_timezone = :local => UTC): as datas já estão em UTC,
+# igual ao Ortholab 2. Conferido pela hora dos eventos (equipe trabalha 08h-17h de Brasília = 11h-20h no banco)
+# e pelo último login (current_sign_in_at) batendo com o horário UTC da cópia.
 SP = ZoneInfo("America/Sao_Paulo")
 
 
 def sp_to_utc(v):
-    if isinstance(v, datetime) and v.tzinfo is None:
-        return v.replace(tzinfo=SP).astimezone(timezone.utc).replace(tzinfo=None)
+    # nome mantido por compatibilidade: o valor do Ortholab 1 já é UTC
     return v
 
 
@@ -137,7 +137,7 @@ def main():
                 if isinstance(v, datetime):
                     r[k] = sp_to_utc(v)
                 elif isinstance(v, date):  # só data: meio-dia em SP, para não "voltar" um dia ao exibir
-                    r[k] = sp_to_utc(datetime.combine(v, time(12, 0)))
+                    r[k] = datetime.combine(v, time(12, 0)).replace(tzinfo=SP).astimezone(timezone.utc).replace(tzinfo=None)
         return rows
 
     # ------------------------------------------------------------------ dados base
@@ -472,8 +472,6 @@ def main():
         pt = patient_by_legacy.get(e["patient_id"])
         if not pt:
             continue
-        if pt[1] in dentistas_utc:  # horário de Portugal gravado em UTC -> mostrar em Brasília corretamente
-            e["last_submission_at"] = desfaz_sp_para_utc(e["last_submission_at"])
         rows.append({
             "id": str(uuid.uuid4()),
             "legacyKey": f"ol1-paciente-{e['patient_id']}",
