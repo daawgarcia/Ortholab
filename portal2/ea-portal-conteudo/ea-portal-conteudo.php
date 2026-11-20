@@ -295,11 +295,20 @@ function eap_links_internos($content) {
         if (strpos($url, 'http') !== 0 && strpos($url, '/') === 0) $url = home_url($url);
         // links antigos com o domínio do portal oficial
         $url = preg_replace('~^https?://(www\.)?portal\.estheticaligner\.com\.br~', untrailingslashit(home_url()), $url);
+        $texto = $tit_secao[$url] ?? ($textos[$url] ?? '');
+        // link direto para um vídeo (MP4, mídia protegida, Vimeo, YouTube)
+        if (preg_match('~\.(mp4|mov|webm)(\?|$)|/secure-media/\d+|vimeo\.com/\d+|youtu\.?be~i', $url)) {
+            if (isset($vistos[$url])) continue;
+            $vistos[$url] = true;
+            $out[] = ['id' => 0, 'video' => $url, 'texto' => $texto];
+            continue;
+        }
         $id = url_to_postid($url);
         if (!$id) { $p = get_page_by_path(trim((string) parse_url($url, PHP_URL_PATH), '/')); if ($p) $id = $p->ID; }
+        if (!$id) { $p = get_page_by_path(basename(trim((string) parse_url($url, PHP_URL_PATH), '/'))); if ($p) $id = $p->ID; }
         if (!$id || isset($vistos[$id])) continue;
         $vistos[$id] = true;
-        $out[] = ['id' => $id, 'texto' => $tit_secao[$url] ?? ($textos[$url] ?? '')];
+        $out[] = ['id' => $id, 'texto' => $texto];
     }
     return $out;
 }
@@ -345,6 +354,12 @@ function eap_importar() {
         $tid = eap_termo('ea_trilha', $nome, $ord);
         $pos = 0;
         foreach (eap_links_internos($idx->post_content) as $lk) {
+            if (!empty($lk['video'])) {
+                $pos++;
+                $tit = $lk['texto'] ?: ucfirst(str_replace(['-', '_'], ' ', preg_replace('~^dc-|\.mp4$~i', '', basename(parse_url($lk['video'], PHP_URL_PATH)))));
+                $n_aulas += eap_criar_aula('vid-' . md5($lk['video']), html_entity_decode($tit), $lk['video'], $tid, $pos * 10);
+                continue;
+            }
             $p = get_post($lk['id']);
             if (!$p || $p->post_type !== 'page') continue;
             $v = eap_video_do_conteudo($p->post_content);
