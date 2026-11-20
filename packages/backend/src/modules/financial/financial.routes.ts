@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { requireRole, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 import { getCasePricingSnapshot, getProgressiveAlignerDiscountRate } from '../services/pricing.utils'
+import { getPricingContext } from './pricing-context'
 
 export async function financialRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: requireRole(Role.FINANCIAL, Role.ADMIN) }, async (request) => {
@@ -48,29 +49,7 @@ export async function financialRoutes(fastify: FastifyInstance) {
       : []
     const couponMap = new Map(coupons.map((coupon) => [coupon.code, coupon]))
 
-    const dentistIds = [...new Set(cases.map((caseItem) => caseItem.dentistId))]
-    const monthStart = new Date()
-    monthStart.setDate(1)
-    monthStart.setHours(0, 0, 0, 0)
-    const nextMonthStart = new Date(monthStart)
-    nextMonthStart.setMonth(nextMonthStart.getMonth() + 1)
-
-    const billedCasesThisMonth = dentistIds.length > 0
-      ? await fastify.prisma.case.findMany({
-          where: {
-            dentistId: { in: dentistIds },
-            service: { is: { type: { in: ['MID', 'FULL'] } } },
-            financial: { is: { billedAt: { gte: monthStart, lt: nextMonthStart } } },
-          },
-          select: { dentistId: true },
-        })
-      : []
-    const billedCountByDentist = billedCasesThisMonth.reduce((acc, item) => {
-      acc.set(item.dentistId, (acc.get(item.dentistId) || 0) + 1)
-      return acc
-    }, new Map<string, number>())
-
-    const enrichedCases = cases.map((caseItem) => {
+    const enrichedCases = await Promise.all(cases.map(async (caseItem) => {
       const hasResolvedAmount = caseItem.financial?.amount !== null && caseItem.financial?.amount !== undefined
         || caseItem.payment?.amount !== null && caseItem.payment?.amount !== undefined
 
@@ -85,8 +64,9 @@ export async function financialRoutes(fastify: FastifyInstance) {
 
       try {
         const coupon = caseItem.discountCoupon ? couponMap.get(caseItem.discountCoupon) : null
-        const progressiveDiscountPercent = getProgressiveAlignerDiscountRate(caseItem.service?.type, billedCountByDentist.get(caseItem.dentistId) || 0)
-        const pricing = getCasePricingSnapshot(caseItem.service, caseItem.installmentOption, coupon && coupon.active ? coupon : null, progressiveDiscountPercent)
+        const ctx = await getPricingContext(fastify.prisma, caseItem)
+        const progressiveDiscountPercent = getProgressiveAlignerDiscountRate(caseItem.service?.type, ctx.approvedBefore)
+        const pricing = getCasePricingSnapshot(caseItem.service, caseItem.installmentOption, coupon && coupon.active ? coupon : null, progressiveDiscountPercent, { quantity: ctx.quantity, checagemFee: ctx.checagemFee })
         return {
           ...caseItem,
           suggestedAmount: pricing.finalAmount,
@@ -99,12 +79,15 @@ export async function financialRoutes(fastify: FastifyInstance) {
             couponType: coupon?.active ? coupon.type : null,
             couponValue: coupon?.active ? coupon.value : null,
             progressiveDiscountPercent,
+            quantity: pricing.quantity,
+            unitPrice: pricing.unitPrice,
+            checagemFee: pricing.checagemFee,
           },
         }
-      } catch {
-        return { ...caseItem, suggestedAmount: null, progressiveDiscountPercent: 0, amountSource: null, pricingContext: null }
+      } catch (err: any) {
+        return { ...caseItem, suggestedAmount: null, progressiveDiscountPercent: 0, amountSource: null, pricingContext: null, pricingError: err?.message || null }
       }
-    })
+    }))
 
     return { cases: enrichedCases, total }
   })
@@ -125,26 +108,12 @@ export async function financialRoutes(fastify: FastifyInstance) {
     let resolvedAmount = amount !== undefined ? Number(amount) : undefined
 
     if (resolvedAmount === undefined && caseData.service?.prices?.length) {
-      const monthStart = new Date()
-      monthStart.setDate(1)
-      monthStart.setHours(0, 0, 0, 0)
-      const nextMonthStart = new Date(monthStart)
-      nextMonthStart.setMonth(nextMonthStart.getMonth() + 1)
-
-      const billedCountThisMonth = await fastify.prisma.case.count({
-        where: {
-          dentistId: caseData.dentistId,
-          id: { not: caseId },
-          service: { is: { type: { in: ['MID', 'FULL'] } } },
-          financial: { is: { billedAt: { gte: monthStart, lt: nextMonthStart } } },
-        },
-      })
-
-      const progressiveDiscountPercent = getProgressiveAlignerDiscountRate(caseData.service.type, billedCountThisMonth)
+      const ctx = await getPricingContext(fastify.prisma, caseData)
+      const progressiveDiscountPercent = getProgressiveAlignerDiscountRate(caseData.service.type, ctx.approvedBefore)
       const coupon = caseData.discountCoupon
         ? await fastify.prisma.coupon.findUnique({ where: { code: caseData.discountCoupon } })
         : null
-      const pricing = getCasePricingSnapshot(caseData.service, caseData.installmentOption, coupon && coupon.active ? coupon : null, progressiveDiscountPercent)
+      const pricing = getCasePricingSnapshot(caseData.service, caseData.installmentOption, coupon && coupon.active ? coupon : null, progressiveDiscountPercent, { quantity: ctx.quantity, checagemFee: ctx.checagemFee })
       resolvedAmount = pricing.finalAmount
     }
 

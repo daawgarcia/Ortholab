@@ -44,9 +44,10 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const queryClient = useQueryClient()
 
+  const [buscaContato, setBuscaContato] = useState('')
   const { data: contactsData } = useQuery({
-    queryKey: ['chat-contacts'],
-    queryFn: () => api.get('/chat/contacts').then(r => r.data),
+    queryKey: ['chat-contacts', buscaContato.trim().length >= 2 ? buscaContato.trim() : ''],
+    queryFn: () => api.get('/chat/contacts', { params: buscaContato.trim().length >= 2 ? { q: buscaContato.trim() } : {} }).then(r => r.data),
     enabled: !!user,
     refetchInterval: 15000,
   })
@@ -156,6 +157,14 @@ export default function ChatPage() {
       <div className="w-72 shrink-0 bg-white border-r flex flex-col">
         <div className="px-4 py-3 border-b">
           <h2 className="text-base font-semibold text-gray-800">Chat</h2>
+          {user.role !== 'DENTIST' && user.role !== 'SELLER' && (
+            <input
+              value={buscaContato}
+              onChange={e => setBuscaContato(e.target.value)}
+              placeholder="Buscar dentista ou colega…"
+              className="mt-2 h-8 w-full rounded-md border border-gray-200 px-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y">

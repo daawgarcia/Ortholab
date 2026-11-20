@@ -71,12 +71,28 @@ async function createPriceRecords(fastify: FastifyInstance, serviceId: string, t
   }
 }
 
+/** Valores do desconto progressivo cadastrados por faixa (groupId "CASH:D10" etc.). */
+function extractDiscountTiers(prices: Array<{ price: any; groupId: string | null }>) {
+  const tiers: Record<string, Record<string, number>> = {}
+  const names: Record<string, string> = { CASH: 'cash', INSTALLMENT_6: 'installment6', INSTALLMENT_12: 'installment12', INSTALLMENT_21: 'installment21' }
+  for (const p of prices) {
+    const m = String(p.groupId || '').match(/^([A-Z0-9_]+):D(\d+)$/)
+    if (!m || !names[m[1]]) continue
+    const tier = `D${m[2]}`
+    tiers[tier] = tiers[tier] || {}
+    if (tiers[tier][names[m[1]]] === undefined) tiers[tier][names[m[1]]] = Number(p.price)
+  }
+  return tiers
+}
+
 function presentService(service: any) {
   const latestPrices = extractLatestPrices(service.prices || [])
+  const discountTiers = extractDiscountTiers(service.prices || [])
   const cashPrice = latestPrices.cash
 
   return {
     ...service,
+    discountTiers,
     latestPrices: {
       ...latestPrices,
       installment2: service.type === 'AIR' ? latestPrices.installment2 : undefined,

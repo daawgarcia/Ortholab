@@ -171,6 +171,7 @@ model Case {
   gender            String?
   notes             String?
   planningFormData  Json?
+  approvedAt        DateTime? // data de aprovação do caso (base do desconto progressivo do mês)
   checagem          Json?     // indicação da Checagem Virtual 3D lida do PDF do planejamento
   status            CaseStatus   @default(DRAFT)
   billingType       String?

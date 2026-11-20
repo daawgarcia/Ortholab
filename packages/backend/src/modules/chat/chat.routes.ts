@@ -38,13 +38,31 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
       ])
       contacts = [...sellerLinks.map(sl => sl.seller), ...financials]
     } else {
-      // Admin/Financial/others see all active users except themselves
-      contacts = await fastify.prisma.user.findMany({
-        where: { id: { not: user.id } },
-        select: { id: true, name: true, email: true, role: true },
-        orderBy: { name: 'asc' },
-        take: 100,
-      })
+      // Equipe: vê só a equipe ativa (os ~15 mil dentistas importados do Ortholab 1 não entram na lista).
+      // Dentistas aparecem quando já há conversa ou pela busca (?q=nome/e-mail).
+      const q = String((request.query as any)?.q || '').trim()
+      if (q.length >= 2) {
+        contacts = await fastify.prisma.user.findMany({
+          where: {
+            id: { not: user.id },
+            status: 'ACTIVE' as any,
+            OR: [
+              { name: { contains: q, mode: 'insensitive' } },
+              { email: { contains: q, mode: 'insensitive' } },
+            ],
+          },
+          select: { id: true, name: true, email: true, role: true },
+          orderBy: { name: 'asc' },
+          take: 30,
+        })
+      } else {
+        contacts = await fastify.prisma.user.findMany({
+          where: { id: { not: user.id }, role: { not: Role.DENTIST }, status: 'ACTIVE' as any },
+          select: { id: true, name: true, email: true, role: true },
+          orderBy: { name: 'asc' },
+          take: 200,
+        })
+      }
     }
 
     // Attach online status

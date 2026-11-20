@@ -11,6 +11,7 @@ Uso (no servidor):
   MYSQL_HOST=127.0.0.1 MYSQL_PORT=3307 python3 importar_ol1.py
 """
 import json
+import re
 import os
 import secrets
 import sys
@@ -83,6 +84,15 @@ def clean(s):
 _UNUSABLE = None
 
 
+def primeiro_email(valor):
+    """O TOTVS às vezes guarda vários e-mails no mesmo campo (separados por ; , ou espaço)."""
+    for parte in re.split(r"[;,\s]+", str(valor or "")):
+        parte = parte.strip().lower()
+        if re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", parte):
+            return parte
+    return None
+
+
 def unusable_password():
     # Hash bcrypt válido de um segredo aleatório descartado: a conta existe, mas ninguém entra com ela.
     global _UNUSABLE
@@ -143,6 +153,17 @@ def main():
     p.execute('SELECT lower(email) FROM "User" WHERE "legacyDentistId" IS NULL AND "legacyUserId" IS NULL')
     used_emails = {r[0] for r in p.fetchall()}
 
+    # e-mails de login do Ortholab 1 ficam reservados para o dono do login
+    logins = {(clean(x.get("email")) or "").lower() for x in users.values()} - {""}
+
+    def email_dentista(u, d, c):
+        if u and clean(u.get("email")):
+            return u.get("email")
+        for cand in (clean(d.get("email")), primeiro_email(c.get("email"))):
+            if cand and cand.lower() not in logins:
+                return cand
+        return None
+
     def take_email(candidate, fallback_key):
         e = (clean(candidate) or "").lower()
         if e and "@" in e and e not in used_emails:
@@ -190,12 +211,13 @@ def main():
                 or clean(c.get("nome"))
                 or f"Dentista {d['id']} (sem nome no Ortholab 1)"
             ),
-            "email": take_email((u or {}).get("email") or d.get("email"), f"dentista-{d['id']}"),
+            # e-mail: login -> cadastro do dentista -> e-mail do cliente no TOTVS (como o Ortholab 1 mostra)
+            "email": take_email(email_dentista(u, d, c), f"dentista-{d['id']}"),
             "password": (u or {}).get("encrypted_password") or unusable_password(),
             "role": "DENTIST",
             "status": "ACTIVE" if (u and not blocked) else "INACTIVE",
-            "cro": clean(d.get("cro")),
-            "cpf": clean(d.get("cpf")),
+            "cro": clean(d.get("cro")) or clean(c.get("cro")),
+            "cpf": clean(d.get("cpf")) or clean(c.get("dcto")),
             "phone": clean(a.get("mobile_phone")) or clean(a.get("business_phone")),
             "address": street or None,
             "city": clean(a.get("city")),
@@ -288,6 +310,10 @@ def main():
                "(SELECT order_id, MAX(id) mid FROM workflow_events GROUP BY order_id) x ON x.mid = e.id"):
         last_event[r["order_id"]] = r["name"]
         last_event_at[r["order_id"]] = r["date_of_event"] or r["created_at"]
+    # data de aprovação = evento "approved_case_for_production" (base do desconto progressivo do mês)
+    approved_at = {r["order_id"]: r["quando"] for r in q(
+        "SELECT order_id, MAX(created_at) AS quando FROM workflow_events "
+        "WHERE name='approved_case_for_production' GROUP BY order_id")}
     try:
         canceled = {r["order_id"] for r in q("SELECT order_id FROM workflow_canceled_orders")}
     except Exception:
@@ -333,6 +359,7 @@ def main():
                 "opcoesPack": clean(o.get("pack_billing_options")),
             }, default=str),
             "status": status,
+            "approvedAt": approved_at.get(o["id"]),
             "billingType": clean(o.get("billing_type")),
             "installmentOption": clean(o.get("installment")),
             "dropoutInsurance": bool(o.get("has_dropout_insurance")),

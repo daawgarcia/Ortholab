@@ -211,6 +211,25 @@ export default function AdminServicesPage() {
                 {service.type === 'FULL' && <PriceCard label="21x" value={service.latestPrices.installment21} />}
               </div>
 
+              {service.discountTiers && Object.keys(service.discountTiers).length > 0 && (
+                <div className="rounded-lg border border-dashed p-2 text-xs space-y-1">
+                  <p className="font-medium text-gray-600">Desconto progressivo no mês (pela data de aprovação)</p>
+                  {(['D10', 'D15'] as const).filter(t => service.discountTiers[t]).map(t => {
+                    const v = service.discountTiers[t]
+                    const fmt = (n?: number) => n !== undefined ? formatCurrency(n) : null
+                    return (
+                      <p key={t} className="text-gray-600">
+                        <span className="font-semibold">{t === 'D10' ? '2º caso (-10%)' : '3º caso em diante (-15%)'}:</span>{' '}
+                        {[fmt(v.cash) && `${fmt(v.cash)}${service.type === 'UNIDADE' ? ' por alinhador' : ' à vista'}`,
+                          fmt(v.installment6) && `6x ${fmt(v.installment6)}`,
+                          fmt(v.installment12) && `12x ${fmt(v.installment12)}`,
+                          fmt(v.installment21) && `21x ${fmt(v.installment21)}`].filter(Boolean).join(' • ')}
+                      </p>
+                    )
+                  })}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 text-center">
                 <div className="bg-gray-50 rounded-lg p-2">
                   <p className="text-lg font-bold">{service.productionDays}d</p>
