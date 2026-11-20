@@ -2,14 +2,14 @@
 /**
  * Plugin Name: EA Portal – Conteúdo do Credenciado
  * Description: Vídeo aulas e materiais (downloads/marketing) do Portal do Credenciado, com cadastro simples para a equipe. Inclui importação do conteúdo das páginas antigas.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Esthetic Aligner
  * Text Domain: ea-portal
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EAP_VERSION', '1.0.0');
+define('EAP_VERSION', '1.0.1');
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {
@@ -273,15 +273,24 @@ function eap_capa_do_conteudo($content) {
 
 /** Links de páginas internas de uma página "índice", na ordem em que aparecem. */
 function eap_links_internos($content) {
-    $html = do_shortcode($content);
-    preg_match_all('~<a[^>]+href="([^"#]+)"[^>]*>(.*?)</a>~is', $html, $mm, PREG_SET_ORDER);
+    // pega URLs tanto do HTML renderizado quanto dos atributos dos shortcodes (url="", link="", href="")
+    $fontes = $content . "\n" . do_shortcode($content);
+    preg_match_all('~(?:href|url|link)\s*=\s*["\']([^"\'#\s]+)["\']~i', $fontes, $mm);
+    preg_match_all('~(?:href|url|link)\s*=\s*["\']([^"\'#\s]+)["\'][^>\]]*[>\]]([^<\[]{0,140})~i', $fontes, $tx, PREG_SET_ORDER);
+    $textos = [];
+    foreach ($tx as $t) { $k = $t[1]; if (!isset($textos[$k]) && trim(wp_strip_all_tags($t[2])) !== '') $textos[$k] = trim(wp_strip_all_tags($t[2])); }
     $vistos = [];
     $out = [];
-    foreach ($mm as $m) {
-        $id = url_to_postid($m[1]);
+    foreach ($mm[1] as $url) {
+        $url = html_entity_decode($url);
+        if (strpos($url, 'http') !== 0 && strpos($url, '/') === 0) $url = home_url($url);
+        // links antigos com o domínio do portal oficial
+        $url = preg_replace('~^https?://(www\.)?portal\.estheticaligner\.com\.br~', untrailingslashit(home_url()), $url);
+        $id = url_to_postid($url);
+        if (!$id) { $p = get_page_by_path(trim((string) parse_url($url, PHP_URL_PATH), '/')); if ($p) $id = $p->ID; }
         if (!$id || isset($vistos[$id])) continue;
         $vistos[$id] = true;
-        $out[] = ['id' => $id, 'texto' => trim(wp_strip_all_tags($m[2]))];
+        $out[] = ['id' => $id, 'texto' => $textos[$url] ?? ''];
     }
     return $out;
 }
@@ -343,11 +352,11 @@ function eap_importar() {
         $idx = get_page_by_path($slug);
         if (!$idx) continue;
         $sid = eap_termo('ea_secao', $nome, $ord);
-        $html = do_shortcode($idx->post_content);
-        preg_match_all('~<a[^>]+href="([^"]+\.(?:pdf|zip|rar|jpg|jpeg|png|mp4|pptx?|docx?|xlsx?))"[^>]*>(.*?)</a>~is', $html, $mm, PREG_SET_ORDER);
+        $html = do_shortcode($idx->post_content) . "\n" . $idx->post_content;
+        preg_match_all('~(?:href|url|link)\s*=\s*["\']([^"\']+\.(?:pdf|zip|rar|jpg|jpeg|png|mp4|pptx?|docx?|xlsx?))["\'][^>\]]*[>\]]([^<\[]{0,160})~is', $html, $mm, PREG_SET_ORDER);
         $pos = 0;
         foreach ($mm as $m) {
-            $url = $m[1];
+            $url = preg_replace('~^https?://(www\.)?portal\.estheticaligner\.com\.br~', untrailingslashit(home_url()), html_entity_decode($m[1]));
             $titulo = trim(preg_replace('~\s*\((?:\d+[\.,]?\d*\s*(?:kb|mb|gb|k))\)\s*$~i', '', wp_strip_all_tags($m[2])));
             if ($titulo === '' || strlen($titulo) < 3) $titulo = basename(parse_url($url, PHP_URL_PATH));
             $legado = 'arq-' . md5($url);
