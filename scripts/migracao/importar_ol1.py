@@ -160,7 +160,15 @@ def main():
             "id": str(uuid.uuid4()),
             "legacyDentistId": d["id"],
             "legacyUserId": uid,
-            "name": clean(d["name"]) or f"Dentista {d['id']}",
+            # Nome igual ao que o Ortholab 1 exibe: fantasia do TOTVS -> cadastro do dentista
+            # -> login (nome + sobrenome) -> razão social do TOTVS
+            "name": (
+                clean(c.get("fantasia"))
+                or clean(d["name"])
+                or " ".join(x for x in [clean((u or {}).get("name")), clean((u or {}).get("last_name"))] if x)
+                or clean(c.get("nome"))
+                or f"Dentista {d['id']} (sem nome no Ortholab 1)"
+            ),
             "email": take_email((u or {}).get("email") or d.get("email"), f"dentista-{d['id']}"),
             "password": (u or {}).get("encrypted_password") or unusable_password(),
             "role": "DENTIST",
@@ -323,6 +331,88 @@ def main():
     stats["casos"] = len(rows)
     pg.commit()
     log(f"Casos: {len(rows)} (sem paciente: {stats['casos_sem_paciente']}, cancelados: {stats['casos_cancelados']})")
+
+    # ------------------------------------------------------------------ entradas (igual ao Ortholab 1)
+    # Mesma regra do entries_controller#pending_entries do Ortholab 1: paciente cujo último envio
+    # (STL sup/inf, ficha de planejamento, ficha de finalização ou outros serviços) é >= 01/01/2026,
+    # sem pedido de workflow criado depois do envio e sem pedido ativo no momento do envio.
+    pend = q("""
+        SELECT p.id AS patient_id, p.box_number, sub_last.last_submission_at, sub_last.origem
+        FROM patients p
+        INNER JOIN (
+            SELECT s.patient_id, s.last_submission_at,
+                   (SELECT x.origem FROM (
+                        SELECT patient_id, created_at, 'STL_FILE' origem FROM stl_upper_digital_models
+                        UNION ALL SELECT patient_id, created_at, 'STL_FILE' FROM stl_lower_digital_models
+                        UNION ALL SELECT patient_id, created_at, 'PLANNING_FORM' FROM plans
+                        UNION ALL SELECT patient_id, created_at, 'COMPLETION_FORM' FROM completion_forms
+                        UNION ALL SELECT patient_id, created_at, 'OTHER_SERVICES_FORM' FROM other_services_forms
+                    ) x WHERE x.patient_id = s.patient_id AND x.created_at = s.last_submission_at LIMIT 1) AS origem
+            FROM (
+                SELECT patient_id, MAX(created_at) AS last_submission_at FROM (
+                    SELECT patient_id, created_at FROM stl_upper_digital_models
+                    UNION ALL SELECT patient_id, created_at FROM stl_lower_digital_models
+                    UNION ALL SELECT patient_id, created_at FROM plans
+                    UNION ALL SELECT patient_id, created_at FROM completion_forms
+                    UNION ALL SELECT patient_id, created_at FROM other_services_forms
+                ) ps GROUP BY patient_id
+            ) s
+        ) sub_last ON sub_last.patient_id = p.id
+        INNER JOIN dentists d ON d.id = p.dentist_id
+        LEFT JOIN workflow_orders oas ON oas.patient_id = p.id AND oas.created_at >= sub_last.last_submission_at
+        LEFT JOIN workflow_orders aas ON aas.patient_id = p.id
+             AND aas.created_at <= sub_last.last_submission_at
+             AND (aas.in_progress = 1
+                  OR aas.updated_at > sub_last.last_submission_at
+                  OR (SELECT MAX(c.created_at) FROM workflow_canceled_orders c WHERE c.order_id = aas.id) > sub_last.last_submission_at)
+        WHERE oas.id IS NULL AND aas.id IS NULL
+          AND sub_last.last_submission_at >= '2026-01-01 00:00:00'
+        GROUP BY p.id, p.box_number, sub_last.last_submission_at, sub_last.origem
+        ORDER BY sub_last.last_submission_at ASC
+        LIMIT 10000
+    """)
+    rows = []
+    for e in pend:
+        pt = patient_by_legacy.get(e["patient_id"])
+        if not pt:
+            continue
+        rows.append({
+            "id": str(uuid.uuid4()),
+            "legacyKey": f"ol1-paciente-{e['patient_id']}",
+            "patientId": pt[0],
+            "dentistId": pt[1],
+            "entryType": e["origem"] or "STL_FILE",
+            "sourceType": "ortholab1",
+            "boxNumber": clean(e.get("box_number")),
+            "lastStlDate": e["last_submission_at"],
+            "status": "PENDING",
+            "createdAt": e["last_submission_at"] or now,
+            "updatedAt": now,
+        })
+    keys = [r["legacyKey"] for r in rows]
+    if rows:
+        cols = list(rows[0].keys())
+        updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", "legacyKey"))
+        tmpl = "(" + ", ".join(
+            f'%({c})s::"EntryType"' if c == "entryType" else f'%({c})s::"EntryStatus"' if c == "status"
+            else f"%({c})s" for c in cols
+        ) + ")"
+        psycopg2.extras.execute_values(
+            p,
+            f'INSERT INTO "Entry" ({", ".join(chr(34) + c + chr(34) for c in cols)}) VALUES %s '
+            f'ON CONFLICT ("legacyKey") DO UPDATE SET {updates}',
+            rows, template=tmpl, page_size=1000,
+        )
+    # o que saiu da lista no Ortholab 1 (virou workflow) sai da lista no Ortholab 2
+    p.execute(
+        """UPDATE "Entry" SET status = 'COMPLETED', "processedAt" = now(), "updatedAt" = now()
+           WHERE "legacyKey" IS NOT NULL AND status = 'PENDING' AND NOT ("legacyKey" = ANY(%s))""",
+        (keys,),
+    )
+    stats["entradas_pendentes"] = len(rows)
+    stats["entradas_concluidas_agora"] = p.rowcount
+    pg.commit()
+    log(f"Entradas pendentes: {len(rows)}")
 
     log("Resumo: " + json.dumps(dict(sorted(stats.items())), ensure_ascii=False))
 

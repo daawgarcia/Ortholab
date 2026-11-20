@@ -464,6 +464,10 @@ export async function patientRoutes(fastify: FastifyInstance) {
     return { ok: true, deletedPatientId: id, name: patient.name }
   })
 
+  // Bucket privado: devolve links temporários (1 h) em vez da URL crua do arquivo
+  const withSignedUrls = <T extends { url: string }>(items: T[]) =>
+    Promise.all(items.map(async (item) => ({ ...item, url: await fastify.s3.signedUrlForUrl(item.url, 3600) })))
+
   fastify.get('/:id/photos', { preHandler: authenticate }, async (request) => {
     const { id } = request.params as { id: string }
     const { isPrivate } = request.query as any
@@ -475,7 +479,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
       where: { patientId: id, isPrivate: isPrivate === 'true' },
       orderBy: { createdAt: 'desc' },
     })
-    return { photos }
+    return { photos: await withSignedUrls(photos) }
   })
 
   fastify.post('/:id/photos', { preHandler: authenticate }, async (request, reply) => {
@@ -553,7 +557,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
       where: { patientId: id },
       orderBy: { createdAt: 'desc' },
     })
-    return { files }
+    return { files: await withSignedUrls(files) }
   })
 
   fastify.post('/:id/digital-models', { preHandler: authenticate }, async (request, reply) => {
@@ -620,7 +624,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
       where: { patientId: id },
       orderBy: { createdAt: 'desc' },
     })
-    return { files }
+    return { files: await withSignedUrls(files) }
   })
 
   fastify.post('/:id/work-files', { preHandler: authenticate }, async (request, reply) => {

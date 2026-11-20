@@ -44,3 +44,5 @@ packages/backend/uploads/
 secrets/
 backup*.sql
 backup*.dump
+__pycache__/
+*.pyc

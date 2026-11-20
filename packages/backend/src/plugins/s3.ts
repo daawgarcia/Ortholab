@@ -86,10 +86,19 @@ class S3Service {
     // Local fallback: já autenticado pelo /api/uploads/*
     if (url.includes('/api/uploads/')) return url
 
-    // Tenta extrair a key do bucket S3
+    if (!this.s3Enabled) return url
+
+    // Formato AWS "virtual-hosted": https://<bucket>.s3.<regiao>.amazonaws.com/<key>
+    const hosted = `https://${this.bucket}.s3.`
+    if (url.startsWith(hosted)) {
+      const key = decodeURIComponent(new URL(url).pathname.replace(/^\//, ''))
+      return this.getSignedUrl(key, expiresIn)
+    }
+
+    // Formato "path-style" / MinIO: .../<bucket>/<key>
     const bucketMarker = `/${this.bucket}/`
     const idx = url.indexOf(bucketMarker)
-    if (idx >= 0 && this.s3Enabled) {
+    if (idx >= 0) {
       const key = url.slice(idx + bucketMarker.length)
       return this.getSignedUrl(key, expiresIn)
     }

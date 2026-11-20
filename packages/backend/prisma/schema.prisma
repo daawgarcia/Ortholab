@@ -574,6 +574,7 @@ model Entry {
   entryType     EntryType // Tipo de entrada: NEW_PATIENT, PLANNING_FORM, COMPLETION_FORM, OTHER_SERVICES_FORM, STL_FILE
   sourceId      String?   // ID do registro relacionado (form ou arquivo)
   sourceType    String?   // Tipo do registro relacionado
+  legacyKey     String?   @unique // "ol1-paciente-<id>" para entradas vindas do Ortholab 1
   boxNumber     String?   // Número da caixa (CAIXA-{caseNumber})
   lastStlDate   DateTime? // Data do último STL enviado
   status        EntryStatus @default(PENDING)

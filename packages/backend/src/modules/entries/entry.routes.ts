@@ -35,10 +35,11 @@ export async function entryRoutes(fastify: FastifyInstance) {
 
     const entries = await fastify.prisma.entry.findMany({
       where,
-      take: parseInt(limit),
-      orderBy: { createdAt: 'desc' },
+      take: Math.min(parseInt(limit) || 50, 10000),
+      // igual ao Ortholab 1: mais antigo primeiro (quem espera há mais tempo)
+      orderBy: [{ lastStlDate: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }],
       include: {
-        patient: { select: { id: true, name: true } },
+        patient: { select: { id: true, name: true, boxNumber: true } },
         dentist: { select: { id: true, name: true, clinic: true } },
         case: { select: { id: true, caseNumber: true, status: true } },
         processor: { select: { id: true, name: true } },

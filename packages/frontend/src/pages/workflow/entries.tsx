@@ -60,7 +60,7 @@ export function EntriesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['entries'],
-    queryFn: () => api.get('/entries?limit=100').then(r => r.data),
+    queryFn: () => api.get('/entries?limit=10000').then(r => r.data),
   })
 
   const entries: Entry[] = data?.entries || []
@@ -151,7 +151,7 @@ export function EntriesPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paciente</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caixa</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último STL</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último envio</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada em</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ação</th>
               </tr>
@@ -207,7 +207,7 @@ export function EntriesPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600">{formatDate(entry.lastStlDate)}</span>
+                    <span className="text-sm text-gray-600">{formatDateTime(entry.lastStlDate)}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm text-gray-600">{formatDateTime(entry.createdAt)}</span>
