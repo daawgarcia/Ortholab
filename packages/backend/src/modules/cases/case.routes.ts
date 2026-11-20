@@ -45,6 +45,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
         where,
         include: {
           dentist: { select: { name: true, clinic: true, email: true } },
+          patient: { select: { boxNumber: true } },
           service: true,
           workflowEvents: { orderBy: { stage: 'desc' }, take: 1 },
           payment: { select: { status: true, amount: true } },
@@ -53,7 +54,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
         },
         orderBy: { updatedAt: 'desc' },
         skip,
-        take: parseInt(limit),
+        take: Math.min(parseInt(limit) || 20, 1000),
       }),
       fastify.prisma.case.count({ where }),
     ])
