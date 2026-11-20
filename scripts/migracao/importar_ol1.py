@@ -336,41 +336,43 @@ def main():
     # Mesma regra do entries_controller#pending_entries do Ortholab 1: paciente cujo último envio
     # (STL sup/inf, ficha de planejamento, ficha de finalização ou outros serviços) é >= 01/01/2026,
     # sem pedido de workflow criado depois do envio e sem pedido ativo no momento do envio.
-    pend = q("""
-        SELECT p.id AS patient_id, p.box_number, sub_last.last_submission_at, sub_last.origem
-        FROM patients p
-        INNER JOIN (
-            SELECT s.patient_id, s.last_submission_at,
-                   (SELECT x.origem FROM (
-                        SELECT patient_id, created_at, 'STL_FILE' origem FROM stl_upper_digital_models
-                        UNION ALL SELECT patient_id, created_at, 'STL_FILE' FROM stl_lower_digital_models
-                        UNION ALL SELECT patient_id, created_at, 'PLANNING_FORM' FROM plans
-                        UNION ALL SELECT patient_id, created_at, 'COMPLETION_FORM' FROM completion_forms
-                        UNION ALL SELECT patient_id, created_at, 'OTHER_SERVICES_FORM' FROM other_services_forms
-                    ) x WHERE x.patient_id = s.patient_id AND x.created_at = s.last_submission_at LIMIT 1) AS origem
-            FROM (
-                SELECT patient_id, MAX(created_at) AS last_submission_at FROM (
-                    SELECT patient_id, created_at FROM stl_upper_digital_models
-                    UNION ALL SELECT patient_id, created_at FROM stl_lower_digital_models
-                    UNION ALL SELECT patient_id, created_at FROM plans
-                    UNION ALL SELECT patient_id, created_at FROM completion_forms
-                    UNION ALL SELECT patient_id, created_at FROM other_services_forms
-                ) ps GROUP BY patient_id
-            ) s
-        ) sub_last ON sub_last.patient_id = p.id
-        INNER JOIN dentists d ON d.id = p.dentist_id
-        LEFT JOIN workflow_orders oas ON oas.patient_id = p.id AND oas.created_at >= sub_last.last_submission_at
-        LEFT JOIN workflow_orders aas ON aas.patient_id = p.id
-             AND aas.created_at <= sub_last.last_submission_at
-             AND (aas.in_progress = 1
-                  OR aas.updated_at > sub_last.last_submission_at
-                  OR (SELECT MAX(c.created_at) FROM workflow_canceled_orders c WHERE c.order_id = aas.id) > sub_last.last_submission_at)
-        WHERE oas.id IS NULL AND aas.id IS NULL
-          AND sub_last.last_submission_at >= '2026-01-01 00:00:00'
-        GROUP BY p.id, p.box_number, sub_last.last_submission_at, sub_last.origem
-        ORDER BY sub_last.last_submission_at ASC
-        LIMIT 10000
-    """)
+    # Só envios a partir de 01/01/2026 importam: se o último envio do paciente é >= essa data,
+    # ele está entre estes registros (equivale ao MAX + filtro do Ortholab 1, mas sem varrer tudo).
+    MIN_ENVIO = "2026-01-01 00:00:00"
+    ultimo = {}  # patient_id -> (data, origem)
+    for tabela, origem in (("stl_upper_digital_models", "STL_FILE"), ("stl_lower_digital_models", "STL_FILE"),
+                           ("plans", "PLANNING_FORM"), ("completion_forms", "COMPLETION_FORM"),
+                           ("other_services_forms", "OTHER_SERVICES_FORM")):
+        for r in q(f"SELECT patient_id, created_at FROM {tabela} WHERE created_at >= '{MIN_ENVIO}' AND patient_id IS NOT NULL"):
+            atual = ultimo.get(r["patient_id"])
+            if atual is None or r["created_at"] > atual[0]:
+                ultimo[r["patient_id"]] = (r["created_at"], origem)
+    pedidos = {}
+    if ultimo:
+        ids = ",".join(str(int(i)) for i in ultimo)
+        for o in q(f"""SELECT o.id, o.patient_id, o.created_at, o.updated_at, o.in_progress,
+                              (SELECT MAX(c.created_at) FROM workflow_canceled_orders c WHERE c.order_id = o.id) AS canceled_at
+                       FROM workflow_orders o WHERE o.patient_id IN ({ids})"""):
+            pedidos.setdefault(o["patient_id"], []).append(o)
+    box = {}
+    if ultimo:
+        for r in q(f"SELECT id, box_number FROM patients WHERE id IN ({ids})"):
+            box[r["id"]] = r["box_number"]
+    pend = []
+    for pid, (envio, origem) in ultimo.items():
+        bloqueado = False
+        for o in pedidos.get(pid, []):
+            ca, ua = o["created_at"], o["updated_at"]
+            if ca and ca >= envio:  # pedido criado depois do envio
+                bloqueado = True
+                break
+            if ca and ca <= envio and (o["in_progress"] == 1 or (ua and ua > envio)
+                                       or (o["canceled_at"] and o["canceled_at"] > envio)):
+                bloqueado = True  # pedido ativo no momento do envio
+                break
+        if not bloqueado:
+            pend.append({"patient_id": pid, "box_number": box.get(pid), "last_submission_at": envio, "origem": origem})
+    pend.sort(key=lambda e: e["last_submission_at"])
     rows = []
     for e in pend:
         pt = patient_by_legacy.get(e["patient_id"])
