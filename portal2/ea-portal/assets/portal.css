@@ -334,7 +334,7 @@ body.eap input.eap-busca { padding-left: 38px !important; height: auto !importan
 .eap-sec-tit span { color: var(--eap-txt-2); font-size: 13.5px; }
 .eap-sec-tit--mat { margin-top: 34px; }
 .eap-posts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-.eap-post-card { padding: 0; border: 0; background: #eef2f8; border-radius: 14px; overflow: hidden; cursor: zoom-in; aspect-ratio: 1; box-shadow: 0 4px 14px rgba(17, 38, 84, .08); }
+.eap-post-card { padding: 0; border: 0; background: #eef2f8; border-radius: 14px !important; min-height: 0 !important; height: auto !important; width: 100% !important; line-height: 0 !important; overflow: hidden; cursor: zoom-in; aspect-ratio: 1; box-shadow: 0 4px 14px rgba(17, 38, 84, .08); }
 .eap-post-card img { width: 100% !important; height: 100% !important; object-fit: cover; transition: transform .25s; display: block; }
 .eap-post-card:hover img { transform: scale(1.04); }
 .eap-modal { position: fixed; inset: 0; z-index: 10000; background: rgba(8, 18, 40, .78); display: flex; align-items: center; justify-content: center; padding: 20px; }
