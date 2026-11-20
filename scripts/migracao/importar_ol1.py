@@ -191,7 +191,12 @@ def main():
         if uid in linked_users:
             continue
         rset = user_roles.get(uid, set())
-        role = next((ROLE_MAP[r] for r in ("admin", "worker", "worker_pt", "worker_co", "worker_mx", "worker_pe", "dentist") if r in rset), "LAB_TECH")
+        role = next((ROLE_MAP[r] for r in ("admin", "worker", "worker_pt", "worker_co", "worker_mx", "worker_pe", "dentist") if r in rset), None)
+        # Sem papel conhecido no Ortholab 1: entra como dentista INATIVO (sem acesso) até alguém revisar.
+        no_role = role is None
+        if no_role:
+            role = "DENTIST"
+            stats["usuarios_sem_papel"] += 1
         name = " ".join(x for x in [clean(u.get("name")), clean(u.get("last_name"))] if x) or (u.get("email") or f"Usuário {uid}")
         rows.append({
             "id": str(uuid.uuid4()),
@@ -200,7 +205,7 @@ def main():
             "email": take_email(u.get("email"), f"usuario-{uid}"),
             "password": u.get("encrypted_password") or unusable_password(),
             "role": role,
-            "status": "INACTIVE" if "blocked" in rset else "ACTIVE",
+            "status": "INACTIVE" if ("blocked" in rset or no_role) else "ACTIVE",
             "emailVerified": bool(u.get("confirmed_at")),
             "createdAt": u.get("created_at") or now,
             "updatedAt": u.get("updated_at") or now,
