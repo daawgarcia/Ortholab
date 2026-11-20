@@ -31,16 +31,17 @@ const norm = (s: string) => s.replace(/\s+/g, ' ').replace(/[ºª°]/g, '°').tr
 export function interpretarTexto(texto: string): Omit<Checagem, 'lidoEm'> | null {
   const t = norm(texto)
   const out: Omit<Checagem, 'lidoEm'> = {}
-  const sup = t.match(/Arcada\s+Superior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries/i)
-  const inf = t.match(/Arcada\s+Inferior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries/i)
+  // português e espanhol (mesma regra do scripts/migracao/ler_checagens_ol1.py)
+  const FAIXA = String.raw`(\d{1,3})\s*(?:-|–|a|até|al)\s*(\d{1,3})\s*s[ée]ries`
+  const sup = t.match(new RegExp(String.raw`Estima\w*[^;]{0,60}?Superior[^0-9;]{0,40}?` + FAIXA, 'i'))
+  const inf = t.match(new RegExp(String.raw`Estima\w*[^;]{0,60}?Inferior[^0-9;]{0,40}?` + FAIXA, 'i'))
   if (sup) out.estimativaSuperior = { min: +sup[1], max: +sup[2] }
   if (inf) out.estimativaInferior = { min: +inf[1], max: +inf[2] }
   if (!sup && !inf) {
-    const geral = t.match(/movimenta[çc][ãa]o\s*:\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries/i)
+    const geral = t.match(new RegExp(String.raw`Estima\w*[^;0-9]{0,80}?:\s*` + FAIXA, 'i'))
     if (geral) out.estimativaGeral = { min: +geral[1], max: +geral[2] }
   }
-  // "produção de 6 séries superiores e 6 séries inferiores"
-  const prod = t.match(/produ[çc][ãa]o\s+de\s+(.{0,120}?)\s+para\s+esta\s+fase/i)
+  const prod = t.match(/produ(?:[çc][ãa]o|cci[óo]n)\s+de\s+(.{0,120}?)\s+para\s+esta/i)
   const trecho = prod ? prod[1] : t
   const fs = trecho.match(/(\d{1,3})\s*s[ée]ries?\s+superiores?/i)
   const fi = trecho.match(/(\d{1,3})\s*s[ée]ries?\s+inferiores?/i)
@@ -76,7 +77,7 @@ export async function lerChecagemDoPdf(buffer: Buffer, arquivo?: string): Promis
       const r = interpretarTexto(paginas[i])
       if (r) {
         r.tipoIndicado = classificar(r)
-        return { ...r, pagina: i + 1, arquivo, versao: 2, lidoEm: new Date().toISOString() }
+        return { ...r, pagina: i + 1, arquivo, versao: 3, lidoEm: new Date().toISOString() }
       }
     }
     return null

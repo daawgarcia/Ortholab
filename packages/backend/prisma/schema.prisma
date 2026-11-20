@@ -462,6 +462,7 @@ model SystemSetting {
 
 model Photo {
   id        String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId String
   url       String
   filename  String
@@ -474,6 +475,7 @@ model Photo {
 
 model DigitalModel {
   id        String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId String
   url       String
   filename  String
@@ -486,6 +488,7 @@ model DigitalModel {
 
 model WorkFile {
   id        String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId String
   url       String
   filename  String
@@ -497,6 +500,7 @@ model WorkFile {
 
 model PlanningForm {
   id        String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId String
   dentistId String
   formData  Json
@@ -509,6 +513,7 @@ model PlanningForm {
 
 model CompletionForm {
   id              String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId       String
   dentistId       String
   formData        Json
@@ -524,6 +529,7 @@ model CompletionForm {
 
 model OtherServicesForm {
   id           String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId    String
   dentistId    String
   eaGuard      Boolean  @default(false)
@@ -540,6 +546,7 @@ model OtherServicesForm {
 
 model ClinicalRecord {
   id             String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   patientId      String
   dentistId      String
   consultationAt DateTime
@@ -555,6 +562,7 @@ model ClinicalRecord {
 
 model WorkflowEvent {
   id          String   @id @default(uuid())
+  legacyKey String? @unique // registro de origem no Ortholab 1
   caseId      String
   stage       Int
   stageName   String

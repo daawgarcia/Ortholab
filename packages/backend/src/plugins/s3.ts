@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin'
 import { FastifyPluginAsync } from 'fastify'
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { v4 as uuidv4 } from 'uuid'
 import { promises as fs } from 'fs'
@@ -92,6 +92,13 @@ class S3Service {
     const hosted = `https://${this.bucket}.s3.`
     if (url.startsWith(hosted)) {
       const key = decodeURIComponent(new URL(url).pathname.replace(/^\//, ''))
+      // Arquivos do Ortholab 1 ainda em cópia para o bucket novo: se não estiver lá ainda,
+      // entrega um link temporário de LEITURA do bucket antigo (nada é alterado lá).
+      const legado = process.env.OL1_LEGACY_BUCKET
+      if (legado && key.startsWith('ortholab1-arquivos/') && !(await this.exists(key))) {
+        const cmd = new GetObjectCommand({ Bucket: legado, Key: key.replace(/^ortholab1-arquivos\//, '') })
+        return getSignedUrl(this.legacyClient(), cmd, { expiresIn })
+      }
       return this.getSignedUrl(key, expiresIn)
     }
 
@@ -103,6 +110,25 @@ class S3Service {
       return this.getSignedUrl(key, expiresIn)
     }
     return url
+  }
+
+  private _legacy?: S3Client
+  private legacyClient() {
+    if (!this._legacy) this._legacy = new S3Client({ region: process.env.OL1_LEGACY_REGION || 'us-east-1' })
+    return this._legacy
+  }
+
+  private existsCache = new Map<string, boolean>()
+  private async exists(key: string): Promise<boolean> {
+    if (this.existsCache.get(key)) return true
+    try {
+      await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }))
+      this.existsCache.set(key, true)
+      if (this.existsCache.size > 50000) this.existsCache.clear()
+      return true
+    } catch {
+      return false
+    }
   }
 
   async delete(key: string): Promise<void> {

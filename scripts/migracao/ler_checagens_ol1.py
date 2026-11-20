@@ -20,16 +20,21 @@ import pymysql
 
 BUCKET_NOVO = "s3://ortholab2-arquivos-ea/ortholab1-arquivos/uploads/v2_work/file"
 BUCKET_ANTIGO = "s3://ortholab/uploads/v2_work/file"
-STATUS = tuple((os.environ.get("CHECAGEM_STATUS") or "WAITING_APPROVAL").split(","))
+STATUS = tuple((os.environ.get("CHECAGEM_STATUS") or
+               "IN_PLANNING,IN_MOVEMENT,LAB_APPROVAL,WAITING_APPROVAL,REVISION_REQUESTED,APPROVED,PRINTING_3D,LABORATORY,SHIPPED").split(","))
 
-SUP = re.compile(r"Arcada\s+Superior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries", re.I)
-INF = re.compile(r"Arcada\s+Inferior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries", re.I)
-# variante sem arcada: "Estimativa aproximada de movimentação: 11 - 15 séries" (vale para o caso todo)
-GERAL = re.compile(r"movimenta[çc][ãa]o\s*:\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries", re.I)
-VERSAO_LEITURA = 2
-PROD = re.compile(r"produ[çc][ãa]o\s+de\s+(.{0,120}?)\s+para\s+esta\s+fase", re.I)
+# Português e espanhol, ex.:
+#  "Estimativa aproximada de movimentação: (Arcada Superior) 11 - 17 séries;"
+#  "Estimación del movimiento Superior aproximada de: 14 - 20 series;"
+#  "Estimativa aproximada de movimentação: 11 - 15 séries;"  (sem arcada = geral)
+FAIXA = r"(\d{1,3})\s*(?:-|–|a|até|al)\s*(\d{1,3})\s*s[ée]ries"
+SUP = re.compile(r"Estima\w*[^;]{0,60}?Superior[^0-9;]{0,40}?" + FAIXA, re.I)
+INF = re.compile(r"Estima\w*[^;]{0,60}?Inferior[^0-9;]{0,40}?" + FAIXA, re.I)
+GERAL = re.compile(r"Estima\w*[^;0-9]{0,80}?:\s*" + FAIXA, re.I)
+PROD = re.compile(r"produ(?:[çc][ãa]o|cci[óo]n)\s+de\s+(.{0,120}?)\s+para\s+esta", re.I)
 FS = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+superiores?", re.I)
 FI = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+inferiores?", re.I)
+VERSAO_LEITURA = 3
 
 
 def log(m):
