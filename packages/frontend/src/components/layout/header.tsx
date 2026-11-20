@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import { Bell, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useUiStore } from '@/store/ui'
+import { BuscaGlobal } from './busca-global'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
 import { useState } from 'react'
@@ -49,6 +50,7 @@ export function Header() {
         title={sidebarHidden ? 'Mostrar menu' : 'Ocultar menu (mais espaço na tela)'}>
         {sidebarHidden ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
       </Button>
+      <div className="flex-1 flex justify-center px-4"><BuscaGlobal /></div>
       <div className="flex items-center gap-3">
         <div className="relative">
           <Button variant="ghost" size="icon" onClick={() => setShowNotifs(!showNotifs)}>

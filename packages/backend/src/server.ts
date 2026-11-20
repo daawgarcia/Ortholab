@@ -45,6 +45,7 @@ import { entryRoutes } from './modules/entries/entry.routes'
 import { caseApprovalRoutes } from './modules/cases/case-approval.routes'
 import { whatsappRoutes } from './modules/whatsapp/whatsapp.routes'
 import { reportsRoutes } from './modules/reports/reports.routes'
+import { buscaRoutes, prepararBusca } from './modules/busca/busca'
 import { startStalledCasesJob } from './modules/jobs/stalled-cases.job'
 
 const env = validateEnv()
@@ -269,6 +270,8 @@ const start = async () => {
   await app.register(caseApprovalRoutes, { prefix: '/api/cases' })
   await app.register(whatsappRoutes, { prefix: '/api/whatsapp' })
   await app.register(reportsRoutes, { prefix: '/api/reports' })
+  await app.register(buscaRoutes, { prefix: '/api/busca' })
+  prepararBusca(app.prisma).catch(() => {})
 
   // Iniciar job de verificação de casos parados
   startStalledCasesJob(app)

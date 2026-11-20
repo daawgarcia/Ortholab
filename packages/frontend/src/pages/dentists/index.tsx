@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useDebounce } from '@/hooks/use-debounce'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
@@ -10,11 +11,12 @@ import { toast } from '@/hooks/use-toast'
 export default function DentistsPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const termo = useDebounce(search.trim(), 300)
   const [syncing, setSyncing] = useState(false)
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['dentists', search],
-    queryFn: () => api.get(`/dentists?search=${search}&limit=50`).then(r => r.data),
+    queryKey: ['dentists', termo],
+    queryFn: () => api.get(`/dentists?search=${encodeURIComponent(termo)}&limit=50`).then(r => r.data),
     staleTime: 30000,
   })
 
@@ -49,7 +51,7 @@ export default function DentistsPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
-          placeholder="Digite ao menos 2 caracteres, ou ** para listar tudo..."
+          placeholder="Nome, clínica, CRO, e-mail, CPF/CNPJ ou código TOTVS"
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -70,7 +72,7 @@ export default function DentistsPage() {
           )}
           {!isLoading && dentists.length === 0 && (
             <div className="col-span-5 px-5 py-8 text-center text-gray-400 text-sm">
-              {search ? 'Nenhum dentista encontrado' : 'Digite para buscar dentistas'}
+              {termo ? 'Nenhum dentista encontrado' : 'Nenhum dentista cadastrado'}
             </div>
           )}
           {dentists.map((d: any) => (

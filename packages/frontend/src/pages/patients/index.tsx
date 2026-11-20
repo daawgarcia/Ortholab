@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useDebounce } from '@/hooks/use-debounce'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import api from '@/lib/api'
@@ -24,24 +25,28 @@ function getTreatmentLabel(patient: any) {
 export default function PatientsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
+  const [params] = useSearchParams()
+  const [search, setSearch] = useState(params.get('busca') || '')
+  const termo = useDebounce(search.trim(), 300)
+  useEffect(() => { const b = params.get('busca'); if (b !== null) setSearch(b) }, [params])
   const [dentistId, setDentistId] = useState('')
   const [dentistSearch, setDentistSearch] = useState('')
+  const termoDentista = useDebounce(dentistSearch.trim(), 300)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['patients', search, dentistId],
+    queryKey: ['patients', termo, dentistId],
     queryFn: () => {
-      const params = new URLSearchParams()
-      if (search) params.set('search', search)
-      if (dentistId) params.set('dentistId', dentistId)
-      return api.get(`/patients?${params}`).then(r => r.data)
+      const qs = new URLSearchParams()
+      if (termo.length >= 2) qs.set('search', termo)
+      if (dentistId) qs.set('dentistId', dentistId)
+      return api.get(`/patients?${qs}`).then(r => r.data)
     },
     staleTime: 30000,
   })
 
   const { data: dentistsData } = useQuery({
-    queryKey: ['dentists-select', dentistSearch],
-    queryFn: () => api.get(`/admin/dentists?search=${encodeURIComponent(dentistSearch)}`).then(r => r.data),
+    queryKey: ['dentists-select', termoDentista],
+    queryFn: () => api.get(`/dentists?limit=30&search=${encodeURIComponent(termoDentista)}`).then(r => r.data),
     enabled: user?.role === 'ADMIN' || user?.role === 'LAB_TECH' || user?.role === 'FINANCIAL',
   })
 
@@ -64,7 +69,7 @@ export default function PatientsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Buscar paciente por nome..."
+            placeholder="Nome do paciente, nº da caixa ou dentista (aceita erro de digitação)"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"

@@ -1,18 +1,29 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload, requireRole } from '../../plugins/auth'
 import { Role, UserStatus } from '@prisma/client'
+import { buscarDentistas, ordenarPor } from '../busca/busca'
 
 export async function dentistRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: authenticate }, async (request) => {
     const { search, page = '1', limit = '30' } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const where: any = { role: Role.DENTIST }
-    if (search) where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { clinic: { contains: search, mode: 'insensitive' } },
-      { cro: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } },
-    ]
+    const termo = String(search || '').trim()
+    if (termo.length >= 2 && termo !== '**') {
+      const r = await buscarDentistas(fastify.prisma, termo, { limit: parseInt(limit), offset: skip })
+      where.id = { in: r.ids }
+      const lista = await fastify.prisma.user.findMany({
+        where,
+        select: {
+          id: true, name: true, email: true, cro: true, clinic: true,
+          cnpj: true, phone: true, status: true, totvsCode: true,
+          firstCaseCouponEligible: true,
+          deliveryCity: true, deliveryState: true, country: true,
+          _count: { select: { cases: true, patients: true } },
+        },
+      })
+      return { dentists: ordenarPor(r.ids, lista), total: r.total }
+    }
 
     const [dentists, total] = await Promise.all([
       fastify.prisma.user.findMany({
@@ -24,7 +35,7 @@ export async function dentistRoutes(fastify: FastifyInstance) {
           deliveryCity: true, deliveryState: true, country: true,
           _count: { select: { cases: true, patients: true } },
         },
-        orderBy: { name: 'asc' },
+        orderBy: [{ patients: { _count: 'desc' } }, { name: 'asc' }], // quem tem mais pacientes primeiro
         skip,
         take: parseInt(limit),
       }),

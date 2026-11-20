@@ -1,4 +1,5 @@
 import { lerChecagemDoPdf } from '../checagem/checagem'
+import { buscarPacientes, ordenarPor } from '../busca/busca'
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
@@ -129,7 +130,17 @@ export async function patientRoutes(fastify: FastifyInstance) {
     } else if (dentistId) {
       where.dentistId = dentistId
     }
-    if (search) where.name = { contains: search, mode: 'insensitive' }
+    // busca inteligente: acentos, várias palavras, nº da caixa, nome do dentista e erros de digitação
+    if (search && String(search).trim().length >= 2) {
+      const restricao = typeof where.dentistId === 'string' ? [where.dentistId]
+        : where.dentistId?.in ? where.dentistId.in : null
+      const r = await buscarPacientes(fastify.prisma, String(search), { dentistIds: restricao, limit: parseInt(limit), offset: skip })
+      const encontrados = await fastify.prisma.patient.findMany({
+        where: { id: { in: r.ids } },
+        select: buildPatientSelect(includeImportantNotes, true),
+      })
+      return { patients: ordenarPor(r.ids, encontrados as any), total: r.total }
+    }
 
     const [patients, total] = await Promise.all([
       fastify.prisma.patient.findMany({
