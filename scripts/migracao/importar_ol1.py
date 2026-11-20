@@ -16,7 +16,8 @@ import secrets
 import sys
 import uuid
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
+from zoneinfo import ZoneInfo
 
 import bcrypt
 import psycopg2
@@ -38,11 +39,13 @@ ROLE_MAP = {
 }
 
 # Último evento do workflow (Ortholab 1) -> CaseStatus (Ortholab 2)
+# O Ortholab 1 grava o ÚLTIMO passo concluído; a coluna do Planning Center é o próximo passo
+# (planning_center_controller.rb). O status do Ortholab 2 representa a coluna onde o caso está.
 EVENT_STATUS = {
-    "receipt_of_models": "SUBMITTED",
-    "preparing_models": "IN_PLANNING",
-    "movement": "IN_MOVEMENT",
-    "not_approved_by_responsible_for_lab": "LAB_APPROVAL",
+    "receipt_of_models": "IN_PLANNING",            # Casos a preparar
+    "preparing_models": "IN_MOVEMENT",             # Casos a movimentar
+    "not_approved_by_responsible_for_lab": "IN_MOVEMENT",  # volta para movimentar
+    "movement": "LAB_APPROVAL",                    # Casos a aprovar resp. lab.
     "approval_setup_sent": "WAITING_APPROVAL",
     "change_requests": "REVISION_REQUESTED",
     "approved_case_for_production": "APPROVED",
@@ -50,6 +53,17 @@ EVENT_STATUS = {
     "confection": "LABORATORY",
     "aligners_shipping": "SHIPPED",
 }
+
+# O Ortholab 1 grava datas no horário de São Paulo (default_timezone = :local);
+# o Ortholab 2 (Prisma) guarda em UTC.
+SP = ZoneInfo("America/Sao_Paulo")
+
+
+def sp_to_utc(v):
+    if isinstance(v, datetime) and v.tzinfo is None:
+        return v.replace(tzinfo=SP).astimezone(timezone.utc).replace(tzinfo=None)
+    return v
+
 
 now = datetime.now(timezone.utc).replace(tzinfo=None)
 stats = Counter()
@@ -94,7 +108,14 @@ def main():
 
     def q(sql):
         m.execute(sql)
-        return m.fetchall()
+        rows = m.fetchall()
+        for r in rows:
+            for k, v in r.items():
+                if isinstance(v, datetime):
+                    r[k] = sp_to_utc(v)
+                elif isinstance(v, date):  # só data: meio-dia em SP, para não "voltar" um dia ao exibir
+                    r[k] = sp_to_utc(datetime.combine(v, time(12, 0)))
+        return rows
 
     # ------------------------------------------------------------------ dados base
     roles = {r["id"]: r["name"] for r in q("SELECT id, name FROM roles")}
@@ -261,11 +282,12 @@ def main():
     patient_by_legacy = {r[0]: r[1:] for r in p.fetchall()}
 
     # ------------------------------------------------------------------ casos (workflow_orders)
-    last_event = {
-        r["order_id"]: r["name"]
-        for r in q("SELECT e.order_id, e.name FROM workflow_events e JOIN "
-                   "(SELECT order_id, MAX(id) mid FROM workflow_events GROUP BY order_id) x ON x.mid = e.id")
-    }
+    last_event = {}
+    last_event_at = {}
+    for r in q("SELECT e.order_id, e.name, e.date_of_event, e.created_at FROM workflow_events e JOIN "
+               "(SELECT order_id, MAX(id) mid FROM workflow_events GROUP BY order_id) x ON x.mid = e.id"):
+        last_event[r["order_id"]] = r["name"]
+        last_event_at[r["order_id"]] = r["date_of_event"] or r["created_at"]
     try:
         canceled = {r["order_id"] for r in q("SELECT order_id FROM workflow_canceled_orders")}
     except Exception:
@@ -283,7 +305,9 @@ def main():
         if o["id"] in canceled:
             stats["casos_cancelados"] += 1
             notes = ("[Cancelado no Ortholab 1] " + (notes or "")).strip()
-        elif status == "SHIPPED" and not o.get("in_progress"):
+        # Igual ao Ortholab 1: só pedidos "in_progress" aparecem nas telas de workflow.
+        # O que não está em andamento (finalizado, cancelado ou abandonado) fica como concluído.
+        if not o.get("in_progress"):
             status = "COMPLETED"
         stats[f"status_{status}"] += 1
         rows.append({
@@ -300,6 +324,8 @@ def main():
             "planningFormData": json.dumps({
                 "origem": "ortholab1",
                 "ultimoEventoWorkflow": ev,
+                "dataUltimoEvento": last_event_at.get(o["id"]),
+                "emAndamentoNoOrtholab1": bool(o.get("in_progress")),
                 "alinhadoresSuperiores": o.get("amount_of_upper_aligners"),
                 "alinhadoresInferiores": o.get("amount_of_lower_aligners"),
                 "guiaAttachments": o.get("amount_of_attachments_guide"),
@@ -312,8 +338,9 @@ def main():
             "dropoutInsurance": bool(o.get("has_dropout_insurance")),
             "discountCoupon": clean(o.get("discount_coupon")),
             "packActive": bool(o.get("active_pack")),
+            # data do último evento = há quanto tempo o caso está na coluna (como o Ortholab 1 ordena)
             "createdAt": o.get("created_at") or now,
-            "updatedAt": o.get("updated_at") or now,
+            "updatedAt": last_event_at.get(o["id"]) or o.get("updated_at") or now,
         })
     cols = list(rows[0].keys())
     updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", "legacyId", "createdAt"))

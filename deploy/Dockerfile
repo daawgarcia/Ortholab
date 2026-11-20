@@ -16,7 +16,8 @@ RUN cd packages/frontend && VITE_API_URL=$VITE_API_URL npm run build
 
 FROM node:20-bookworm-slim AS backend
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+# poppler-utils: pdftotext, para ler a Checagem 3D no PDF do planejamento
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates poppler-utils && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/backend ./packages/backend

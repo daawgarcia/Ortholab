@@ -11,6 +11,7 @@ import { formatDate, formatDateTime } from '@/lib/utils'
 import { ArrowLeft, Upload, CheckCircle, RefreshCw, Send, FileText, X, Loader2 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useDropzone } from 'react-dropzone'
+import { ChecagemCard } from '@/components/cases/checagem-card'
 
 function DocUploader({ caseId, type, label, onDone }: any) {
   const [uploading, setUploading] = useState(false)
@@ -216,6 +217,10 @@ export default function CaseDetailPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {(c.status === 'WAITING_APPROVAL' || c.checagem) && (
+        <ChecagemCard checagem={c.checagem} aguardandoDesde={c.status === 'WAITING_APPROVAL' ? c.updatedAt : undefined} />
       )}
 
       <div className="grid grid-cols-3 gap-5">

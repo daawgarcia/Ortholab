@@ -171,6 +171,7 @@ model Case {
   gender            String?
   notes             String?
   planningFormData  Json?
+  checagem          Json?     // indicação da Checagem Virtual 3D lida do PDF do planejamento
   status            CaseStatus   @default(DRAFT)
   billingType       String?
   installmentOption String?

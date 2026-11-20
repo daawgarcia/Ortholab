@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
-import { Bell, LogOut } from 'lucide-react'
+import { Bell, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { useUiStore } from '@/store/ui'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
 import { useState } from 'react'
@@ -8,6 +9,7 @@ import { formatDateTime } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 export function Header() {
+  const { sidebarHidden, toggleSidebar } = useUiStore()
   const { user, logout } = useAuthStore()
   const [showNotifs, setShowNotifs] = useState(false)
   const [selectedNotif, setSelectedNotif] = useState<any | null>(null)
@@ -43,7 +45,10 @@ export function Header() {
 
   return (
     <header className="h-16 border-b bg-white px-6 flex items-center justify-between shrink-0">
-      <div />
+      <Button variant="ghost" size="icon" onClick={toggleSidebar}
+        title={sidebarHidden ? 'Mostrar menu' : 'Ocultar menu (mais espaço na tela)'}>
+        {sidebarHidden ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+      </Button>
       <div className="flex items-center gap-3">
         <div className="relative">
           <Button variant="ghost" size="icon" onClick={() => setShowNotifs(!showNotifs)}>

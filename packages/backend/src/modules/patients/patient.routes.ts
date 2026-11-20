@@ -1,3 +1,4 @@
+import { lerChecagemDoPdf } from '../checagem/checagem'
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
@@ -647,6 +648,22 @@ export async function patientRoutes(fastify: FastifyInstance) {
           const file = await fastify.prisma.workFile.create({
             data: { patientId: id, url, filename: part.filename, size: buffer.length },
           })
+          // PDF do planejamento 3D: lê a indicação da checagem e grava no caso em andamento
+          if (/\.pdf$/i.test(part.filename) || part.mimetype === 'application/pdf') {
+            lerChecagemDoPdf(buffer, part.filename).then(async (checagem) => {
+              if (!checagem) return
+              const caso = await fastify.prisma.case.findFirst({
+                where: { patientId: id, status: { notIn: ['COMPLETED', 'DRAFT'] as any } },
+                orderBy: { createdAt: 'desc' },
+              })
+              if (caso) {
+                await fastify.prisma.case.update({
+                  where: { id: caso.id },
+                  data: { checagem: { ...checagem, arquivoId: file.id } as any },
+                })
+              }
+            }).catch(console.error)
+          }
           mailer.onDigitalModelsUploaded(patient, part.filename, 'work-file').catch(console.error)
           const internalUsers = await getInternalNotificationUserIds(patient.dentistId)
           if (internalUsers.length > 0) {

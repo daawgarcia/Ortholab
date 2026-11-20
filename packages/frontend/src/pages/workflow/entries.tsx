@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '@/lib/api'
-import { Loader2, ArrowRight, Archive, CheckCircle, Package, FileText, UserPlus, Box, PlayCircle } from 'lucide-react'
+import { Loader2, Archive, CheckCircle, Package, FileText, UserPlus, Box, PlayCircle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -26,10 +26,10 @@ interface Entry {
 
 const entryTypeLabels: Record<string, string> = {
   NEW_PATIENT: 'Novo Paciente',
-  PLANNING_FORM: 'Ficha de Planejamento',
-  COMPLETION_FORM: 'Ficha de Finalização',
-  OTHER_SERVICES_FORM: 'Ficha de Novos Produtos',
-  STL_FILE: 'Arquivo STL',
+  PLANNING_FORM: 'Ficha de planejamento',
+  COMPLETION_FORM: 'Ficha de finalização',
+  OTHER_SERVICES_FORM: 'Ficha de novos produtos',
+  STL_FILE: 'Modelos STL',
 }
 
 const entryTypeIcons: Record<string, React.ReactNode> = {
@@ -120,157 +120,126 @@ export function EntriesPage() {
     startWorkflowMutation.mutate(selectedEntry.id)
   }
 
+  const [busca, setBusca] = useState('')
+  const termo = busca.trim().toLowerCase()
+  const visiveis = termo
+    ? entries.filter(e => [e.patient.name, e.dentist.name, e.boxNumber].filter(Boolean).some(v => v!.toLowerCase().includes(termo)))
+    : entries
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Entradas</h1>
-        <div className="flex gap-4 text-sm">
-          <div className="bg-blue-50 px-4 py-2 rounded-lg">
-            <span className="text-blue-600 font-semibold">{stats?.pending || 0}</span>
-            <span className="text-gray-500 ml-1">Pendentes</span>
-          </div>
-          <div className="bg-yellow-50 px-4 py-2 rounded-lg">
-            <span className="text-yellow-600 font-semibold">{stats?.processing || 0}</span>
-            <span className="text-gray-500 ml-1">Com Caixa Aberta</span>
-          </div>
-          <div className="bg-green-50 px-4 py-2 rounded-lg">
-            <span className="text-green-600 font-semibold">{stats?.totalToday || 0}</span>
-            <span className="text-gray-500 ml-1">Hoje</span>
-          </div>
+    <div className="-m-6 p-4 h-[calc(100vh-4rem)] flex flex-col gap-3">
+      {/* Cabeçalho */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="mr-auto">
+          <h1 className="text-xl font-semibold text-gray-900">Entradas</h1>
+          <p className="text-sm text-gray-500">Envios de dentistas aguardando abertura de workflow • mais antigos no topo</p>
+        </div>
+        <div className="flex gap-2">
+          {[
+            { n: stats?.pending ?? entries.length, label: 'Pendentes', cls: 'text-sky-700' },
+            { n: entries.filter(e => !e.boxNumber).length, label: 'Sem caixa', cls: 'text-amber-700' },
+            { n: stats?.totalToday || 0, label: 'Hoje', cls: 'text-emerald-700' },
+          ].map(c => (
+            <div key={c.label} className="rounded-lg bg-white ring-1 ring-gray-200 px-3 py-1.5 text-center min-w-[84px]">
+              <p className={`text-lg font-semibold leading-tight tabular-nums ${c.cls}`}>{c.n}</p>
+              <p className="text-[11px] text-gray-500">{c.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="relative">
+          <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Paciente, dentista ou caixa"
+            className="h-9 w-60 rounded-md border border-gray-200 bg-white pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+          />
         </div>
       </div>
 
-      {/* Tabela de Entradas */}
-      <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dentista</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paciente</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caixa</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último envio</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada em</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ação</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+      {/* Tabela */}
+      <div className="flex-1 min-h-0 overflow-auto rounded-xl bg-white ring-1 ring-gray-200">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur border-b">
+            <tr className="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <th className="px-4 py-2.5">Último envio</th>
+              <th className="px-4 py-2.5">Dentista</th>
+              <th className="px-4 py-2.5">Paciente</th>
+              <th className="px-4 py-2.5">Caixa</th>
+              <th className="px-4 py-2.5">Enviado</th>
+              <th className="px-4 py-2.5 text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {isLoading && (
+              <tr><td colSpan={6} className="py-12 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+            )}
+            {!isLoading && visiveis.length === 0 && (
+              <tr><td colSpan={6} className="py-12 text-center text-sm text-gray-400">Nenhuma entrada pendente</td></tr>
+            )}
+            {visiveis.map(entry => {
+              const quando = entry.lastStlDate || entry.createdAt
+              const dias = Math.max(0, Math.floor((Date.now() - new Date(quando).getTime()) / 86400000))
+              return (
+                <tr key={entry.id} className="group hover:bg-gray-50/80">
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <p className="font-medium text-gray-900 tabular-nums">{formatDateTime(quando)}</p>
+                    <p className={`text-[11px] ${dias >= 7 ? 'text-rose-600' : 'text-gray-500'}`}>
+                      {dias === 0 ? 'hoje' : dias === 1 ? 'há 1 dia' : `há ${dias} dias`}
+                    </p>
                   </td>
-                </tr>
-              )}
-              {!isLoading && entries.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
-                    Nenhuma entrada pendente
+                  <td className="px-4 py-2.5 max-w-[260px]">
+                    <p className="truncate font-medium text-gray-800" title={entry.dentist.name}>{entry.dentist.name}</p>
+                    {entry.dentist.clinic && <p className="truncate text-[11px] text-gray-500">{entry.dentist.clinic}</p>}
                   </td>
-                </tr>
-              )}
-              {entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{entry.dentist.name}</p>
-                      {entry.dentist.clinic && (
-                        <p className="text-xs text-gray-500">{entry.dentist.clinic}</p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => navigate(`/patients/${entry.patientId}`)}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
+                  <td className="px-4 py-2.5 max-w-[280px]">
+                    <button onClick={() => navigate(`/patients/${entry.patientId}`)}
+                      className="truncate max-w-full text-left font-medium text-primary hover:underline" title={entry.patient.name}>
                       {entry.patient.name}
                     </button>
                   </td>
-                  <td className="px-4 py-3">
-                    {entry.boxNumber ? (
-                      <span className="text-sm text-gray-900 font-mono font-semibold">
-                        {entry.boxNumber}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                        Criar caixa
-                      </span>
-                    )}
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    {entry.boxNumber
+                      ? <span className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-[13px] font-semibold text-gray-800">{entry.boxNumber}</span>
+                      : <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">sem caixa</span>}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 text-gray-600">
                       <span className="text-gray-400">{entryTypeIcons[entry.entryType]}</span>
-                      <span className="text-sm text-gray-600">{entryTypeLabels[entry.entryType]}</span>
-                    </div>
+                      {entryTypeLabels[entry.entryType]}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600">{formatDateTime(entry.lastStlDate)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600">{formatDateTime(entry.createdAt)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center justify-end gap-1">
                       {!entry.boxNumber ? (
-                        // Sem caixa - mostrar botão para criar
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
-                          onClick={() => {
-                            setSelectedEntry(entry)
-                            setCreateBoxDialogOpen(true)
-                          }}
-                        >
-                          <CheckCircle className="w-3 h-3" />
-                          Criar Caixa
+                        <Button size="sm" variant="outline"
+                          className="h-8 gap-1 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                          onClick={() => { setSelectedEntry(entry); setCreateBoxDialogOpen(true) }}>
+                          <CheckCircle className="w-3.5 h-3.5" /> Criar caixa
                         </Button>
-                      ) : entry.status === 'PENDING' || entry.status === 'PROCESSING' ? (
-                        // Com caixa - mostrar botão para iniciar workflow
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1 text-xs"
-                          onClick={() => {
-                            setSelectedEntry(entry)
-                            setWorkflowDialogOpen(true)
-                          }}
-                        >
-                          <PlayCircle className="w-3 h-3" />
-                          Iniciar Workflow
+                      ) : (entry.status === 'PENDING' || entry.status === 'PROCESSING') ? (
+                        <Button size="sm" className="h-8 gap-1 text-xs"
+                          onClick={() => { setSelectedEntry(entry); setWorkflowDialogOpen(true) }}>
+                          <PlayCircle className="w-3.5 h-3.5" /> Iniciar workflow
                         </Button>
                       ) : entry.status === 'COMPLETED' && entry.case ? (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs text-primary"
-                          onClick={() => navigate(`/cases/${entry.case?.id}`)}
-                        >
-                          Ver Caso
-                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 text-xs text-primary"
+                          onClick={() => navigate(`/cases/${entry.case?.id}`)}>Ver caso</Button>
                       ) : null}
-                      
                       {(entry.status === 'PENDING' || entry.status === 'PROCESSING') && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs text-gray-400 hover:text-gray-600"
-                          onClick={() => archiveMutation.mutate(entry.id)}
-                          disabled={archiveMutation.isPending}
-                        >
-                          <Archive className="w-3 h-3" />
+                        <Button size="sm" variant="ghost" title="Arquivar"
+                          className="h-8 w-8 p-0 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-700"
+                          onClick={() => archiveMutation.mutate(entry.id)} disabled={archiveMutation.isPending}>
+                          <Archive className="w-3.5 h-3.5" />
                         </Button>
                       )}
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Dialog de Criar Caixa */}
