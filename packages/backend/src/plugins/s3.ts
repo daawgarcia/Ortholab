@@ -28,14 +28,13 @@ class S3Service {
     this.bucket = process.env.S3_BUCKET || 'ortholab-files'
     this.isAWS = endpoint.includes('amazonaws.com')
     this.uploadsRoot = path.resolve(process.cwd(), 'uploads')
-    this.s3Enabled = Boolean(endpoint && accessKeyId && secretAccessKey)
+    // Na AWS sem chaves: usa a permissão (IAM role) do servidor pela cadeia padrão do SDK.
+    const hasKeys = Boolean(accessKeyId && secretAccessKey)
+    this.s3Enabled = Boolean(endpoint && (hasKeys || this.isAWS))
 
-    const clientConfig: Record<string, unknown> = {
-      region: this.region,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
+    const clientConfig: Record<string, unknown> = { region: this.region }
+    if (hasKeys) {
+      clientConfig.credentials = { accessKeyId, secretAccessKey }
     }
 
     if (!this.isAWS && endpoint) {

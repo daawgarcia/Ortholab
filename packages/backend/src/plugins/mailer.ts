@@ -31,10 +31,14 @@ class MailerService {
 
   async send(options: EmailOptions): Promise<void> {
     try {
+      const originalTo = Array.isArray(options.to) ? options.to.join(', ') : options.to
+      // Ambiente de teste: MAIL_REDIRECT_ALL_TO desvia TODO e-mail para uma caixa interna,
+      // registrando o destinatário original no assunto. Nenhum dentista recebe nada.
+      const redirectTo = process.env.MAIL_REDIRECT_ALL_TO
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || 'noreply@estheticaligner.com.br',
-        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
-        subject: options.subject,
+        to: redirectTo || originalTo,
+        subject: redirectTo ? `[TESTE → ${originalTo}] ${options.subject}` : options.subject,
         html: options.html,
       })
     } catch (err) {
