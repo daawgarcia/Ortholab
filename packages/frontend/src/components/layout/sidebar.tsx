@@ -10,7 +10,7 @@ import {
   Briefcase, ExternalLink, ChevronRight, ChevronDown,
   FlaskConical, Printer, Beaker, Send, UserCircle,
   CreditCard, BookOpen, Radio, PlaySquare, FileText, Video, MessageCircle,
-  Inbox, Smartphone, BarChart3, FolderKanban
+  Inbox, Smartphone, BarChart3, FolderKanban, ShieldCheck
 } from 'lucide-react'
 
 const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION']
@@ -41,6 +41,7 @@ const adminNav = [
   { label: 'Cupons', href: '/admin/coupons', icon: CreditCard },
   { label: 'WhatsApp', href: '/admin/whatsapp', icon: Smartphone },
   { label: 'Relatórios', href: '/admin/reports', icon: BarChart3 },
+  { label: 'LGPD', href: '/admin/lgpd', icon: ShieldCheck },
   { label: 'Conteúdo', href: '/admin/content', icon: FileText },
   { label: 'Vídeos', href: '/admin/videos', icon: PlaySquare },
   { label: 'Push / Avisos', href: '/admin/push', icon: Bell },

@@ -778,3 +778,17 @@ enum ApprovalDocStatus {
   REJECTED
   DOWNLOADED
 }
+
+/// LGPD: registro de aceite dos Termos de Uso e da Política de Privacidade (versão = data da última edição do texto)
+model TermsAcceptance {
+  id         String   @id @default(uuid())
+  userId     String
+  document   String   // slug do ContentPage (termos-de-uso, politica-de-privacidade)
+  version    String
+  ip         String?
+  userAgent  String?
+  acceptedAt DateTime @default(now())
+
+  @@unique([userId, document, version])
+  @@index([userId])
+}

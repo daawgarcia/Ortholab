@@ -46,6 +46,7 @@ import { caseApprovalRoutes } from './modules/cases/case-approval.routes'
 import { whatsappRoutes } from './modules/whatsapp/whatsapp.routes'
 import { reportsRoutes } from './modules/reports/reports.routes'
 import { buscaRoutes, prepararBusca } from './modules/busca/busca'
+import { lgpdRoutes, prepararLgpd, registrarAuditoriaDeAcesso } from './modules/lgpd/lgpd.routes'
 import { startStalledCasesJob } from './modules/jobs/stalled-cases.job'
 
 const env = validateEnv()
@@ -149,6 +150,8 @@ const start = async () => {
 
   await app.register(prismaPlugin)
   await app.register(auditPlugin)
+  // LGPD: registra acessos a dados de pacientes (precisa vir antes das rotas)
+  registrarAuditoriaDeAcesso(app)
   await app.register(s3Plugin)
   await app.register(mailerPlugin)
   await app.register(redePlugin)
@@ -271,6 +274,8 @@ const start = async () => {
   await app.register(whatsappRoutes, { prefix: '/api/whatsapp' })
   await app.register(reportsRoutes, { prefix: '/api/reports' })
   await app.register(buscaRoutes, { prefix: '/api/busca' })
+  await app.register(lgpdRoutes, { prefix: '/api/lgpd' })
+  prepararLgpd(app).catch((e) => app.log.error(e, 'lgpd: minutas'))
   prepararBusca(app.prisma).catch(() => {})
 
   // Iniciar job de verificação de casos parados

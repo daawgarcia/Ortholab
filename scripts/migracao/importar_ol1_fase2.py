@@ -77,7 +77,9 @@ def main():
             yield r
         c.close()
 
-    p.execute('SELECT "legacyId", id, "dentistId" FROM "Patient" WHERE "legacyId" IS NOT NULL')
+    # pacientes anonimizados (LGPD) ficam de fora: fotos e arquivos não são reimportados
+    p.execute('SELECT "legacyId", id, "dentistId" FROM "Patient" WHERE "legacyId" IS NOT NULL '
+              "AND name NOT LIKE 'Paciente anonimizado %%'")
     pat = {r[0]: (r[1], r[2]) for r in p.fetchall()}
     p.execute('SELECT "legacyId", id FROM "Case" WHERE "legacyId" IS NOT NULL')
     case_by_order = dict(p.fetchall())

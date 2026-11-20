@@ -293,7 +293,9 @@ def main():
     updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", "legacyId", "createdAt"))
     psycopg2.extras.execute_values(
         p,
-        f'INSERT INTO "Patient" ({", ".join(chr(34) + c + chr(34) for c in cols)}) VALUES %s ON CONFLICT ("legacyId") DO UPDATE SET {updates}',
+        f'INSERT INTO "Patient" ({", ".join(chr(34) + c + chr(34) for c in cols)}) VALUES %s ON CONFLICT ("legacyId") DO UPDATE SET {updates} '
+        # LGPD: paciente anonimizado no Ortholab 2 nunca volta a ser identificado pela sincronização
+        f'WHERE "Patient".name NOT LIKE \'Paciente anonimizado %%\'',
         rows, template="(" + ", ".join(f"%({c})s" for c in cols) + ")", page_size=1000,
     )
     stats["pacientes"] = len(rows)
