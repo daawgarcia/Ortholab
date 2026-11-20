@@ -24,6 +24,9 @@ STATUS = tuple((os.environ.get("CHECAGEM_STATUS") or "WAITING_APPROVAL").split("
 
 SUP = re.compile(r"Arcada\s+Superior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries", re.I)
 INF = re.compile(r"Arcada\s+Inferior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries", re.I)
+# variante sem arcada: "Estimativa aproximada de movimentação: 11 - 15 séries" (vale para o caso todo)
+GERAL = re.compile(r"movimenta[çc][ãa]o\s*:\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries", re.I)
+VERSAO_LEITURA = 2
 PROD = re.compile(r"produ[çc][ãa]o\s+de\s+(.{0,120}?)\s+para\s+esta\s+fase", re.I)
 FS = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+superiores?", re.I)
 FI = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+inferiores?", re.I)
@@ -40,6 +43,8 @@ def interpretar(texto):
         out["estimativaSuperior"] = {"min": int(m[1]), "max": int(m[2])}
     if (m := INF.search(t)):
         out["estimativaInferior"] = {"min": int(m[1]), "max": int(m[2])}
+    if "estimativaSuperior" not in out and "estimativaInferior" not in out and (m := GERAL.search(t)):
+        out["estimativaGeral"] = {"min": int(m[1]), "max": int(m[2])}
     p = PROD.search(t)
     trecho = p[1] if p else t
     if (m := FS.search(trecho)):
@@ -94,7 +99,7 @@ def main():
             sem_pdf += 1
             continue
         chave = f"ol1-v2work-{w['id']}"
-        if atual and atual.get("arquivoId") == chave:
+        if atual and atual.get("arquivoId") == chave and atual.get("versao") == VERSAO_LEITURA:
             pulados += 1
             continue
         with tempfile.TemporaryDirectory() as d:
@@ -106,7 +111,7 @@ def main():
         if not r:
             sem_dado += 1
             r = {}
-        r.update({"arquivo": w["file"], "arquivoId": chave, "tipoIndicado": None,
+        r.update({"arquivo": w["file"], "arquivoId": chave, "versao": VERSAO_LEITURA,
                   "lidoEm": datetime.now(timezone.utc).isoformat()})
         p.execute('UPDATE "Case" SET checagem = %s::jsonb WHERE id = %s', (json.dumps(r), case_id))
         pg.commit()

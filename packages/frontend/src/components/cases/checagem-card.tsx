@@ -4,6 +4,7 @@ interface Faixa { min: number; max: number }
 export interface Checagem {
   estimativaSuperior?: Faixa
   estimativaInferior?: Faixa
+  estimativaGeral?: Faixa
   seriesFaseSuperior?: number
   seriesFaseInferior?: number
   tipoIndicado?: 'UNIDADE' | 'MID' | 'FULL' | null
@@ -47,8 +48,8 @@ export function ChecagemCard({ checagem, aguardandoDesde }: { checagem?: Checage
       {checagem ? (
         <>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Arcada nome="Arcada superior" fase={checagem.seriesFaseSuperior} estimativa={checagem.estimativaSuperior} />
-            <Arcada nome="Arcada inferior" fase={checagem.seriesFaseInferior} estimativa={checagem.estimativaInferior} />
+            <Arcada nome="Arcada superior" fase={checagem.seriesFaseSuperior} estimativa={checagem.estimativaSuperior ?? checagem.estimativaGeral} />
+            <Arcada nome="Arcada inferior" fase={checagem.seriesFaseInferior} estimativa={checagem.estimativaInferior ?? checagem.estimativaGeral} />
           </div>
           <p className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-500">
             <FileText className="w-3.5 h-3.5" />

@@ -13,6 +13,9 @@ const run = promisify(execFile)
 export interface Checagem {
   estimativaSuperior?: { min: number; max: number }
   estimativaInferior?: { min: number; max: number }
+  /** estimativa única, quando o PDF não separa por arcada */
+  estimativaGeral?: { min: number; max: number }
+  versao?: number
   seriesFaseSuperior?: number
   seriesFaseInferior?: number
   tipoIndicado?: 'UNIDADE' | 'MID' | 'FULL' | null
@@ -32,6 +35,10 @@ export function interpretarTexto(texto: string): Omit<Checagem, 'lidoEm'> | null
   const inf = t.match(/Arcada\s+Inferior\)?\s*:?\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries/i)
   if (sup) out.estimativaSuperior = { min: +sup[1], max: +sup[2] }
   if (inf) out.estimativaInferior = { min: +inf[1], max: +inf[2] }
+  if (!sup && !inf) {
+    const geral = t.match(/movimenta[çc][ãa]o\s*:\s*(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})\s*s[ée]ries/i)
+    if (geral) out.estimativaGeral = { min: +geral[1], max: +geral[2] }
+  }
   // "produção de 6 séries superiores e 6 séries inferiores"
   const prod = t.match(/produ[çc][ãa]o\s+de\s+(.{0,120}?)\s+para\s+esta\s+fase/i)
   const trecho = prod ? prod[1] : t
@@ -41,7 +48,7 @@ export function interpretarTexto(texto: string): Omit<Checagem, 'lidoEm'> | null
   if (fi) out.seriesFaseInferior = +fi[1]
   const ambos = trecho.match(/(\d{1,3})\s*s[ée]ries?\s+(?:superiores?\s+e\s+inferiores?|em\s+ambas)/i)
   if (ambos && !fs && !fi) { out.seriesFaseSuperior = +ambos[1]; out.seriesFaseInferior = +ambos[1] }
-  const achou = out.estimativaSuperior || out.estimativaInferior || out.seriesFaseSuperior != null || out.seriesFaseInferior != null
+  const achou = out.estimativaSuperior || out.estimativaInferior || out.estimativaGeral || out.seriesFaseSuperior != null || out.seriesFaseInferior != null
   return achou ? out : null
 }
 
@@ -69,7 +76,7 @@ export async function lerChecagemDoPdf(buffer: Buffer, arquivo?: string): Promis
       const r = interpretarTexto(paginas[i])
       if (r) {
         r.tipoIndicado = classificar(r)
-        return { ...r, pagina: i + 1, arquivo, lidoEm: new Date().toISOString() }
+        return { ...r, pagina: i + 1, arquivo, versao: 2, lidoEm: new Date().toISOString() }
       }
     }
     return null
