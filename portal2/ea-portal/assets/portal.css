@@ -273,3 +273,13 @@ body.eap #cookie-law-info-bar a { color: var(--eap-azul) !important; }
 body.eap #cookie-law-info-bar .cli_action_button, body.eap #cookie-law-info-bar #cookie_action_close_header {
   background: var(--eap-azul) !important; color: #fff !important; border-radius: 999px !important; padding: 7px 18px !important; margin-top: 8px !important; display: inline-block !important;
 }
+
+/* ---------------------------------------------------------------- ajustes 2 */
+body.eap .eap-form label.eap-check { display: inline-flex !important; grid-template-columns: none; font-weight: 500; }
+body.eap .eap-curso__lista { overflow-x: hidden; }
+body.eap input.eap-busca { padding-left: 38px !important; height: auto !important; }
+/* simuladores: já têm o próprio cartão */
+.eap-conteudo--app > .eap-wrap { background: none !important; box-shadow: none !important; padding: 0 24px !important; }
+.eap-conteudo--app .top-logo img { height: 40px !important; width: auto !important; }
+.eap-conteudo--app .welcome-logo img { max-height: 72px !important; width: auto !important; }
+.eap-faixa p { font-size: 15.5px; }

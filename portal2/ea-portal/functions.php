@@ -156,3 +156,7 @@ add_action('template_redirect', function () {
     $a = get_posts(['post_type' => 'ea_aula', 'meta_key' => '_eap_legado', 'meta_value' => 'page-' . $id, 'numberposts' => 1, 'fields' => 'ids']);
     if ($a) { wp_safe_redirect(add_query_arg('aula', $a[0], home_url('/video-aulas/'))); exit; }
 }, 5);
+
+// título da aba na tela de login
+add_filter('pre_get_document_title', fn($t) => is_front_page() ? 'Portal do Credenciado · Esthetic Aligner' : $t, 99);
+add_filter('wpseo_title', fn($t) => is_front_page() ? 'Portal do Credenciado · Esthetic Aligner' : $t, 99);
