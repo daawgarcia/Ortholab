@@ -6,8 +6,9 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 const BASE = 'https://ortholab.estheticaligner.com.br'
-const EMAIL = 'marketing@estheticaligner.com.br'
-const PASSWORD = 'Otavio2805@'
+const EMAIL = process.env.OL1_EMAIL ?? ''
+const PASSWORD = process.env.OL1_PASSWORD ?? ''
+if (!EMAIL || !PASSWORD) { throw new Error('Defina OL1_EMAIL e OL1_PASSWORD no ambiente (.env, fora do git).') }
 
 function request(url: string, options: { method?: string; headers?: Record<string, string>; data?: string } = {}) {
   return new Promise<{ status: number; headers: Record<string, any>; body: string }>((resolve, reject) => {

@@ -4,8 +4,9 @@ const https = require('https');
 const { URL } = require('url');
 
 const BASE = 'https://ortholab.estheticaligner.com.br';
-const EMAIL = 'marketing@estheticaligner.com.br';
-const PASSWORD = 'Otavio2805@';
+const EMAIL = process.env.OL1_EMAIL;
+const PASSWORD = process.env.OL1_PASSWORD;
+if (!EMAIL || !PASSWORD) { console.error('Defina OL1_EMAIL e OL1_PASSWORD no ambiente (.env, fora do git).'); process.exit(1); }
 const BATCH_MS = 5 * 60 * 1000;
 const OUT_DIR = path.join(__dirname, '..', 'tmp-migration');
 
