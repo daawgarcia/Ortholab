@@ -77,7 +77,7 @@ export default function CasesPage() {
           ) : (
             <div className="divide-y">
               <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-gray-50 rounded-t-xl">
-                <div className="col-span-1">#</div>
+                <div className="col-span-1">Caixa</div>
                 <div className="col-span-3">Paciente</div>
                 <div className="col-span-3">Dentista / Clínica</div>
                 <div className="col-span-2">Serviço</div>
@@ -87,7 +87,7 @@ export default function CasesPage() {
               {cases.map((c: any) => (
                 <Link key={c.id} to={`/cases/${c.id}`}
                   className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors items-center">
-                  <div className="col-span-1 text-sm font-bold text-primary">#{c.caseNumber}</div>
+                  <div className="col-span-1 text-sm font-mono font-bold text-primary">{c.patient?.boxNumber || '—'}</div>
                   <div className="col-span-3">
                     <p className="text-sm font-medium">{c.patientName}</p>
                     {c.isRefinement && <span className="text-xs text-orange-600 font-medium">Refinamento</span>}

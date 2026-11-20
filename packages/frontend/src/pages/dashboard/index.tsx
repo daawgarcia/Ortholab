@@ -276,8 +276,9 @@ export default function DashboardPage() {
                 : c.service?.name
               return (
                 <Link key={c.id} to={`/patients/${c.patientId}`} className="flex items-center gap-4 py-3.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors">
-                  <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
-                    #{c.caseNumber}
+                  <div className="min-w-[64px] h-9 px-2 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary shrink-0" title="Número da caixa">
+                    <span className="text-[9px] uppercase tracking-wide opacity-70 leading-none">Caixa</span>
+                    <span className="font-mono font-bold text-xs leading-tight">{c.patient?.boxNumber || '—'}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
