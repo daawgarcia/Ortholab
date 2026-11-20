@@ -1,0 +1,246 @@
+/* EA Portal do Credenciado — layout novo */
+:root {
+  --eap-azul: #2f6fe4;
+  --eap-azul-2: #3fa2f2;
+  --eap-azul-esc: #1b4fb8;
+  --eap-navy: #0d1f42;
+  --eap-navy-2: #16305f;
+  --eap-txt: #1b2433;
+  --eap-txt-2: #5b6576;
+  --eap-linha: #e4e8f0;
+  --eap-fundo: #f5f7fb;
+  --eap-laranja: #f2a33a;
+  --eap-raio: 16px;
+  --eap-sombra: 0 10px 30px rgba(17, 38, 84, .08);
+  --eap-grad: linear-gradient(120deg, #2f6fe4 0%, #3fa2f2 100%);
+}
+
+body.eap {
+  margin: 0;
+  background: var(--eap-fundo) !important;
+  color: var(--eap-txt);
+  font-family: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body.eap h1, body.eap h2, body.eap h3, body.eap h4 { font-family: 'Montserrat', 'Open Sans', sans-serif; letter-spacing: -.01em; color: inherit; }
+body.eap a { color: var(--eap-azul); text-decoration: none; transition: color .15s, background .15s, border-color .15s, box-shadow .15s, transform .15s; }
+body.eap img { max-width: 100%; height: auto; }
+.eap-wrap { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; }
+.eap-main { min-height: 60vh; }
+
+/* ---------------------------------------------------------------- topo */
+.eap-topo { position: sticky; top: 0; z-index: 999; background: var(--eap-navy); box-shadow: 0 2px 18px rgba(0, 0, 0, .18); }
+.admin-bar .eap-topo { top: 32px; }
+.eap-topo__in { display: flex; align-items: center; gap: 24px; height: 72px; }
+.eap-logo { display: flex; align-items: center; gap: 14px; color: #fff !important; }
+.eap-logo img { height: 40px; width: auto; }
+.eap-logo span { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .65); border-left: 1px solid rgba(255, 255, 255, .2); padding-left: 14px; white-space: nowrap; }
+.eap-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.eap-nav a { color: rgba(255, 255, 255, .82) !important; font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.eap-nav a:hover { color: #fff !important; background: rgba(255, 255, 255, .08); }
+.eap-nav a.is-ativo { color: #fff !important; background: rgba(63, 162, 242, .22); }
+.eap-nav svg { width: 17px; height: 17px; }
+.eap-nav__sep { width: 1px; height: 24px; background: rgba(255, 255, 255, .18); margin: 0 6px; }
+.eap-nav__pac { border: 1px solid rgba(255, 255, 255, .25); }
+.eap-burger { display: none; margin-left: auto; background: none; border: 0; padding: 8px; cursor: pointer; }
+.eap-burger span { display: block; width: 24px; height: 2px; background: #fff; margin: 5px 0; border-radius: 2px; transition: .2s; }
+
+/* ---------------------------------------------------------------- faixa de título */
+.eap-faixa { background: var(--eap-grad); color: #fff; padding: 46px 0 52px; position: relative; overflow: hidden; }
+.eap-faixa::after { content: ''; position: absolute; right: -120px; top: -120px; width: 380px; height: 380px; border-radius: 50%; background: rgba(255, 255, 255, .08); }
+.eap-faixa h1 { margin: 0; font-size: clamp(26px, 3.4vw, 38px); font-weight: 700; color: #fff; }
+.eap-faixa p { margin: 8px 0 0; color: rgba(255, 255, 255, .88); max-width: 720px; }
+.eap-faixa--fina { padding: 34px 0 38px; }
+
+/* ---------------------------------------------------------------- conteúdo das páginas antigas */
+.eap-conteudo { padding: 40px 0 64px; }
+.eap-conteudo > .eap-wrap { background: #fff; border-radius: var(--eap-raio); box-shadow: var(--eap-sombra); padding: 36px; }
+.eap-conteudo .mk-page-section, .eap-conteudo .vc_row.vc_row-fluid { max-width: 100% !important; }
+.eap-conteudo .mk-page-section { border-radius: 12px; overflow: hidden; }
+.eap-conteudo .full-width-section, .eap-conteudo .mk-page-section-wrapper { margin-left: 0 !important; margin-right: 0 !important; width: 100% !important; left: 0 !important; }
+.eap-conteudo iframe { max-width: 100%; border-radius: 12px; }
+.eap-conteudo table { width: 100%; border-collapse: collapse; }
+.eap-conteudo input[type=text], .eap-conteudo input[type=email], .eap-conteudo input[type=number], .eap-conteudo input[type=tel], .eap-conteudo select, .eap-conteudo textarea {
+  border: 1px solid var(--eap-linha); border-radius: 10px; padding: 10px 12px; font: inherit; background: #fff; box-sizing: border-box; max-width: 100%;
+}
+.eap-conteudo input:focus, .eap-conteudo select:focus, .eap-conteudo textarea:focus { outline: 0; border-color: var(--eap-azul); box-shadow: 0 0 0 3px rgba(47, 111, 228, .15); }
+.eap-conteudo button, .eap-conteudo input[type=submit], .eap-conteudo .mk-button {
+  border-radius: 999px !important;
+}
+.eap-vazio { text-align: center; color: var(--eap-txt-2); padding: 40px 10px; }
+
+/* ---------------------------------------------------------------- botões e campos */
+.eap-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 14.5px; font-family: 'Montserrat', sans-serif; cursor: pointer; border: 0; line-height: 1.2; }
+.eap-btn svg { width: 18px; height: 18px; }
+.eap-btn--cheio { background: var(--eap-grad); color: #fff !important; box-shadow: 0 8px 20px rgba(47, 111, 228, .28); }
+.eap-btn--cheio:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(47, 111, 228, .34); }
+.eap-btn--linha { background: #fff; color: var(--eap-azul) !important; border: 1.5px solid #cfdcf7; }
+.eap-btn--linha:hover { border-color: var(--eap-azul); }
+.eap-check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--eap-txt-2); cursor: pointer; }
+.eap-check input { width: 17px; height: 17px; accent-color: var(--eap-azul); }
+.eap-chip { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--eap-azul); background: #e8f0fe; padding: 4px 10px; border-radius: 999px; }
+.eap-busca { width: 100%; box-sizing: border-box; border: 1px solid var(--eap-linha); border-radius: 12px; padding: 11px 14px 11px 38px; font: inherit; font-size: 14px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='%238a94a6' viewBox='0 0 24 24'%3E%3Cpath d='M10 3a7 7 0 0 1 5.6 11.2l5 5-1.4 1.4-5-5A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z'/%3E%3C/svg%3E") no-repeat 12px center; }
+.eap-busca:focus { outline: 0; border-color: var(--eap-azul); box-shadow: 0 0 0 3px rgba(47, 111, 228, .15); }
+.eap-busca--larga { margin-bottom: 18px; max-width: 420px; }
+.eap-alerta { background: #fdecec; color: #a12626; border: 1px solid #f6c9c9; padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 16px; }
+
+/* ---------------------------------------------------------------- login */
+.eap-login { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 1fr; }
+.eap-login__marca { background: radial-gradient(1200px 600px at 10% 10%, #2a5fd0 0%, transparent 60%), linear-gradient(150deg, #0d1f42 0%, #173a7a 55%, #2f6fe4 100%); color: #fff; display: flex; align-items: center; justify-content: center; padding: 48px; position: relative; overflow: hidden; }
+.eap-login__marca::before, .eap-login__marca::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .12); }
+.eap-login__marca::before { width: 520px; height: 520px; right: -180px; bottom: -200px; }
+.eap-login__marca::after { width: 300px; height: 300px; right: -60px; bottom: -80px; background: rgba(255, 255, 255, .04); }
+.eap-login__marca-in { max-width: 460px; position: relative; z-index: 1; }
+.eap-login__logo { height: 56px; width: auto; margin-bottom: 48px; }
+.eap-login__marca h1 { color: #fff; font-size: clamp(34px, 4vw, 52px); line-height: 1.05; margin: 0 0 18px; font-weight: 800; }
+.eap-login__marca p { color: rgba(255, 255, 255, .82); font-size: 16.5px; margin: 0 0 28px; }
+.eap-login__marca ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.eap-login__marca li { display: flex; align-items: center; gap: 12px; color: rgba(255, 255, 255, .92); font-weight: 600; }
+.eap-login__marca li svg { width: 22px; height: 22px; padding: 7px; border-radius: 10px; background: rgba(255, 255, 255, .12); color: #9fd2ff; }
+.eap-login__form { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; background: #fff; }
+.eap-login__caixa { width: 100%; max-width: 400px; }
+.eap-login__logo-m { display: none; }
+.eap-login__caixa h2 { font-size: 30px; margin: 0 0 4px; font-weight: 800; color: var(--eap-navy); }
+.eap-login__sub { color: var(--eap-txt-2); margin: 0 0 26px; }
+.eap-form { display: grid; gap: 16px; }
+.eap-form label { display: grid; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--eap-txt); }
+.eap-form input[type=text], .eap-form input[type=password] { width: 100%; box-sizing: border-box; border: 1.5px solid var(--eap-linha); border-radius: 12px; padding: 13px 14px; font: inherit; font-size: 15.5px; background: #fafbfd; }
+.eap-form input:focus { outline: 0; border-color: var(--eap-azul); background: #fff; box-shadow: 0 0 0 4px rgba(47, 111, 228, .12); }
+.eap-senha { position: relative; display: block; }
+.eap-senha button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--eap-azul); font-weight: 700; font-size: 12.5px; cursor: pointer; padding: 6px 8px; }
+.eap-form__linha { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.eap-form__linha .eap-check { font-weight: 500; }
+.eap-form .eap-btn { width: 100%; padding: 14px; font-size: 15.5px; margin-top: 4px; }
+.eap-login__pac { width: 100%; margin-top: 14px; box-sizing: border-box; }
+.eap-login__rodape { color: #9aa3b2; font-size: 12.5px; margin-top: 40px; }
+
+/* ---------------------------------------------------------------- área do credenciado */
+.eap-boasvindas { background: var(--eap-grad); color: #fff; padding: 44px 0 96px; position: relative; overflow: hidden; }
+.eap-boasvindas::after { content: ''; position: absolute; right: -100px; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: rgba(255, 255, 255, .08); }
+.eap-boasvindas__oi { margin: 0 0 4px; font-weight: 600; color: rgba(255, 255, 255, .9); }
+.eap-boasvindas h1 { color: #fff; margin: 0; font-size: clamp(28px, 3.6vw, 40px); font-weight: 800; }
+.eap-boasvindas p { margin: 6px 0 0; color: rgba(255, 255, 255, .88); }
+
+.eap-ia { margin-top: -62px; position: relative; z-index: 2; }
+.eap-ia__tag { display: inline-flex; align-items: center; gap: 8px; background: var(--eap-navy); color: #fff; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; margin-bottom: 12px; }
+.eap-ia__tag span { width: 8px; height: 8px; border-radius: 50%; background: var(--eap-laranja); box-shadow: 0 0 0 4px rgba(242, 163, 58, .25); }
+.eap-ia__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.eap-ia__card { display: flex; align-items: center; gap: 18px; background: #fff; border-radius: var(--eap-raio); padding: 24px; box-shadow: var(--eap-sombra); color: var(--eap-txt) !important; border: 1px solid transparent; position: relative; overflow: hidden; }
+.eap-ia__card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--eap-laranja); }
+.eap-ia__card:hover { transform: translateY(-2px); border-color: #f7d3a1; box-shadow: 0 16px 36px rgba(17, 38, 84, .12); }
+.eap-ia__ic { flex: none; width: 56px; height: 56px; border-radius: 14px; background: #fff4e6; color: #e08a14; display: grid; place-items: center; }
+.eap-ia__ic svg { width: 28px; height: 28px; }
+.eap-ia__card--air .eap-ia__ic { background: #eef0ff; color: #4b55d6; }
+.eap-ia__card--air::before { background: #6b74ea; }
+.eap-ia__txt { display: grid; gap: 4px; flex: 1; }
+.eap-ia__txt strong { font-family: 'Montserrat', sans-serif; font-size: 17px; color: var(--eap-navy); }
+.eap-ia__txt em { font-style: normal; color: var(--eap-txt-2); font-size: 14px; }
+.eap-seta { font-size: 22px; color: var(--eap-azul); transition: transform .15s; }
+.eap-ia__card:hover .eap-seta, .eap-atalho:hover .eap-seta { transform: translateX(4px); }
+
+.eap-atalhos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 26px; }
+.eap-atalho { background: #fff; border-radius: var(--eap-raio); padding: 22px; box-shadow: 0 2px 10px rgba(17, 38, 84, .05); border: 1px solid var(--eap-linha); display: flex; flex-direction: column; gap: 6px; color: var(--eap-txt) !important; }
+.eap-atalho:hover { border-color: #b9cdf6; transform: translateY(-2px); box-shadow: var(--eap-sombra); }
+.eap-atalho__ic { width: 46px; height: 46px; border-radius: 12px; background: #e9f1fe; color: var(--eap-azul); display: grid; place-items: center; margin-bottom: 8px; transition: .15s; }
+.eap-atalho:hover .eap-atalho__ic { background: var(--eap-azul); color: #fff; }
+.eap-atalho__ic svg { width: 24px; height: 24px; }
+.eap-atalho strong { font-family: 'Montserrat', sans-serif; font-size: 16px; color: var(--eap-navy); }
+.eap-atalho strong small { color: var(--eap-txt-2); font-size: 13px; }
+.eap-atalho em { font-style: normal; color: var(--eap-txt-2); font-size: 13.5px; line-height: 1.5; }
+
+.eap-novas { margin: 44px auto 70px; }
+.eap-sec-tit { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.eap-sec-tit h2 { margin: 0; font-size: 21px; color: var(--eap-navy); font-weight: 700; }
+.eap-sec-tit a { font-weight: 700; font-size: 14px; }
+.eap-cards-aula { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.eap-card-aula { background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--eap-linha); color: var(--eap-txt) !important; display: flex; flex-direction: column; }
+.eap-card-aula:hover { transform: translateY(-2px); box-shadow: var(--eap-sombra); }
+.eap-card-aula__capa { aspect-ratio: 16/9; background: #dfe7f6 var(--eap-grad) center/cover; display: grid; place-items: center; }
+.eap-card-aula__capa i { font-style: normal; width: 46px; height: 46px; border-radius: 50%; background: rgba(13, 31, 66, .72); color: #fff; display: grid; place-items: center; font-size: 15px; padding-left: 3px; box-sizing: border-box; }
+.eap-card-aula strong { padding: 12px 14px 2px; font-size: 14.5px; line-height: 1.4; font-family: 'Montserrat', sans-serif; color: var(--eap-navy); }
+.eap-card-aula em { padding: 0 14px 14px; font-style: normal; font-size: 12.5px; color: var(--eap-txt-2); }
+
+/* ---------------------------------------------------------------- vídeo aulas */
+.eap-curso { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; padding-top: 28px; padding-bottom: 64px; }
+.eap-curso__player { background: #fff; border-radius: var(--eap-raio); box-shadow: var(--eap-sombra); overflow: hidden; }
+.eap-video { position: relative; aspect-ratio: 16/9; background: #000; }
+.eap-video iframe, .eap-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.eap-curso__info { padding: 22px 26px 6px; display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+.eap-curso__info h2 { margin: 10px 0 6px; font-size: 22px; color: var(--eap-navy); font-weight: 700; }
+.eap-curso__info p { margin: 0; color: var(--eap-txt-2); }
+.eap-feito { margin-top: 10px; white-space: nowrap; }
+.eap-curso__nav { display: flex; justify-content: space-between; gap: 12px; padding: 16px 26px 24px; }
+.eap-curso__lista { position: sticky; top: 92px; max-height: calc(100vh - 110px); overflow: auto; background: #fff; border-radius: var(--eap-raio); box-shadow: var(--eap-sombra); padding: 14px; }
+.eap-curso__lista .eap-busca { margin-bottom: 10px; }
+.eap-trilha { border-bottom: 1px solid var(--eap-linha); }
+.eap-trilha:last-child { border-bottom: 0; }
+.eap-trilha summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 6px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14.5px; color: var(--eap-navy); }
+.eap-trilha summary::-webkit-details-marker { display: none; }
+.eap-trilha summary::after { content: '▾'; color: var(--eap-txt-2); transition: transform .15s; }
+.eap-trilha:not([open]) summary::after { transform: rotate(-90deg); }
+.eap-trilha summary small { margin-left: auto; font-family: 'Open Sans', sans-serif; font-weight: 600; color: var(--eap-txt-2); font-size: 12px; }
+.eap-trilha ol { list-style: none; margin: 0 0 10px; padding: 0; }
+.eap-trilha li a { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 10px; color: var(--eap-txt) !important; font-size: 13.8px; line-height: 1.35; }
+.eap-trilha li a:hover { background: var(--eap-fundo); }
+.eap-trilha li.is-atual a { background: #e8f0fe; color: var(--eap-azul-esc) !important; font-weight: 700; }
+.eap-trilha li a span { flex: 1; }
+.eap-trilha li a small { color: var(--eap-txt-2); font-size: 12px; }
+.eap-ok { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #c8d2e3; box-sizing: border-box; }
+.eap-trilha li.is-feito .eap-ok { background: #22a06b; border-color: #22a06b; position: relative; }
+.eap-trilha li.is-feito .eap-ok::after { content: ''; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.eap-trilha li.is-atual .eap-ok { border-color: var(--eap-azul); }
+
+/* ---------------------------------------------------------------- materiais */
+.eap-materiais { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.eap-material { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--eap-linha); border-radius: 14px; color: var(--eap-txt) !important; background: #fff; }
+.eap-material:hover { border-color: #b9cdf6; box-shadow: 0 8px 22px rgba(17, 38, 84, .07); }
+.eap-material__tipo { flex: none; width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center; font-size: 11.5px; font-weight: 800; letter-spacing: .04em; background: #eef2f8; color: #4b5b78; font-family: 'Montserrat', sans-serif; }
+.eap-tipo-pdf { background: #fdecec; color: #c93a3a; }
+.eap-tipo-zip, .eap-tipo-rar { background: #fff4e6; color: #c9780e; }
+.eap-tipo-jpg, .eap-tipo-jpeg, .eap-tipo-png { background: #e9f7ef; color: #1f8a55; }
+.eap-tipo-mp4 { background: #eef0ff; color: #4b55d6; }
+.eap-material__txt { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.eap-material__txt strong { font-size: 14.5px; font-weight: 700; color: var(--eap-navy); }
+.eap-material__txt em { font-style: normal; font-size: 12.5px; color: var(--eap-txt-2); }
+.eap-material__baixar { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--eap-azul); white-space: nowrap; }
+.eap-material__baixar svg { width: 18px; height: 18px; }
+
+/* ---------------------------------------------------------------- rodapé */
+.eap-rodape { background: var(--eap-navy); color: rgba(255, 255, 255, .7); padding: 28px 0; font-size: 13.5px; }
+.eap-rodape__in { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.eap-rodape img { height: 32px; width: auto; }
+.eap-rodape p { margin: 0; }
+.eap-rodape nav { margin-left: auto; display: flex; gap: 18px; }
+.eap-rodape a { color: rgba(255, 255, 255, .78) !important; }
+.eap-rodape a:hover { color: #fff !important; }
+
+/* ---------------------------------------------------------------- responsivo */
+@media (max-width: 1080px) {
+  .eap-atalhos, .eap-cards-aula { grid-template-columns: repeat(2, 1fr); }
+  .eap-curso { grid-template-columns: 1fr; }
+  .eap-curso__lista { position: static; max-height: none; }
+  .eap-burger { display: block; }
+  .eap-nav { display: none; position: absolute; left: 0; right: 0; top: 72px; background: var(--eap-navy); flex-direction: column; align-items: stretch; padding: 10px 16px 18px; box-shadow: 0 14px 24px rgba(0, 0, 0, .25); }
+  .eap-nav.is-aberto { display: flex; }
+  .eap-nav__sep { display: none; }
+  .eap-nav a { padding: 12px; }
+}
+@media (max-width: 820px) {
+  .eap-login { grid-template-columns: 1fr; }
+  .eap-login__marca { display: none; }
+  .eap-login__form { background: linear-gradient(180deg, #0d1f42 0, #0d1f42 210px, #fff 210px); padding-top: 34px; }
+  .eap-login__logo-m { display: block; height: 46px; width: auto; margin: 0 auto 40px; }
+  .eap-login__caixa { background: #fff; border-radius: 20px; padding: 26px 22px; box-shadow: var(--eap-sombra); }
+  .eap-ia__grid, .eap-materiais { grid-template-columns: 1fr; }
+  .eap-logo span { display: none; }
+  .eap-conteudo > .eap-wrap { padding: 20px; border-radius: 0; }
+}
+@media (max-width: 560px) {
+  .eap-atalhos, .eap-cards-aula { grid-template-columns: 1fr; }
+  .eap-wrap { padding: 0 16px; }
+  .eap-ia__card { padding: 18px; }
+  .eap-curso__info, .eap-curso__nav { padding-left: 18px; padding-right: 18px; }
+  .eap-rodape nav { margin-left: 0; }
+}
