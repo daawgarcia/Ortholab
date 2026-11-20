@@ -16,7 +16,7 @@ import secrets
 import sys
 import uuid
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 
 import bcrypt
 import psycopg2
@@ -51,7 +51,7 @@ EVENT_STATUS = {
     "aligners_shipping": "SHIPPED",
 }
 
-now = datetime.utcnow()
+now = datetime.now(timezone.utc).replace(tzinfo=None)
 stats = Counter()
 
 
@@ -66,9 +66,15 @@ def clean(s):
     return s or None
 
 
+_UNUSABLE = None
+
+
 def unusable_password():
-    # Hash bcrypt válido de um segredo descartado: a conta existe, mas ninguém entra com ela.
-    return bcrypt.hashpw(secrets.token_bytes(24), bcrypt.gensalt(rounds=10)).decode()
+    # Hash bcrypt válido de um segredo aleatório descartado: a conta existe, mas ninguém entra com ela.
+    global _UNUSABLE
+    if _UNUSABLE is None:
+        _UNUSABLE = bcrypt.hashpw(secrets.token_urlsafe(32).encode(), bcrypt.gensalt(rounds=10)).decode()
+    return _UNUSABLE
 
 
 def main():
