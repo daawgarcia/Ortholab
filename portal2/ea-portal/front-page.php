@@ -25,6 +25,8 @@ $redirect = isset($_GET['redirect_to']) ? esc_url_raw(wp_unslash($_GET['redirect
       <p class="eap-login__sub">Use o mesmo e-mail e senha de sempre.</p>
       <?php if ($erro === 'erro') : ?><div class="eap-alerta">E-mail ou senha incorretos. Tente de novo.</div><?php endif; ?>
       <?php if ($erro === 'vazio') : ?><div class="eap-alerta">Preencha o e-mail e a senha.</div><?php endif; ?>
+      <?php if ($erro === 'sso-expirado') : ?><div class="eap-alerta">O link de acesso expirou. Entre com seu e-mail e senha.</div><?php endif; ?>
+      <?php if ($erro === 'sso-nao-encontrado') : ?><div class="eap-alerta">Não encontramos seu cadastro no portal pelo e-mail, CPF ou CRO. Entre com seu e-mail e senha ou fale com o suporte.</div><?php endif; ?>
       <form method="post" action="<?php echo esc_url(site_url('wp-login.php', 'login_post')); ?>" class="eap-form">
         <input type="hidden" name="eapt_login" value="1">
         <input type="hidden" name="redirect_to" value="<?php echo esc_attr($redirect); ?>">

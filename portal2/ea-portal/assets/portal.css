@@ -283,3 +283,88 @@ body.eap input.eap-busca { padding-left: 38px !important; height: auto !importan
 .eap-conteudo--app .top-logo img { height: 40px !important; width: auto !important; }
 .eap-conteudo--app .welcome-logo img { max-height: 72px !important; width: auto !important; }
 .eap-faixa p { font-size: 15.5px; }
+
+/* ---------------------------------------------------------------- suporte */
+.eap-canais { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: -40px; position: relative; z-index: 2; }
+.eap-canal { background: #fff; border-radius: var(--eap-raio); box-shadow: var(--eap-sombra); padding: 22px; display: flex; flex-direction: column; gap: 6px; }
+.eap-canal strong { font-family: 'Montserrat', sans-serif !important; font-size: 16px; color: var(--eap-navy); }
+.eap-canal em { color: var(--eap-txt-2); font-size: 13.5px; flex: 1; }
+.eap-btn--whats { background: #25d366; color: #fff !important; margin-top: 10px; padding: 10px 16px; font-size: 14px; }
+.eap-btn--whats:hover { background: #1fb457; }
+.eap-btn--whats svg { width: 18px; height: 18px; }
+.eap-suporte { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; padding-top: 30px; padding-bottom: 64px; align-items: start; }
+.eap-suporte > div, .eap-suporte > aside { background: #fff; border-radius: var(--eap-raio); box-shadow: var(--eap-sombra); padding: 28px; }
+.eap-suporte h2 { margin: 0 0 14px; font-size: 21px; color: var(--eap-navy); }
+.eap-suporte__form { position: sticky; top: 96px; }
+.eap-suporte__form > p { color: var(--eap-txt-2); margin: -8px 0 14px; }
+.eap-suporte .eap-busca { margin-bottom: 12px; }
+.eap-faq { border-bottom: 1px solid var(--eap-linha); }
+.eap-faq summary { cursor: pointer; list-style: none; padding: 14px 30px 14px 4px; font-weight: 700; color: var(--eap-navy); position: relative; }
+.eap-faq summary::-webkit-details-marker { display: none; }
+.eap-faq summary::after { content: '+'; position: absolute; right: 6px; top: 10px; font-size: 22px; color: var(--eap-azul); font-weight: 400; }
+.eap-faq[open] summary::after { content: '–'; }
+.eap-faq__r { padding: 0 4px 16px; color: var(--eap-txt-2); }
+.eap-suporte__form input[type=text], .eap-suporte__form input[type=email], .eap-suporte__form input[type=tel], .eap-suporte__form textarea, .eap-suporte__form select { width: 100%; box-sizing: border-box; border: 1.5px solid var(--eap-linha); border-radius: 12px; padding: 11px 13px; font: inherit; background: #fafbfd; margin-top: 4px; }
+.eap-suporte__form textarea { min-height: 120px; }
+.eap-suporte__form input[type=submit] { background: var(--eap-grad) !important; color: #fff !important; border: 0 !important; padding: 12px 22px !important; font-weight: 700; cursor: pointer; width: 100%; }
+.eap-suporte__form .wpcf7-form p { margin: 0 0 12px; font-size: 13.5px; font-weight: 600; }
+
+/* ---------------------------------------------------------------- clube */
+.eap-clube-topo { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.eap-clube-topo .eap-busca { margin: 0; }
+.eap-filtros { display: flex; gap: 6px; flex-wrap: wrap; }
+.eap-filtros button { border: 1px solid var(--eap-linha); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--eap-txt-2); }
+.eap-filtros button.is-ativo { background: var(--eap-azul); border-color: var(--eap-azul); color: #fff; }
+.eap-clube { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.eap-parceiro { background: #fff; border-radius: var(--eap-raio); box-shadow: 0 2px 10px rgba(17, 38, 84, .05); border: 1px solid var(--eap-linha); display: flex; flex-direction: column; overflow: hidden; transition: .15s; }
+.eap-parceiro:hover { box-shadow: var(--eap-sombra); transform: translateY(-2px); }
+.eap-parceiro__logo { height: 130px; display: grid; place-items: center; padding: 18px; background: #f8fafd; border-bottom: 1px solid var(--eap-linha); position: relative; }
+.eap-parceiro__logo img { max-height: 90px !important; max-width: 80% !important; width: auto !important; object-fit: contain; }
+.eap-parceiro__logo span { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 20px; color: var(--eap-navy); }
+.eap-parceiro__selo { position: absolute; top: 12px; right: 12px; background: var(--eap-laranja); color: #fff; font-family: 'Montserrat', sans-serif; font-size: 12.5px; font-weight: 800; padding: 5px 10px; border-radius: 999px; }
+.eap-parceiro__txt { padding: 18px 20px 6px; flex: 1; }
+.eap-parceiro__txt strong { font-family: 'Montserrat', sans-serif !important; font-size: 16.5px; color: var(--eap-navy); }
+.eap-parceiro__txt p { margin: 6px 0 0; color: var(--eap-txt-2); font-size: 14px; }
+.eap-parceiro .eap-btn { margin: 14px 20px 20px; }
+.eap-cupom { margin-top: 12px; display: inline-flex; gap: 6px; align-items: center; border: 1.5px dashed #9bb8ef; background: #f2f6fe; color: var(--eap-azul-esc); padding: 7px 12px; border-radius: 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.eap-cupom small { color: var(--eap-txt-2); }
+.eap-clube-nota { color: var(--eap-txt-2); text-align: center; margin-top: 26px; }
+
+/* ---------------------------------------------------------------- marketing: posts */
+.eap-sec-tit span { color: var(--eap-txt-2); font-size: 13.5px; }
+.eap-sec-tit--mat { margin-top: 34px; }
+.eap-posts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.eap-post-card { padding: 0; border: 0; background: #eef2f8; border-radius: 14px; overflow: hidden; cursor: zoom-in; aspect-ratio: 1; box-shadow: 0 4px 14px rgba(17, 38, 84, .08); }
+.eap-post-card img { width: 100% !important; height: 100% !important; object-fit: cover; transition: transform .25s; display: block; }
+.eap-post-card:hover img { transform: scale(1.04); }
+.eap-modal { position: fixed; inset: 0; z-index: 10000; background: rgba(8, 18, 40, .78); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.eap-modal[hidden] { display: none; }
+.eap-modal__caixa { background: #fff; border-radius: 18px; max-width: 980px; width: 100%; max-height: 90vh; display: grid; grid-template-columns: minmax(0, 1.3fr) 1fr; overflow: hidden; position: relative; }
+.eap-modal__caixa img { width: 100% !important; height: 100% !important; max-height: 90vh; object-fit: contain; background: #0d1f42; }
+.eap-modal__lado { padding: 28px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+.eap-modal__lado strong { font-family: 'Montserrat', sans-serif !important; font-size: 18px; color: var(--eap-navy); }
+.eap-modal__lado p { color: var(--eap-txt-2); white-space: pre-line; flex: 1; }
+.eap-modal__acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+.eap-modal__x { position: absolute; top: 8px; right: 12px; border: 0; background: none; font-size: 30px; line-height: 1; color: var(--eap-txt-2); cursor: pointer; }
+
+/* ---------------------------------------------------------------- confirmar dados */
+.eap-confirmar { max-width: 760px !important; }
+.eap-form--grade { grid-template-columns: 1fr 1fr; }
+.eap-form--grade .eap-col2 { grid-column: 1 / -1; }
+.eap-form input[type=email], .eap-form input[type=tel], .eap-form select { width: 100%; box-sizing: border-box; border: 1.5px solid var(--eap-linha); border-radius: 12px; padding: 13px 14px; font: inherit; font-size: 15.5px; background: #fafbfd; }
+.eap-confirmar__nota { color: var(--eap-txt-2); font-size: 13px; margin: 0; }
+.eap-ok-msg { display: inline-block; margin-top: 12px !important; background: rgba(255, 255, 255, .18); padding: 6px 12px; border-radius: 999px; font-weight: 600; }
+
+@media (max-width: 1080px) {
+  .eap-canais { grid-template-columns: repeat(2, 1fr); }
+  .eap-suporte { grid-template-columns: 1fr; }
+  .eap-suporte__form { position: static; }
+  .eap-clube { grid-template-columns: repeat(2, 1fr); }
+  .eap-posts { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 680px) {
+  .eap-canais, .eap-clube, .eap-form--grade { grid-template-columns: 1fr; }
+  .eap-posts { grid-template-columns: repeat(2, 1fr); }
+  .eap-modal__caixa { grid-template-columns: 1fr; overflow: auto; }
+  .eap-modal__caixa img { max-height: 50vh; }
+}

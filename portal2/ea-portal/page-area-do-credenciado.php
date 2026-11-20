@@ -10,6 +10,7 @@ $nome = trim($u->first_name) ?: $u->display_name;
     <p class="eap-boasvindas__oi">Olá, <?php echo esc_html($nome); ?> 👋</p>
     <h1>Área do Credenciado</h1>
     <p>Tudo o que você precisa para trabalhar com Esthetic Aligner.</p>
+    <?php if (isset($_GET['dados'])) : ?><p class="eap-ok-msg">✓ Dados confirmados. Obrigado!</p><?php endif; ?>
   </div>
 </section>
 

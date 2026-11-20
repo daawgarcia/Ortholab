@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { LinksSso } from './links-sso'
 import { Link, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
@@ -189,6 +190,7 @@ export function Sidebar() {
             ))}
           </>
         )}
+        {isDentist && <LinksSso />}
       </nav>
 
       <div className="p-4 border-t border-white/10">

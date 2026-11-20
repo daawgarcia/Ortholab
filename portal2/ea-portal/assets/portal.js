@@ -73,3 +73,64 @@
     });
   });
 })();
+
+(function () {
+  function norm(s) { return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  // FAQ
+  var bf = document.querySelector('[data-eap-busca-faq]');
+  if (bf) bf.addEventListener('input', function () {
+    var q = norm(bf.value.trim());
+    document.querySelectorAll('[data-eap-faq]').forEach(function (d) {
+      var ok = !q || norm(d.textContent).indexOf(q) >= 0;
+      d.style.display = ok ? '' : 'none';
+      if (q && ok && norm(d.querySelector('summary').textContent).indexOf(q) < 0) d.open = true;
+    });
+  });
+  // Clube: busca + categorias
+  var bc = document.querySelector('[data-eap-busca-clube]');
+  var cat = '';
+  function filtraClube() {
+    var q = bc ? norm(bc.value.trim()) : '';
+    document.querySelectorAll('[data-eap-parc]').forEach(function (a) {
+      var okq = !q || norm(a.textContent).indexOf(q) >= 0;
+      var okc = !cat || (' ' + a.getAttribute('data-cats') + ' ').indexOf(' ' + cat + ' ') >= 0;
+      a.style.display = okq && okc ? '' : 'none';
+    });
+  }
+  if (bc) bc.addEventListener('input', filtraClube);
+  document.querySelectorAll('[data-eap-filtros] button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-eap-filtros] button').forEach(function (x) { x.classList.remove('is-ativo'); });
+      b.classList.add('is-ativo'); cat = b.getAttribute('data-cat'); filtraClube();
+    });
+  });
+  // copiar cupom
+  function copiar(txt, el, msg) {
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () {
+      var o = el.innerHTML; el.innerHTML = msg; setTimeout(function () { el.innerHTML = o; }, 1600);
+    }).catch(function () { window.prompt('Copie:', txt); });
+  }
+  document.querySelectorAll('[data-eap-copiar]').forEach(function (b) {
+    b.addEventListener('click', function () { copiar(b.getAttribute('data-eap-copiar'), b, 'Cupom copiado ✓'); });
+  });
+  // posts: modal
+  var modal = document.querySelector('[data-eap-modal]');
+  if (modal) {
+    var img = modal.querySelector('[data-eap-modal-img]'), tit = modal.querySelector('[data-eap-modal-tit]'),
+      leg = modal.querySelector('[data-eap-modal-leg]'), baixar = modal.querySelector('[data-eap-baixar]'),
+      bleg = modal.querySelector('[data-eap-copiar-leg]');
+    document.querySelectorAll('[data-eap-post]').forEach(function (c) {
+      c.addEventListener('click', function () {
+        img.src = c.getAttribute('data-img'); tit.textContent = c.getAttribute('data-titulo');
+        var l = c.getAttribute('data-legenda') || '';
+        leg.textContent = l || 'Sem legenda sugerida. Use a arte com o texto que preferir.';
+        bleg.style.display = l ? '' : 'none'; bleg.onclick = function () { copiar(l, bleg, 'Legenda copiada ✓'); };
+        baixar.href = c.getAttribute('data-img');
+        modal.hidden = false; document.body.style.overflow = 'hidden';
+      });
+    });
+    function fechar() { modal.hidden = true; document.body.style.overflow = ''; }
+    modal.addEventListener('click', function (e) { if (e.target === modal || e.target.hasAttribute('data-eap-fechar')) fechar(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
+  }
+})();

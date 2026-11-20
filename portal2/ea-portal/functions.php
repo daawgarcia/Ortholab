@@ -34,7 +34,7 @@ function eapt_pagina_livre() {
 add_action('template_redirect', function () {
     if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST) || is_feed()) return;
     // logado na tela inicial -> vai direto para a Área do Credenciado
-    if (is_front_page() && is_user_logged_in() && !isset($_GET['entrar'])) {
+    if (is_front_page() && is_user_logged_in() && !isset($_GET['entrar']) && !isset($_GET['eap_confirmar'])) {
         wp_safe_redirect(home_url('/area-do-credenciado/'));
         exit;
     }
@@ -112,13 +112,15 @@ function eapt_icone($nome) {
 function eapt_atalhos() {
     return [
         ['Vídeo aulas', 'Curso do credenciado, webinars, mentorias, dicas clínicas e podcast.', home_url('/video-aulas/'), 'play'],
-        ['Ortholab', 'Envio de casos, documentação digital e acompanhamento do paciente.', EAPT_ORTHOLAB, 'lab', true],
+        ['Ortholab', 'Envio de casos, documentação digital e acompanhamento do paciente.', eapt_link_ortholab(), 'lab', true],
+        ['Esthetic Rewards', 'Seus pontos, categoria e prêmios do programa de fidelidade.', eapt_link_rewards(), 'clube', true],
         ['Downloads', 'Guia de início rápido, fichas, checagem 3D, preços e serviços, manuais.', home_url('/downloads/'), 'download'],
         ['Marketing', 'Folders, vídeos e posts para divulgar o tratamento.', home_url('/marketing/'), 'mkt'],
         ['Suporte ao credenciado', 'Dúvidas frequentes e chamado com nossa equipe de ortodontistas.', home_url('/suporte/'), 'suporte'],
-        ['Clube de vantagens', 'Descontos e benefícios com parceiros Esthetic Aligner.', home_url('/eaclub/'), 'clube'],
-        ['Área financeira', 'Consulte todos os seus títulos em um só lugar.', home_url('/financeiro/'), 'fin'],
+        ['Clube de vantagens', 'Descontos e benefícios com parceiros Esthetic Aligner.', home_url('/eaclub/'), 'loja'],
+        // Área financeira (consulta de títulos) oculta até a integração funcionar
         ['Esthetic Aligner Store', 'Confira nossa loja.', home_url('/esthetic-aligner-store/'), 'loja'],
+        ['Dicas clínicas', 'Vídeos curtos com dicas práticas para o dia a dia.', add_query_arg('trilha', 'dicas-clinicas', home_url('/video-aulas/')), 'dica'],
     ];
 }
 
@@ -129,7 +131,8 @@ function eapt_menu() {
         ['Downloads', home_url('/downloads/'), 'downloads'],
         ['Marketing', home_url('/marketing/'), 'marketing'],
         ['Suporte', home_url('/suporte/'), 'suporte'],
-        ['Ortholab', EAPT_ORTHOLAB, ''],
+        ['Clube', home_url('/eaclub/'), 'eaclub'],
+        ['Ortholab', eapt_link_ortholab(), ''],
     ];
 }
 
@@ -160,3 +163,17 @@ add_action('template_redirect', function () {
 // título da aba na tela de login
 add_filter('pre_get_document_title', fn($t) => is_front_page() ? 'Portal do Credenciado · Esthetic Aligner' : $t, 99);
 add_filter('wpseo_title', fn($t) => is_front_page() ? 'Portal do Credenciado · Esthetic Aligner' : $t, 99);
+
+/* ------------------------------------------------------------------ login único */
+function eapt_link_ortholab() {
+    $l = function_exists('eap_sso_link') ? eap_sso_link('ortholab') : '';
+    return $l ?: EAPT_ORTHOLAB;
+}
+function eapt_link_rewards() {
+    $l = function_exists('eap_sso_link') ? eap_sso_link('rewards') : '';
+    return $l ?: 'https://pontos.estheticaligner.com.br/';
+}
+// Área financeira oculta por enquanto
+add_action('template_redirect', function () {
+    if (is_page('financeiro') && !current_user_can('edit_pages')) { wp_safe_redirect(home_url('/area-do-credenciado/')); exit; }
+}, 4);

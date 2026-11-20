@@ -5,6 +5,7 @@ function eapt_materiais($secao, $titulo, $sub) {
     get_header();
     eapt_faixa($titulo, $sub);
     echo '<section class="eap-conteudo"><div class="eap-wrap">';
+    do_action('eapt_antes_materiais');
     $itens = [];
     $t = get_term_by('name', $secao, 'ea_secao');
     if ($t) $itens = get_posts(['post_type' => 'ea_material', 'numberposts' => -1, 'tax_query' => [['taxonomy' => 'ea_secao', 'terms' => $t->term_id]], 'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC']]);

@@ -7,6 +7,9 @@ $todas = [];
 foreach ($grupos as $g) foreach ($g['aulas'] as $a) $todas[] = $a;
 $atual = null;
 if (!empty($_GET['aula'])) { $p = get_post((int) $_GET['aula']); if ($p && $p->post_type === 'ea_aula' && $p->post_status === 'publish') $atual = $p; }
+if (!$atual && !empty($_GET['trilha'])) {
+  foreach ($grupos as $g) if ($g['trilha']->slug === sanitize_title($_GET['trilha']) && $g['aulas']) { $atual = $g['aulas'][0]; break; }
+}
 if (!$atual && $todas) $atual = $todas[0];
 $trilha_atual = $atual ? (wp_get_post_terms($atual->ID, 'ea_trilha', ['fields' => 'ids'])[0] ?? 0) : 0;
 $idx = $atual ? array_search($atual->ID, array_map(fn($a) => $a->ID, $todas), true) : false;

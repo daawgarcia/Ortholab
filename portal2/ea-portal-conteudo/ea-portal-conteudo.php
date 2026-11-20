@@ -2,14 +2,17 @@
 /**
  * Plugin Name: EA Portal – Conteúdo do Credenciado
  * Description: Vídeo aulas e materiais (downloads/marketing) do Portal do Credenciado, com cadastro simples para a equipe. Inclui importação do conteúdo das páginas antigas.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: Esthetic Aligner
  * Text Domain: ea-portal
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EAP_VERSION', '1.0.1');
+define('EAP_VERSION', '1.1.0');
+require_once __DIR__ . '/sso.php';
+require_once __DIR__ . '/clube-suporte.php';
+require_once __DIR__ . '/confirmar-dados.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {

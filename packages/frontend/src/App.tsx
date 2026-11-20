@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import api from '@/lib/api'
 
 import LoginPage from '@/pages/auth/login'
+import SsoPage from '@/pages/auth/sso'
 import RegisterPage from '@/pages/auth/register'
 import ForgotPasswordPage from '@/pages/auth/forgot-password'
 import ResetPasswordPage from '@/pages/auth/reset-password'
@@ -89,6 +90,7 @@ export default function App() {
       )}
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/sso" element={<SsoPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

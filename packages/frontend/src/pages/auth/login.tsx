@@ -103,6 +103,14 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <AplicarIdioma />
           <div className="mb-4 flex justify-end"><SeletorIdioma /></div>
+          {(() => {
+            const m = new URLSearchParams(window.location.search).get('sso')
+            const t: Record<string, string> = {
+              'expirado': 'O link de acesso expirou. Volte ao portal e clique de novo, ou entre com seu e-mail e senha.',
+              'nao-encontrado': 'Não encontramos seu cadastro no Ortholab pelo e-mail, CPF ou CRO. Entre com seu e-mail e senha ou fale com a equipe.',
+            }
+            return m && t[m] ? <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{t[m]}</div> : null
+          })()}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Bem-vindo de volta</h2>
             <p className="text-muted-foreground mt-1">Entre com suas credenciais para acessar</p>

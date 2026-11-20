@@ -1,3 +1,4 @@
+import { ssoRoutes } from '../sso/sso.routes'
 import { paisesDoUsuario, normalizarPais, idiomaDoPais } from '../acesso/escopo'
 import { FastifyInstance } from 'fastify'
 import bcrypt from 'bcryptjs'
@@ -243,6 +244,9 @@ export async function authRoutes(fastify: FastifyInstance) {
       pendingPushes: unreadPushes,
     }
   }
+
+  // login único com Portal do Credenciado e Esthetic Rewards
+  await fastify.register(ssoRoutes, { prefix: '/sso', concluirLogin })
 
   fastify.post('/refresh', { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { refreshToken } = (request.body || {}) as { refreshToken?: string }
