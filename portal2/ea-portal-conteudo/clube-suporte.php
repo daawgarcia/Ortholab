@@ -217,6 +217,6 @@ function eap_importar_posts_marketing() {
 
 /** Logo do parceiro (imagem destacada ou URL guardada na importação). */
 function eap_parceiro_logo($id) {
-    if (has_post_thumbnail($id)) return get_the_post_thumbnail_url($id, 'medium');
+    if (has_post_thumbnail($id)) return function_exists('eapt_thumb_url') ? eapt_thumb_url($id, 'medium') : get_the_post_thumbnail_url($id, 'medium');
     return get_post_meta($id, '_eap_logo_url', true);
 }

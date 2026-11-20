@@ -7,8 +7,8 @@ add_action('eapt_antes_materiais', function () {
     if (!$posts) return;
     echo '<div class="eap-sec-tit"><h2>Posts prontos para suas redes</h2><span>Clique para ver, copiar a legenda e baixar</span></div><div class="eap-posts">';
     foreach ($posts as $p) {
-        $img = get_the_post_thumbnail_url($p->ID, 'large');
-        $full = get_the_post_thumbnail_url($p->ID, 'full');
+        $img = eapt_thumb_url($p->ID, 'large');
+        $full = eapt_thumb_url($p->ID, 'full');
         if (!$img) continue;
         echo '<button type="button" class="eap-post-card" data-eap-post data-img="' . esc_url($full) . '" data-titulo="' . esc_attr(get_the_title($p)) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">';
         echo '<img src="' . esc_url($img) . '" alt="' . esc_attr(get_the_title($p)) . '" loading="lazy"></button>';

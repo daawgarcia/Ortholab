@@ -177,3 +177,27 @@ function eapt_link_rewards() {
 add_action('template_redirect', function () {
     if (is_page('financeiro') && !current_user_can('edit_pages')) { wp_safe_redirect(home_url('/area-do-credenciado/')); exit; }
 }, 4);
+
+/**
+ * URL de imagem que funciona com o plugin de mídia protegida.
+ * O plugin troca os tamanhos intermediários por /secure-media/<arquivo>/, que dá 404.
+ * Aqui montamos o endereço direto do arquivo em /wp-content/uploads.
+ */
+function eapt_img_url($att_id, $tam = 'large') {
+    $att_id = (int) $att_id;
+    if (!$att_id) return '';
+    $meta = wp_get_attachment_metadata($att_id);
+    $up   = wp_get_upload_dir();
+    if (!empty($meta['file'])) {
+        $dir = dirname($meta['file']);
+        $dir = ($dir === '.' || $dir === '') ? '' : trailingslashit($dir);
+        if ($tam !== 'full' && !empty($meta['sizes'][$tam]['file'])) {
+            return trailingslashit($up['baseurl']) . $dir . $meta['sizes'][$tam]['file'];
+        }
+        return trailingslashit($up['baseurl']) . $meta['file'];
+    }
+    return (string) wp_get_attachment_url($att_id);
+}
+function eapt_thumb_url($post_id, $tam = 'large') {
+    return eapt_img_url(get_post_thumbnail_id($post_id), $tam);
+}

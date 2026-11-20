@@ -198,7 +198,7 @@ function eap_video_embed($url, $autoplay = false) {
 
 /** Capa: imagem destacada > capa do Vimeo/YouTube (guardada em cache) > vazio. */
 function eap_video_capa($post_id) {
-    if (has_post_thumbnail($post_id)) return get_the_post_thumbnail_url($post_id, 'medium_large');
+    if (has_post_thumbnail($post_id)) return function_exists('eapt_thumb_url') ? eapt_thumb_url($post_id, 'medium_large') : get_the_post_thumbnail_url($post_id, 'medium_large');
     $url = get_post_meta($post_id, '_eap_video', true);
     $cache = get_post_meta($post_id, '_eap_capa_auto', true);
     if ($cache && strpos($cache, '|') !== false) { [$fonte, $img] = explode('|', $cache, 2); if ($fonte === md5($url)) return $img; }
