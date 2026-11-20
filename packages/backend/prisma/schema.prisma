@@ -105,6 +105,7 @@ model User {
   state                   String?
   zipCode                 String?
   country                 String?    @default("BR")
+  language                String?    // "pt" | "es" (escolhido pelo usuário; senão vem do país)
   deliveryStreet          String?
   deliveryNumber          String?
   deliveryComplement      String?
@@ -158,6 +159,7 @@ model User {
   processedEntries   Entry[]             @relation("EntryProcessor")
   approvalVideos     CaseApprovalVideo[] @relation("ApprovalVideoUploader")
   approvalDocs       CaseApprovalDocument[] @relation("ApprovalDocUploader")
+  couponsApplied          Case[]     @relation("CouponAppliedBy")
 }
 
 model Case {
@@ -183,6 +185,9 @@ model Case {
   installmentOption String?
   dropoutInsurance  Boolean      @default(false)
   discountCoupon    String?
+  couponAppliedById String?   // quem colocou o cupom (equipe ou dentista)
+  couponAppliedAt   DateTime?
+  couponAppliedBy   User?     @relation("CouponAppliedBy", fields: [couponAppliedById], references: [id])
   packActive        Boolean      @default(false)
   totvsOrderId      String?
   isRefinement      Boolean      @default(false)

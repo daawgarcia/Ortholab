@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role, EntryStatus, EntryType, CaseStatus } from '@prisma/client'
+import { paisesDoUsuario, whereDentistaPais } from '../acesso/escopo'
 
 export async function entryRoutes(fastify: FastifyInstance) {
   // Listar entradas pendentes
@@ -10,20 +11,12 @@ export async function entryRoutes(fastify: FastifyInstance) {
 
     const where: any = {}
 
-    // Filtros por role
+    // Filtros: dentista só as dele; equipe estrangeira só do seu país; o resto vê todas
     if (user.role === Role.DENTIST) {
       where.dentistId = user.id
-    } else if (user.role === Role.SELLER) {
-      // Vendedor vê entradas de dentistas do seu portfólio
-      const sellerClients = await fastify.prisma.sellerClient.findMany({
-        where: { sellerId: user.id },
-        select: { clientId: true },
-      })
-      const clientIds = sellerClients.map(sc => sc.clientId)
-      where.dentistId = { in: clientIds }
-    } else if (user.role === Role.EXPEDITION) {
-      // Expedição vê todas as entradas para gerenciar caixas
-      // Não aplica filtro - vê todas
+    } else {
+      const paises = await paisesDoUsuario(fastify.prisma, user)
+      if (paises) where.dentist = { is: whereDentistaPais(paises) }
     }
     // Admin, Lab, Financial veem todas
 

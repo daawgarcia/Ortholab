@@ -12,7 +12,7 @@ import { CheckCircle, XCircle, Search, Plus, X } from 'lucide-react'
 
 const ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER', 'EXPEDITION']
 const ROLE_LABELS: Record<string, string> = {
-  DENTIST: 'Dentista', LAB_TECH: 'Lab Tech', ADMIN: 'Administrador', FINANCIAL: 'Financeiro', SELLER: 'Vendedor', EXPEDITION: 'Expedição'
+  DENTIST: 'Dentista', LAB_TECH: 'Lab Tech', ADMIN: 'Administrador', FINANCIAL: 'Financeiro', SELLER: 'Vendas', EXPEDITION: 'Expedição'
 }
 
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
@@ -148,7 +148,7 @@ export default function AdminUsersPage() {
   })
   const updateCountries = useMutation({
     mutationFn: ({ id, countries }: { id: string; countries: string[] }) => api.patch(`/admin/users/${id}/countries`, { countries }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast({ title: 'País do funcionário atualizado!' }) },
   })
 
 
@@ -223,19 +223,23 @@ export default function AdminUsersPage() {
                   {u.cro && <p className="text-gray-400">CRO: {u.cro}</p>}
                   {u.role === 'DENTIST' && u.firstCaseCouponEligible && <p className="text-amber-700">Elegível PRIMEIROCASO</p>}
                   {['LAB_TECH', 'EXPEDITION', 'FINANCIAL'].includes(u.role) && (
-                    <div className="mt-1 flex flex-wrap gap-1" title="Países que este funcionário vê no workflow (nenhum marcado = todos)">
-                      {['brasil', 'colombia', 'mexico', 'portugal', 'peru'].map(p => {
-                        const on = (u.allowedCountries || []).includes(p)
-                        return (
-                          <button key={p} type="button"
-                            onClick={() => updateCountries.mutate({ id: u.id, countries: on ? u.allowedCountries.filter((x: string) => x !== p) : [...(u.allowedCountries || []), p] })}
-                            className={`rounded px-1.5 py-0.5 text-[10px] ring-1 ${on ? 'bg-primary text-white ring-primary' : 'text-gray-500 ring-gray-200'}`}>
-                            {p === 'brasil' ? 'BR' : p === 'colombia' ? 'CO' : p === 'mexico' ? 'MX' : p === 'portugal' ? 'PT' : 'PE'}
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <label className="mt-1 flex items-center gap-1.5 text-[11px] text-gray-500" title="Funcionário do Brasil vê todos os países; funcionário estrangeiro só vê o próprio país">
+                      País:
+                      <select
+                        className="rounded border border-input px-1.5 py-0.5 text-[11px] text-gray-700"
+                        value={(u.allowedCountries || []).find((p: string) => p !== 'brasil') || 'brasil'}
+                        onChange={e => updateCountries.mutate({ id: u.id, countries: [e.target.value] })}
+                      >
+                        <option value="brasil">Brasil (vê todos)</option>
+                        <option value="portugal">Portugal</option>
+                        <option value="colombia">Colômbia</option>
+                        <option value="mexico">México</option>
+                        <option value="peru">Peru</option>
+                        <option value="espanha">Espanha</option>
+                      </select>
+                    </label>
                   )}
+                  {u.role === 'SELLER' && <p className="mt-1 text-[11px] text-gray-400">Vendas: vê todos os workflows</p>}
                 </div>
                 <div className="col-span-1"><StatusBadge status={u.status} /></div>
                 <div className="col-span-1 text-xs text-muted-foreground">{formatDate(u.createdAt)}</div>

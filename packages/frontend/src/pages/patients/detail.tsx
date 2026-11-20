@@ -11,6 +11,7 @@ import { ArrowRightLeft, ChevronLeft, FileText, Plus, Trash2 } from 'lucide-reac
 import { toast } from '@/hooks/use-toast'
 import { StatusBadge } from '@/components/status-badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { caixaFmt } from '@/lib/rotulo'
 
 function isVideoFile(filename: string) {
   return /\.(mp4|webm|mov)$/i.test(filename)
@@ -221,7 +222,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
               <div key={c.id} className="border rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <div className="text-sm font-semibold">Caso #{c.caseNumber} - {c.productType || c.service?.name || 'Caso'}</div>
+                    <div className="text-sm font-semibold">{c.productType || c.service?.name || 'Caso'} <span className="font-normal text-gray-400">· caso nº {c.caseNumber}</span></div>
                     <div className="text-xs text-gray-500">Concluído em {new Date(c.updatedAt).toLocaleDateString('pt-BR')}</div>
                   </div>
                   <StatusBadge status={c.status} />
@@ -275,7 +276,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:items-start">
                   <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
                     <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
-                      <p className="text-sm font-semibold text-gray-700">Pipeline — Caso #{caseData.caseNumber}</p>
+                      <p className="text-sm font-semibold text-gray-700">Pipeline <span className="font-normal text-gray-400">· caso nº {caseData.caseNumber}</span></p>
                       <StatusBadge status={caseData.status} />
                     </div>
                     <div className="divide-y">
@@ -512,6 +513,19 @@ function FilesTab({ patientId, type }: { patientId: string; type: 'stl' | 'work'
   )
 }
 
+/** Arquivos de trabalho (vindos do Ortholab 1 e enviados depois): PDFs vão para "Relatório", vídeos para "Checagem Virtual 3D". */
+function useArquivosTrabalho(patientId: string) {
+  const { data } = useQuery({
+    queryKey: ['patient-files', patientId, 'work'],
+    queryFn: () => api.get(`/patients/${patientId}/work-files`).then(r => r.data),
+  })
+  const files: any[] = data?.files || []
+  return {
+    pdfs: files.filter(f => /\.pdf$/i.test(f.filename || f.url || '')),
+    videos: files.filter(f => isVideoFile(f.filename || '') || /\.(mp4|webm|mov)(\?|$)/i.test(f.url || '')),
+  }
+}
+
 function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] }) {
   const { user } = useAuthStore()
   const [uploading, setUploading] = useState(false)
@@ -522,7 +536,11 @@ function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] })
     queryKey: ['patient-approvals', patientId],
     queryFn: () => api.get(`/cases/patient/${patientId}/approvals`).then(r => r.data),
   })
-  const documents = data?.documents || []
+  const { pdfs } = useArquivosTrabalho(patientId)
+  const documents = [
+    ...(data?.documents || []),
+    ...pdfs.map((f: any) => ({ id: `wf-${f.id}`, fileUrl: f.url, title: f.filename, createdAt: f.createdAt, status: 'VIEWED', legado: true })),
+  ].sort((a: any, b: any) => +new Date(b.createdAt) - +new Date(a.createdAt))
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -564,7 +582,7 @@ function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] })
         <div className="space-y-2">
           {documents.map((doc: any) => (
             <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
-              onClick={() => handleView(doc.id)}
+              onClick={() => { if (!doc.legado) handleView(doc.id) }}
               className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
               <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0 border border-red-100">
                 <FileText className="w-5 h-5 text-red-500" />
@@ -572,12 +590,14 @@ function RelatorioTab({ patientId, cases }: { patientId: string; cases: any[] })
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{doc.title || doc.fileName}</p>
                 <p className="text-xs text-gray-400">
-                  Caso #{doc.case?.caseNumber} · {doc.uploader?.name} · {new Date(doc.createdAt).toLocaleDateString('pt-BR')}
+                  {doc.uploader?.name ? `${doc.uploader.name} · ` : ''}{new Date(doc.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })}
                 </p>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${doc.status === 'VIEWED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                {doc.status === 'VIEWED' ? 'Visualizado' : 'Novo'}
-              </span>
+              {!doc.legado && (
+                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${doc.status === 'VIEWED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                  {doc.status === 'VIEWED' ? 'Visualizado' : 'Novo'}
+                </span>
+              )}
             </a>
           ))}
         </div>
@@ -604,6 +624,7 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
     queryFn: () => api.get(`/cases/patient/${patientId}/approvals`).then(r => r.data),
   })
   const videos = data?.videos || []
+  const { videos: videosTrabalho } = useArquivosTrabalho(patientId)
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -660,8 +681,21 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
           )}
         </div>
       )}
+      {videosTrabalho.length > 0 && (
+        <div className="space-y-5">
+          {videosTrabalho.map((f: any) => (
+            <div key={f.id} className="border rounded-xl overflow-hidden bg-white shadow-sm">
+              <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
+                <p className="text-sm font-semibold">{f.filename}</p>
+                <p className="text-xs text-gray-400">{new Date(f.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })}</p>
+              </div>
+              <video src={f.url} controls preload="metadata" className="w-full max-h-[500px] bg-black" playsInline />
+            </div>
+          ))}
+        </div>
+      )}
       {videos.length === 0 ? (
-        <p className="text-sm text-gray-400 py-4">Nenhum vídeo de checagem disponível</p>
+        videosTrabalho.length === 0 ? <p className="text-sm text-gray-400 py-4">Nenhum vídeo de checagem disponível</p> : null
       ) : (
         <div className="space-y-5">
           {videos.map((video: any) => (
@@ -670,7 +704,7 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
                 <div>
                   <p className="text-sm font-semibold">{video.title}</p>
                   <p className="text-xs text-gray-400">
-                    Caso #{video.case?.caseNumber} · Enviado por {video.uploader?.name} · {new Date(video.createdAt).toLocaleDateString('pt-BR')}
+                    Enviado por {video.uploader?.name} · {new Date(video.createdAt).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -897,11 +931,12 @@ export default function PatientDetailPage() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-primary">{caixaFmt(patient.boxNumber)}</span>
+            <span className="text-gray-300">–</span>
             <span>{patient.name}</span>
             {treatmentLabel && <Badge variant="secondary">{treatmentLabel}</Badge>}
           </h1>
           <p className="text-sm text-gray-400">{patient.dentist?.name}{patient.dentist?.clinic ? ` · ${patient.dentist.clinic}` : ''}</p>
-          {activeCase?.totvsOrderId && <p className="text-sm text-blue-600 font-medium">Nº de Caixa: {activeCase.totvsOrderId}</p>}
         </div>
         <Button size="sm" variant="outline" className="ml-auto" onClick={() => navigate(`/patients/${id}/edit`)}>Editar</Button>
       </div>
@@ -932,10 +967,10 @@ export default function PatientDetailPage() {
         </div>
       )}
 
-      <div className="border-b flex gap-0 overflow-x-auto">
+      <div className="border-b flex flex-wrap gap-x-1">
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors inline-flex items-center gap-2 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`px-3 py-2.5 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-px transition-colors inline-flex items-center gap-1.5 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {tab}
             {tab === 'Informações Importantes' && hasImportantNotes && (
               <Badge variant="warning" className="px-2 py-0 text-[10px] leading-5">Aviso</Badge>

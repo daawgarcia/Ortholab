@@ -6,7 +6,7 @@ Idempotente: só grava um preço novo quando o valor mudou (o histórico de pre�
 Parcelado = valor da PARCELA (o sistema multiplica pelo nº de parcelas).
 Faixas do desconto progressivo (2º caso do mês -10%, 3º em diante -15%) com os valores
 exatos da tabela comercial: groupId "<grupo>:D10" / "<grupo>:D15".
-Unidade = preço por alinhador (quantidade vem do planejamento 3D).
+Unidade = preço por alinhador (quantidade vem do planejamento 3D), sem desconto progressivo.
 EA AIR² e EA MIO ficam fora do desconto progressivo.
 Checagem Virtual 3D: inclusa se aprovada em até 30 dias; depois, R$ 320.
 """
@@ -17,7 +17,7 @@ import psycopg2
 
 SERVICOS = [
     {"name": "EA Unidade", "type": "UNIDADE", "description": "R$ 95,00 por alinhador (quantidade definida pelo planejamento 3D). Checagem Virtual 3D inclusa*",
-     "prices": {"CASH": 95, "CASH:D10": 86, "CASH:D15": 81}},
+     "prices": {"CASH": 95}},  # sem desconto progressivo
     {"name": "EA MID", "type": "MID", "description": "Até 40 alinhadores • Refinamento de até 6 alinhadores por arcada • Checagem Virtual 3D inclusa*",
      "prices": {"CASH": 3800, "INSTALLMENT_6": 718, "INSTALLMENT_12": 384,
                 "CASH:D10": 3420, "INSTALLMENT_6:D10": 646, "INSTALLMENT_12:D10": 346,
@@ -34,7 +34,7 @@ SERVICOS = [
 ]
 
 # serviços de exemplo do seed inicial — ficam inativos (mantidos por histórico)
-DEMO = ["Alinhadores Full", "Alinhadores Express", "Refinamento", "Contencao"]
+DEMO = ["Alinhadores Full", "Alinhadores Express", "Refinamento", "Contencao", "Unidade"]
 
 
 def main():
@@ -60,7 +60,10 @@ def main():
                 p.execute('INSERT INTO "Price" (id, "serviceId", price, "groupId", "validFrom", "createdAt") '
                           'VALUES (%s,%s,%s,%s,now(),now())', (str(uuid.uuid4()), sid, valor, grupo))
                 novos += 1
-        print(f"{s['name']}: {novos} preço(s) gravado(s)")
+        # remove faixas que não existem mais na tabela (ex.: desconto progressivo da Unidade)
+        p.execute('DELETE FROM "Price" WHERE "serviceId"=%s AND "dentistId" IS NULL AND NOT ("groupId" = ANY(%s))',
+                  (sid, list(s["prices"].keys())))
+        print(f"{s['name']}: {novos} preço(s) gravado(s), {p.rowcount} faixa(s) antiga(s) removida(s)")
     p.execute('UPDATE "Service" SET active=false WHERE name = ANY(%s)', (DEMO,))
     print(f"Serviços de exemplo desativados: {p.rowcount}")
     pg.commit()

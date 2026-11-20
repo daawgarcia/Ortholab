@@ -52,8 +52,8 @@ import AdminFretePage from '@/pages/admin/frete'
 import AdminCardPaymentsPage from '@/pages/admin/card-payments'
 import ProjectsPage from '@/pages/projects'
 
-const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION']
-const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
+const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION', 'SELLER']
+const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER', 'EXPEDITION']
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user } = useAuthStore()
@@ -106,8 +106,8 @@ export default function App() {
           <Route path="patients/:patientId/forms/other-services/new" element={<ProtectedRoute roles={PATIENT_ROLES}><OtherServicesFormPage /></ProtectedRoute>} />
           <Route path="patients/:patientId/clinical-records/new" element={<ProtectedRoute roles={PATIENT_ROLES}><NewClinicalRecordPage /></ProtectedRoute>} />
 
-          <Route path="dentists" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL']}><DentistsPage /></ProtectedRoute>} />
-          <Route path="dentists/:id" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL']}><DentistDetailPage /></ProtectedRoute>} />
+          <Route path="dentists" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL','EXPEDITION','SELLER']}><DentistsPage /></ProtectedRoute>} />
+          <Route path="dentists/:id" element={<ProtectedRoute roles={['ADMIN','LAB_TECH','FINANCIAL','EXPEDITION','SELLER']}><DentistDetailPage /></ProtectedRoute>} />
 
           <Route path="cases" element={<Navigate to="/patients" replace />} />
           <Route path="cases/new" element={<Navigate to="/patients/new" replace />} />

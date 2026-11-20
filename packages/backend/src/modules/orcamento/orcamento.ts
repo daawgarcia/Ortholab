@@ -6,6 +6,12 @@ import {
 } from '../services/pricing.utils'
 import { getPricingContext } from '../financial/pricing-context'
 import { calcularFrete, siglaUF } from './frete'
+import { normalizarPais } from '../acesso/escopo'
+
+/** Dentista de fora do Brasil: só escolhe o pacote; o faturamento é interno, para o laboratório do país. */
+export function semCobrancaDentista(dentist: any) {
+  return normalizarPais(dentist?.country) !== 'brasil'
+}
 
 /**
  * Orçamento do caso no momento da aprovação:
@@ -79,6 +85,13 @@ export async function orcamentoRoutes(fastify: FastifyInstance) {
     })
     const ordem: Record<string, number> = { UNIDADE: 1, MID: 2, FULL: 3 }
     servicos.sort((a, b) => (ordem[a.type] || 9) - (ordem[b.type] || 9))
+    if (semCobrancaDentista(caso.dentist)) {
+      return {
+        semCobranca: true,
+        pais: normalizarPais(caso.dentist.country),
+        opcoes: servicos.map(s => ({ servico: { id: s.id, nome: s.name, tipo: s.type }, parcelasPermitidas: ['1x'], parcelas: '1x' })),
+      }
+    }
     const opcoes = []
     for (const s of servicos) {
       const permitidas = getAllowedInstallmentOptions(s as any)

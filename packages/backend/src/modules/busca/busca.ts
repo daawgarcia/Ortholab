@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Prisma, PrismaClient, Role } from '@prisma/client'
+import { paisesDoUsuario, whereDentistaPais } from '../acesso/escopo'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 
 /**
@@ -115,11 +116,10 @@ export async function buscarDentistas(
 /** Dentistas que o usuário pode ver (null = todos). */
 export async function dentistasPermitidos(prisma: PrismaClient, user: JwtPayload): Promise<string[] | null> {
   if (user.role === Role.DENTIST) return [user.id]
-  if (user.role === Role.SELLER) {
-    const p = await prisma.sellerClient.findMany({ where: { sellerId: user.id }, select: { clientId: true } })
-    return p.map(x => x.clientId)
-  }
-  return null
+  const paises = await paisesDoUsuario(prisma, user)
+  if (!paises) return null
+  const ds = await prisma.user.findMany({ where: { role: Role.DENTIST, ...whereDentistaPais(paises) }, select: { id: true } })
+  return ds.map(d => d.id)
 }
 
 export function ordenarPor<T extends { id: string }>(ids: string[], itens: T[]) {

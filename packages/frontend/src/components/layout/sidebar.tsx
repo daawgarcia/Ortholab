@@ -13,8 +13,8 @@ import {
   Inbox, Smartphone, BarChart3, FolderKanban, ShieldCheck
 } from 'lucide-react'
 
-const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION']
-const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER']
+const WORKFLOW_ROLES = ['LAB_TECH', 'ADMIN', 'FINANCIAL', 'EXPEDITION', 'SELLER'] // Vendas vê todos os workflows
+const PATIENT_ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER', 'EXPEDITION']
 
 const workflowItems = [
   { label: 'Entradas', href: '/workflow/entries', icon: Inbox },
@@ -93,11 +93,9 @@ export function Sidebar() {
           <NavItem href="/patients" icon={UserCircle} label="Pacientes" active={isActive('/patients')} />
         )}
 
-        {(isAdmin || isFinancial || isSeller || isDentist) && (
-          <NavItem href="/projects" icon={FolderKanban} label="Projetos" active={isActive('/projects')} />
-        )}
+        {/* "Projetos" era só uma tela de demonstração (dados fictícios) — fora do menu */}
 
-        {isAdmin && (
+        {!isDentist && (
           <NavItem href="/dentists" icon={Users} label="Dentistas" active={isActive('/dentists')} />
         )}
 

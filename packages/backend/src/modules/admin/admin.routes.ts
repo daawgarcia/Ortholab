@@ -1,3 +1,4 @@
+import { limparCacheEscopo } from '../acesso/escopo'
 import { FastifyInstance } from 'fastify'
 import { requireRole, JwtPayload } from '../../plugins/auth'
 import { Role, UserStatus } from '@prisma/client'
@@ -84,6 +85,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const { countries } = request.body as { countries: string[] }
     const lista = (Array.isArray(countries) ? countries : []).map((c) => String(c).toLowerCase().trim()).filter(Boolean)
     const user = await fastify.prisma.user.update({ where: { id }, data: { allowedCountries: lista }, select: { id: true, allowedCountries: true } })
+    limparCacheEscopo(id)
     await fastify.audit.log(request, { action: 'admin.user_countries', resource: 'User', resourceId: id, metadata: { countries: lista } })
     return user
   })
@@ -237,6 +239,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
         status: true,
         createdAt: true,
         dentist: { select: { id: true, name: true, clinic: true, email: true } },
+        patientName: true,
+        patient: { select: { name: true, boxNumber: true } },
+        couponAppliedAt: true,
+        couponAppliedBy: { select: { name: true, role: true } },
         service: { select: { name: true, type: true } },
         financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
       },
@@ -273,6 +279,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
         status: true,
         createdAt: true,
         dentist: { select: { id: true, name: true, clinic: true, email: true } },
+        patientName: true,
+        patient: { select: { name: true, boxNumber: true } },
+        couponAppliedAt: true,
+        couponAppliedBy: { select: { name: true, role: true } },
         service: { select: { name: true, type: true } },
         financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
       },
@@ -310,6 +320,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
     usagesSheet.columns = [
       { header: 'Cupom', key: 'Cupom', width: 18 },
+      { header: 'Caixa', key: 'Caixa', width: 10 },
+      { header: 'Paciente', key: 'Paciente', width: 32 },
+      { header: 'Cupom colocado por', key: 'Colocado por', width: 30 },
+      { header: 'Quem colocou', key: 'Quem', width: 14 },
       { header: 'Caso', key: 'Caso', width: 10 },
       { header: 'Status', key: 'Status', width: 20 },
       { header: 'Dentista', key: 'Dentista', width: 28 },
@@ -324,6 +338,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
     cases.forEach((item) => {
       usagesSheet.addRow({
         Cupom: item.discountCoupon || '',
+        Caixa: item.patient?.boxNumber || '',
+        Paciente: item.patient?.name || item.patientName || '',
+        'Colocado por': item.couponAppliedBy?.name || '',
+        Quem: !item.couponAppliedBy ? 'Não registrado' : item.couponAppliedBy.role === 'DENTIST' ? 'Dentista' : 'Equipe',
         Caso: item.caseNumber,
         Status: item.status,
         Dentista: item.dentist?.name || '',

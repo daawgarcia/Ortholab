@@ -129,7 +129,7 @@ export default function AdminCouponsPage() {
             <Download className="w-4 h-4" /> Baixar Excel
           </Button>
         </div>
-        <p className="text-sm text-gray-500">Controle por cupom, dentista e caso faturado ou em andamento.</p>
+        <p className="text-sm text-gray-500">Por cupom: caixa, paciente, dentista e quem colocou o cupom (equipe ou dentista). O Excel traz tudo isso.</p>
 
         {reportLoading ? (
           <div className="text-sm text-gray-500">Carregando relatório...</div>
@@ -151,8 +151,10 @@ export default function AdminCouponsPage() {
                   <thead>
                     <tr className="text-left text-xs text-gray-500 border-b">
                       <th className="py-2 pr-3">Cupom</th>
+                      <th className="py-2 pr-3">Caixa</th>
+                      <th className="py-2 pr-3">Paciente</th>
                       <th className="py-2 pr-3">Dentista</th>
-                      <th className="py-2 pr-3">Caso</th>
+                      <th className="py-2 pr-3">Colocado por</th>
                       <th className="py-2 pr-3">Serviço</th>
                       <th className="py-2 pr-3">NF</th>
                       <th className="py-2 pr-3">Data</th>
@@ -162,8 +164,10 @@ export default function AdminCouponsPage() {
                     {reportData.usages.map((item: any) => (
                       <tr key={item.id} className="border-b last:border-0">
                         <td className="py-2 pr-3 font-medium">{item.discountCoupon}</td>
+                        <td className="py-2 pr-3 font-mono">{item.patient?.boxNumber || '-'}</td>
+                        <td className="py-2 pr-3">{item.patient?.name || item.patientName}</td>
                         <td className="py-2 pr-3">{item.dentist?.name}</td>
-                        <td className="py-2 pr-3">#{item.caseNumber}</td>
+                        <td className="py-2 pr-3">{item.couponAppliedBy ? `${item.couponAppliedBy.name} (${item.couponAppliedBy.role === 'DENTIST' ? 'dentista' : 'equipe'})` : <span className="text-gray-400">não registrado</span>}</td>
                         <td className="py-2 pr-3">{item.service?.name || item.service?.type || '-'}</td>
                         <td className="py-2 pr-3">{item.financial?.invoiceNumber || '-'}</td>
                         <td className="py-2 pr-3 text-gray-500">{new Date(item.financial?.billedAt || item.createdAt).toLocaleDateString('pt-BR')}</td>

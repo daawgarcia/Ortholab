@@ -4,6 +4,7 @@ import { CaseStatus, Role } from '@prisma/client'
 import { authenticate, requireRole, JwtPayload } from '../../plugins/auth'
 import { EventMailer } from '../mailer/event-mailer'
 import { whatsappService } from '../../services/whatsapp.service'
+import { paisesDoUsuario, normalizarPais, whereDentistaPais, dentistaNoEscopo } from '../acesso/escopo'
 
 const createCaseSchema = z.object({
   patientName: z.string().min(2),
@@ -29,29 +30,21 @@ export async function caseRoutes(fastify: FastifyInstance) {
     const skip = (parseInt(page) - 1) * parseInt(limit)
 
     const where: any = {}
+    // Dentista só vê os próprios casos. Vendas, Admin e equipe do Brasil veem todos os workflows;
+    // equipe estrangeira só vê casos de dentistas do seu país.
     if (user.role === Role.DENTIST) where.dentistId = user.id
-    if (user.role === Role.SELLER) {
-      const portfolio = await fastify.prisma.sellerClient.findMany({
-        where: { sellerId: user.id },
-        select: { clientId: true },
-      })
-      where.dentistId = { in: portfolio.map((item) => item.clientId) }
-    }
     if (status) where.status = status
     if (search) where.patientName = { contains: search, mode: 'insensitive' }
-    // Laboratórios por país: equipe só vê casos de dentistas dos países liberados para ela
     const { pais } = request.query as any
-    if (user.role !== Role.DENTIST && user.role !== Role.SELLER) {
-      const eu = await fastify.prisma.user.findUnique({ where: { id: user.id }, select: { allowedCountries: true } })
-      let paises = (eu?.allowedCountries || []).map((p) => p.toLowerCase())
-      if (user.role === Role.ADMIN) paises = []
-      if (pais) paises = paises.length ? paises.filter((p) => p === String(pais).toLowerCase()) : [String(pais).toLowerCase()]
-      if (paises.length) {
-        const nomes = paises.flatMap((p) => (p === 'brasil' ? ['brasil', 'br'] : [p]))
-        where.dentist = { is: { OR: nomes.map((p) => ({ country: { equals: p, mode: 'insensitive' } })) } }
-      } else if ((eu?.allowedCountries || []).length && user.role !== Role.ADMIN) {
-        where.id = '00000000-0000-0000-0000-000000000000' // país pedido não está liberado
+    if (user.role !== Role.DENTIST) {
+      const meus = await paisesDoUsuario(fastify.prisma, user)
+      let paises = meus
+      if (pais) {
+        const p = normalizarPais(String(pais))
+        paises = meus ? meus.filter((x) => x === p) : [p]
       }
+      if (paises && paises.length) where.dentist = { is: whereDentistaPais(paises) }
+      else if (paises && !paises.length) where.id = '00000000-0000-0000-0000-000000000000'
     }
 
     const [cases, total] = await Promise.all([
@@ -84,6 +77,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
       where: { id },
       include: {
         dentist: { select: { id: true, name: true, clinic: true, email: true, phone: true } },
+        patient: { select: { id: true, name: true, boxNumber: true } },
         service: { include: { prices: { orderBy: { validFrom: 'desc' } } } },
         documents: { orderBy: { uploadedAt: 'desc' } },
         plannings: {
@@ -106,11 +100,8 @@ export async function caseRoutes(fastify: FastifyInstance) {
     if (user.role === Role.DENTIST && caseData.dentistId !== user.id) {
       return reply.status(403).send({ error: 'Acesso negado' })
     }
-    if (user.role === Role.SELLER) {
-      const relation = await fastify.prisma.sellerClient.findUnique({
-        where: { sellerId_clientId: { sellerId: user.id, clientId: caseData.dentistId } },
-      })
-      if (!relation) return reply.status(403).send({ error: 'Acesso negado' })
+    if (!(await dentistaNoEscopo(fastify.prisma, user, caseData.dentistId))) {
+      return reply.status(403).send({ error: 'Acesso negado' })
     }
 
     return { case: caseData }

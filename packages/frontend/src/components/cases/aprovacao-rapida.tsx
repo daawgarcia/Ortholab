@@ -29,10 +29,12 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
   })
   const opcoes: any[] = data?.opcoes || []
   const escolhida = opcoes.find(o => o.servico.id === serviceId) || null
+  // fora do Brasil: só escolhe o pacote (sem valores, parcelas ou frete — o laboratório do país acerta direto)
+  const semCobranca = !!data?.semCobranca
 
   const aprovar = useMutation({
     mutationFn: () => api.post(`/workflow/case/${caso.id}/approve`, {
-      serviceId, installmentOption: escolhida?.parcelas || parcelas, deliveryMethod: entrega,
+      serviceId, ...(semCobranca ? {} : { installmentOption: escolhida?.parcelas || parcelas, deliveryMethod: entrega }),
     }),
     onSuccess: () => {
       toast({ title: 'Caso aprovado!', description: 'Seu caso foi liberado para produção.' })
@@ -68,7 +70,7 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
                 <button key={o.servico.id} disabled={!!o.erro} onClick={() => { setServiceId(o.servico.id) }}
                   className={`rounded-lg p-3 text-left ring-1 transition ${serviceId === o.servico.id ? 'ring-2 ring-primary bg-primary/5' : 'ring-gray-200 hover:ring-gray-300'} ${o.erro ? 'opacity-50' : ''}`}>
                   <p className="font-semibold text-gray-900">{o.servico.nome.replace(/^EA /, '')}</p>
-                  {o.erro
+                  {semCobranca ? null : o.erro
                     ? <p className="text-xs text-gray-500">{o.erro}</p>
                     : <>
                         <p className="text-lg font-bold text-primary">{brl(o.totalSemFrete)}</p>
@@ -80,7 +82,7 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
             </div>
           </div>
 
-          {escolhida && (escolhida.parcelasPermitidas?.length || 0) > 1 && (
+          {!semCobranca && escolhida && (escolhida.parcelasPermitidas?.length || 0) > 1 && (
             <div>
               <p className="mb-2 text-sm font-medium text-gray-700">2. Forma de pagamento</p>
               <div className="flex flex-wrap gap-2">
@@ -94,7 +96,7 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
             </div>
           )}
 
-          <div>
+          {!semCobranca && <div>
             <p className="mb-2 text-sm font-medium text-gray-700">{escolhida && (escolhida.parcelasPermitidas?.length || 0) > 1 ? '3' : '2'}. Entrega</p>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setEntrega('ENTREGA')} className={`flex items-center gap-2 rounded-lg p-3 text-sm ring-1 ${entrega === 'ENTREGA' ? 'ring-2 ring-primary bg-primary/5' : 'ring-gray-200'}`}>
@@ -104,9 +106,9 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
                 <Store className="w-4 h-4" /> Retirar (sem frete)
               </button>
             </div>
-          </div>
+          </div>}
 
-          {escolhida && !escolhida.erro && (
+          {!semCobranca && escolhida && !escolhida.erro && (
             <div className="rounded-lg bg-gray-50 p-3 text-sm space-y-1">
               <div className="flex justify-between"><span>{escolhida.servico.nome} {escolhida.parcelas !== '1x' ? `(${escolhida.parcelas})` : ''}</span><span>{brl(escolhida.valorCheio)}</span></div>
               {escolhida.descontoProgressivo > 0 && <div className="flex justify-between text-emerald-700"><span>Desconto progressivo ({escolhida.casoNoMes}º caso do mês, -{escolhida.descontoProgressivo}%)</span><span>-{brl(escolhida.valorCheio - escolhida.valorComDesconto)}</span></div>}
@@ -122,7 +124,7 @@ export function AprovacaoRapida({ caso }: { caso: any }) {
             <Button className="gap-2 bg-green-600 hover:bg-green-700" disabled={!escolhida || !!escolhida.erro || aprovar.isPending}
               onClick={() => aprovar.mutate()}>
               {aprovar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-              Aprovar {escolhida ? `• ${brl(escolhida.total)}` : ''}
+              Aprovar {escolhida && !semCobranca ? `• ${brl(escolhida.total)}` : ''}
             </Button>
           </div>
         </div>

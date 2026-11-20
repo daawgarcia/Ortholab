@@ -69,6 +69,16 @@ def sp_to_utc(v):
     return v
 
 
+def desfaz_sp_para_utc(v):
+    """Registros de Portugal: o Ortholab 1 de lá grava em UTC (não em São Paulo).
+    Recebe o valor já convertido por sp_to_utc e devolve o original, que já é UTC."""
+    if isinstance(v, datetime):
+        return v.replace(tzinfo=timezone.utc).astimezone(SP).replace(tzinfo=None)
+    return v
+
+
+PAISES_UTC = ("portugal", "pt")
+
 now = datetime.now(timezone.utc).replace(tzinfo=None)
 stats = Counter()
 
@@ -179,7 +189,14 @@ def main():
 
     def upsert_users(rows, key):
         cols = list(rows[0].keys())
-        updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", key, "createdAt"))
+        def upd(c):
+            # país e perfil definidos no Ortholab 2 (tela Usuários) não são sobrescritos pela sincronização
+            if c == "allowedCountries":
+                return '"allowedCountries" = CASE WHEN cardinality("User"."allowedCountries") > 0 THEN "User"."allowedCountries" ELSE EXCLUDED."allowedCountries" END'
+            if c == "role":
+                return '"role" = CASE WHEN "User".role IN (\'SELLER\', \'FINANCIAL\', \'EXPEDITION\') THEN "User".role ELSE EXCLUDED.role END'
+            return f'"{c}" = EXCLUDED."{c}"'
+        updates = ", ".join(upd(c) for c in cols if c not in ("id", key, "createdAt"))
         sql = (
             f'INSERT INTO "User" ({", ".join(chr(34) + c + chr(34) for c in cols)}) VALUES %s '
             f'ON CONFLICT ("{key}") DO UPDATE SET {updates}'
@@ -448,11 +465,15 @@ def main():
         if not bloqueado:
             pend.append({"patient_id": pid, "box_number": box.get(pid), "last_submission_at": envio, "origem": origem})
     pend.sort(key=lambda e: e["last_submission_at"])
+    p.execute('SELECT id FROM "User" WHERE role = \'DENTIST\' AND lower(country) = ANY(%s)', (list(PAISES_UTC),))
+    dentistas_utc = {r[0] for r in p.fetchall()}
     rows = []
     for e in pend:
         pt = patient_by_legacy.get(e["patient_id"])
         if not pt:
             continue
+        if pt[1] in dentistas_utc:  # horário de Portugal gravado em UTC -> mostrar em Brasília corretamente
+            e["last_submission_at"] = desfaz_sp_para_utc(e["last_submission_at"])
         rows.append({
             "id": str(uuid.uuid4()),
             "legacyKey": f"ol1-paciente-{e['patient_id']}",

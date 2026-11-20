@@ -51,6 +51,13 @@ def utc(v):
     return v
 
 
+def utc_puro(v):
+    """Ortholab 1 de Portugal grava em UTC."""
+    if isinstance(v, datetime):
+        return v.replace(tzinfo=None)
+    return utc(v)
+
+
 def clean(s):
     if s is None:
         return None
@@ -81,8 +88,17 @@ def main():
     p.execute('SELECT "legacyId", id, "dentistId" FROM "Patient" WHERE "legacyId" IS NOT NULL '
               "AND name NOT LIKE 'Paciente anonimizado %%'")
     pat = {r[0]: (r[1], r[2]) for r in p.fetchall()}
-    p.execute('SELECT "legacyId", id FROM "Case" WHERE "legacyId" IS NOT NULL')
-    case_by_order = dict(p.fetchall())
+    p.execute('SELECT "legacyId", id, "dentistId" FROM "Case" WHERE "legacyId" IS NOT NULL')
+    case_dentist = {}
+    case_by_order = {}
+    for lid, cid, did in p.fetchall():
+        case_by_order[lid] = cid
+        case_dentist[lid] = did
+    p.execute("SELECT id FROM \"User\" WHERE role = 'DENTIST' AND lower(country) IN ('portugal', 'pt')")
+    dentistas_utc = {r[0] for r in p.fetchall()}
+
+    def conv(v, dentist_id):
+        return utc_puro(v) if dentist_id in dentistas_utc else utc(v)
     p.execute('SELECT "legacyUserId", id FROM "User" WHERE "legacyUserId" IS NOT NULL')
     user_by_legacy = dict(p.fetchall())
     p.execute('SELECT "legacyDentistId", id FROM "User" WHERE "legacyDentistId" IS NOT NULL')
@@ -118,7 +134,7 @@ def main():
         if pt:
             rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-private_photo-{r['id']}", "patientId": pt[0],
                          "url": url(f"private_photo/image/{r['id']}/{r['image']}"), "filename": r["image"],
-                         "isPrivate": True, "createdAt": utc(r["created_at"]) or now})
+                         "isPrivate": True, "createdAt": conv(r["created_at"], pt[1]) or now})
     log(f"Fotos: {upsert('Photo', rows)}")
 
     # ------------------------------------------------------------ modelos STL
@@ -130,7 +146,7 @@ def main():
             if pt:
                 rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-stl-{kind}-{r['id']}", "patientId": pt[0],
                              "url": url(f"stl/{pasta}/file/{r['id']}/{r['file']}"), "filename": r["file"],
-                             "kind": kind, "createdAt": utc(r["created_at"]) or now})
+                             "kind": kind, "createdAt": conv(r["created_at"], pt[1]) or now})
     log(f"Modelos STL: {upsert('DigitalModel', rows)}")
 
     # ------------------------------------------------------------ arquivos de trabalho (PDF do planejamento etc.)
@@ -140,7 +156,7 @@ def main():
         if pt:
             rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-v2work-{r['id']}", "patientId": pt[0],
                          "url": url(f"v2_work/file/{r['id']}/{r['file']}"), "filename": r["file"],
-                         "createdAt": utc(r["created_at"]) or now})
+                         "createdAt": conv(r["created_at"], pt[1]) or now})
     log(f"Arquivos de trabalho: {upsert('WorkFile', rows)}")
 
     # ------------------------------------------------------------ fichas
@@ -154,7 +170,7 @@ def main():
         dados["origem"] = "ortholab1"
         rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-plan-{r['id']}", "patientId": pt[0], "dentistId": pt[1],
                      "formData": json.dumps(dados, ensure_ascii=False),
-                     "createdAt": utc(r["created_at"]) or now, "updatedAt": utc(r["updated_at"]) or now})
+                     "createdAt": conv(r["created_at"], pt[1]) or now, "updatedAt": conv(r["updated_at"], pt[1]) or now})
     log(f"Fichas de planejamento: {upsert('PlanningForm', rows, {'formData': '::jsonb'})}")
 
     def to_int(v):
@@ -173,7 +189,7 @@ def main():
                      "contentionUpper": to_int(r["contention_upper_amount"]),
                      "contentionLower": to_int(r["contention_lower_amount"]),
                      "observations": clean(r["observations"]),
-                     "createdAt": utc(r["created_at"]) or now, "updatedAt": utc(r["updated_at"]) or now})
+                     "createdAt": conv(r["created_at"], pt[1]) or now, "updatedAt": conv(r["updated_at"], pt[1]) or now})
     log(f"Fichas de finalização: {upsert('CompletionForm', rows, {'formData': '::jsonb'})}")
 
     rows = []
@@ -184,7 +200,7 @@ def main():
         rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-otherservices-{r['id']}", "patientId": pt[0], "dentistId": pt[1],
                      "eaGuard": bool(r["ea_guard"]), "eaSplint": bool(r["ea_splint"]), "eaMio": clean(r["ea_mio"]),
                      "eaAir": bool(r["ea_air"]), "observations": clean(r["observations"]),
-                     "createdAt": utc(r["created_at"]) or now, "updatedAt": utc(r["updated_at"]) or now})
+                     "createdAt": conv(r["created_at"], pt[1]) or now, "updatedAt": conv(r["updated_at"], pt[1]) or now})
     log(f"Fichas de novos produtos: {upsert('OtherServicesForm', rows)}")
 
     # ------------------------------------------------------------ prontuário clínico
@@ -202,7 +218,7 @@ def main():
                      "consultationAt": utc(r["consultation_at"]) or utc(r["created_at"]) or now,
                      "evaluation": avaliacoes.get(r["evaluation_id"]) or "-",
                      "activities": acts, "observations": clean(r["observations"]),
-                     "createdAt": utc(r["created_at"]) or now, "updatedAt": utc(r["updated_at"]) or now})
+                     "createdAt": conv(r["created_at"], pt[1]) or now, "updatedAt": conv(r["updated_at"], pt[1]) or now})
     log(f"Prontuário clínico: {upsert('ClinicalRecord', rows)}")
 
     # ------------------------------------------------------------ histórico do workflow
@@ -215,9 +231,9 @@ def main():
             continue
         stage, nome = STAGE.get(r["name"], (0, r["name"] or "Evento"))
         try:
-            quando = utc(datetime.strptime(str(r["quando"])[:19], "%Y-%m-%d %H:%M:%S"))
+            quando = conv(datetime.strptime(str(r["quando"])[:19], "%Y-%m-%d %H:%M:%S"), case_dentist.get(r["order_id"]))
         except Exception:
-            quando = utc(r["created_at"]) or now
+            quando = conv(r["created_at"], case_dentist.get(r["order_id"])) or now
         rows.append({"id": str(uuid.uuid4()), "legacyKey": f"ol1-event-{r['id']}", "caseId": cid, "stage": stage,
                      "stageName": nome, "performedBy": user_by_legacy.get(r["user_id"]),
                      "notes": clean(r["details"]), "createdAt": quando})

@@ -1,3 +1,4 @@
+import { paisesDoUsuario, normalizarPais, idiomaDoPais } from '../acesso/escopo'
 import { FastifyInstance } from 'fastify'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
@@ -198,6 +199,14 @@ export async function authRoutes(fastify: FastifyInstance) {
     return concluirLogin(user, request)
   })
 
+  /** País, escopo de países e idioma da interface (espanhol para MX/CO/PE/ES). */
+  async function perfilRegional(user: any, request: any) {
+    const full = await fastify.prisma.user.findUnique({ where: { id: user.id }, select: { role: true, country: true, allowedCountries: true, language: true } })
+    const paises = full ? await paisesDoUsuario(fastify.prisma, { ...(request.user || {}), id: user.id, role: full.role } as any) : null
+    const pais = full?.role === 'DENTIST' ? normalizarPais(full?.country) : (paises?.[0] || 'brasil')
+    return { pais, paises, idioma: (full?.language as 'pt' | 'es') || idiomaDoPais(pais) }
+  }
+
   async function concluirLogin(user: any, request: any) {
     const accessToken = fastify.tokens.signAccess(user)
     const refreshToken = fastify.tokens.signRefresh(user)
@@ -230,7 +239,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     return {
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, role: user.role, name: user.name, mustChangePassword: user.mustChangePassword },
+      user: { id: user.id, email: user.email, role: user.role, name: user.name, mustChangePassword: user.mustChangePassword, ...(await perfilRegional(user, request)) },
       pendingPushes: unreadPushes,
     }
   }
@@ -401,6 +410,13 @@ export async function authRoutes(fastify: FastifyInstance) {
     return { message: 'Senha alterada com sucesso. Faça login novamente.' }
   })
 
+  fastify.patch('/me/idioma', { preHandler: authenticate }, async (request, reply) => {
+    const { idioma } = (request.body || {}) as { idioma?: string }
+    if (idioma !== 'pt' && idioma !== 'es') return reply.status(400).send({ error: 'Idioma inválido' })
+    await fastify.prisma.user.update({ where: { id: (request.user as JwtPayload).id }, data: { language: idioma } })
+    return { idioma }
+  })
+
   fastify.get('/me', { preHandler: authenticate }, async (request) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: (request.user as JwtPayload).id },
@@ -420,9 +436,12 @@ export async function authRoutes(fastify: FastifyInstance) {
         zipCode: true,
         createdAt: true,
         mustChangePassword: true,
+        country: true,
+        allowedCountries: true,
+        language: true,
       },
     })
-    return { user }
+    return { user: user ? { ...user, ...(await perfilRegional(user, request)) } : user }
   })
 
   fastify.post('/logout', { preHandler: authenticate }, async (request) => {

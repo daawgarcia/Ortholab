@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role, CaseStatus, UserStatus, EntryType } from '@prisma/client'
+import { paisesDoUsuario, whereDentistaPais, dentistaNoEscopo } from '../acesso/escopo'
 import { EventMailer } from '../mailer/event-mailer'
 import { createEntry } from '../entries/entry.routes'
 
@@ -46,6 +47,7 @@ function buildPatientSelect(includeImportantNotes: boolean, includeLatestCase = 
   return {
     id: true,
     name: true,
+    boxNumber: true,
     gender: true,
     dob: true,
     dentistId: true,
@@ -74,22 +76,9 @@ export async function patientRoutes(fastify: FastifyInstance) {
   const mailer = new EventMailer(fastify)
 
   async function canAccessPatient(user: JwtPayload, dentistId: string) {
-    if (user.role === Role.ADMIN || user.role === Role.LAB_TECH || user.role === Role.FINANCIAL) {
-      return true
-    }
-
-    if (user.role === Role.DENTIST) {
-      return dentistId === user.id
-    }
-
-    if (user.role === Role.SELLER) {
-      const relation = await fastify.prisma.sellerClient.findUnique({
-        where: { sellerId_clientId: { sellerId: user.id, clientId: dentistId } },
-      })
-      return !!relation
-    }
-
-    return false
+    // Dentista: só os próprios pacientes. Equipe/Vendas/Admin: conforme o país (estrangeiro só vê o seu país).
+    if (user.role === Role.DENTIST) return dentistId === user.id
+    return dentistaNoEscopo(fastify.prisma, user, dentistId)
   }
 
   async function getAccessiblePatient(id: string, user: JwtPayload) {
@@ -121,14 +110,15 @@ export async function patientRoutes(fastify: FastifyInstance) {
     const where: any = {}
     if (user.role === Role.DENTIST) {
       where.dentistId = user.id
-    } else if (user.role === Role.SELLER) {
-      const portfolio = await fastify.prisma.sellerClient.findMany({
-        where: { sellerId: user.id },
-        select: { clientId: true },
-      })
-      where.dentistId = { in: portfolio.map((item) => item.clientId) }
-    } else if (dentistId) {
-      where.dentistId = dentistId
+    } else {
+      const paises = await paisesDoUsuario(fastify.prisma, user)
+      if (paises) {
+        const ds = await fastify.prisma.user.findMany({ where: { role: Role.DENTIST, ...whereDentistaPais(paises) }, select: { id: true } })
+        const ids = ds.map((d) => d.id)
+        where.dentistId = { in: dentistId ? ids.filter((x) => x === dentistId) : ids }
+      } else if (dentistId) {
+        where.dentistId = dentistId
+      }
     }
     // busca inteligente: acentos, várias palavras, nº da caixa, nome do dentista e erros de digitação
     if (search && String(search).trim().length >= 2) {

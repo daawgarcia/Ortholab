@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
+import { paisesDoUsuario, whereDentistaPais } from '../acesso/escopo'
 
 export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Map<string, any> }) {
   const wsClients = opts.wsClients
@@ -41,11 +42,13 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
       // Equipe: vê só a equipe ativa (os ~15 mil dentistas importados do Ortholab 1 não entram na lista).
       // Dentistas aparecem quando já há conversa ou pela busca (?q=nome/e-mail).
       const q = String((request.query as any)?.q || '').trim()
+      const paises = await paisesDoUsuario(fastify.prisma, user)
       if (q.length >= 2) {
         contacts = await fastify.prisma.user.findMany({
           where: {
             id: { not: user.id },
             status: 'ACTIVE' as any,
+            ...(paises ? { AND: [{ OR: [{ role: { not: Role.DENTIST } }, whereDentistaPais(paises)] }] } : {}),
             OR: [
               { name: { contains: q, mode: 'insensitive' } },
               { email: { contains: q, mode: 'insensitive' } },
@@ -56,12 +59,8 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
           take: 30,
         })
       } else {
-        contacts = await fastify.prisma.user.findMany({
-          where: { id: { not: user.id }, role: { not: Role.DENTIST }, status: 'ACTIVE' as any },
-          select: { id: true, name: true, email: true, role: true },
-          orderBy: { name: 'asc' },
-          take: 200,
-        })
+        // sem busca: a tela mostra só as conversas já existentes
+        contacts = []
       }
     }
 
@@ -97,7 +96,7 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
       const peer = msg.senderId === user.id ? msg.receiver : msg.sender
       if (!conversationMap.has(peer.id)) {
         conversationMap.set(peer.id, {
-          peer,
+          peer: { ...peer, online: wsClients.has(peer.id) },
           lastMessage: msg.content,
           lastAt: msg.createdAt,
           unread: 0,

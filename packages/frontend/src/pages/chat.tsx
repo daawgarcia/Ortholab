@@ -29,6 +29,8 @@ function roleLabel(role: string) {
     FINANCIAL: 'Financeiro',
     ADMIN: 'Admin',
     DENTIST: 'Dentista',
+    LAB_TECH: 'Laboratório',
+    EXPEDITION: 'Expedição',
   }
   return map[role] || role
 }
@@ -149,7 +151,12 @@ export default function ChatPage() {
 
   if (!user) return null
 
-  const allContacts = [...contacts]
+  const isEquipe = user.role !== 'DENTIST' && user.role !== 'SELLER'
+  const buscando = isEquipe && buscaContato.trim().length >= 2
+  // Equipe: mostra só as conversas já iniciadas; para falar com alguém novo, busca e escolhe.
+  const allContacts = isEquipe
+    ? (buscando ? contacts : conversations.map((c: any) => ({ ...c.peer, lastMessage: c.lastMessage })))
+    : [...contacts]
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-gray-50">
@@ -161,7 +168,7 @@ export default function ChatPage() {
             <input
               value={buscaContato}
               onChange={e => setBuscaContato(e.target.value)}
-              placeholder="Buscar dentista ou colega…"
+              placeholder="Buscar dentista ou colega para conversar…"
               className="mt-2 h-8 w-full rounded-md border border-gray-200 px-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
             />
           )}
@@ -169,7 +176,12 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto divide-y">
           {allContacts.length === 0 && (
-            <p className="p-4 text-sm text-muted-foreground text-center">Nenhum contato disponível</p>
+            <p className="p-4 text-sm text-muted-foreground text-center">
+              {isEquipe ? (buscando ? 'Ninguém encontrado' : 'Nenhuma conversa ainda. Busque um dentista ou colega acima para começar.') : 'Nenhum contato disponível'}
+            </p>
+          )}
+          {isEquipe && !buscando && allContacts.length > 0 && (
+            <p className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Conversas</p>
           )}
           {allContacts.map((contact: any) => {
             const unread = unreadFor(contact.id)
@@ -197,13 +209,13 @@ export default function ChatPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{roleLabel(contact.role)}</p>
+                  <p className="text-xs text-muted-foreground truncate">{contact.lastMessage && !buscando ? String(contact.lastMessage).replace(/^\[img\].*/, '📷 Imagem') : roleLabel(contact.role)}</p>
                 </div>
               </button>
             )
           })}
 
-          {extraPeers.map((peer: any) => {
+          {!isEquipe && extraPeers.map((peer: any) => {
             const unread = unreadFor(peer.id)
             const isSelected = selectedPeer?.id === peer.id
             return (

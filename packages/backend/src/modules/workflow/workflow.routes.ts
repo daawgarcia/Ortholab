@@ -1,3 +1,5 @@
+import { dentistaNoEscopo } from '../acesso/escopo'
+import { semCobrancaDentista } from '../orcamento/orcamento'
 import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
@@ -131,7 +133,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     })
   }
 
-  async function persistBilling(caseData: any, payload: any) {
+  async function persistBilling(caseData: any, payload: any, userId?: string) {
     const { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive, serviceId, deliveryMethod } = payload
     const wantsPricing = !!(billingType || installmentOption || discountCoupon || serviceId)
     const service = await resolveService(caseData, billingType, serviceId)
@@ -215,6 +217,9 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
         installmentOption: normalizedInstallment || caseData.installmentOption || null,
         dropoutInsurance: typeof dropoutInsurance === 'boolean' ? dropoutInsurance : !!caseData.dropoutInsurance,
         discountCoupon: service && isAlignerService(service.type) ? (normalizedCoupon || null) : null,
+        // relatório de cupons: quem colocou o cupom (equipe ou o próprio dentista)
+        ...(normalizedCoupon && normalizedCoupon !== caseData.discountCoupon && userId ? { couponAppliedById: userId, couponAppliedAt: new Date() } : {}),
+        ...(!normalizedCoupon ? { couponAppliedById: null, couponAppliedAt: null } : {}),
         packActive: typeof packActive === 'boolean' ? packActive : !!caseData.packActive,
         serviceId: service?.id || caseData.serviceId || null,
         deliveryMethod: deliveryMethod ? (String(deliveryMethod).toUpperCase() === 'RETIRA' ? 'RETIRA' : 'ENTREGA') : caseData.deliveryMethod || null,
@@ -230,6 +235,14 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     if ((updated.installmentOption || '').toLowerCase() === '21x') {
       await clearOpenDentistInvoices(updated.id, updated.dentistId)
       return { updated, baseAmount: null, finalAmount: null, requiresManualPricing: true }
+    }
+
+    // Colômbia, México, Portugal etc.: o dentista só escolhe Unidade/MID/FULL; não há cobrança do dentista
+    // (faturamos internamente para o laboratório do país, que acerta os preços direto com ele).
+    if (semCobrancaDentista(updated.dentist)) {
+      await clearOpenDentistInvoices(updated.id, updated.dentistId)
+      await fastify.prisma.case.update({ where: { id: updated.id }, data: { freightAmount: null, installmentOption: null } })
+      return { updated, baseAmount: null, finalAmount: null, requiresManualPricing: false, semCobranca: true }
     }
 
     if (updated.service) {
@@ -295,6 +308,9 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
       where: { id: caseId },
       include: { workflowEvents: { orderBy: { stage: 'desc' }, take: 1 }, dentist: true },
     })
+    if (caseData && !(await dentistaNoEscopo(fastify.prisma, user, caseData.dentistId))) {
+      return reply.status(403).send({ error: 'Caso de outro país' })
+    }
     if (!caseData) return reply.status(404).send({ error: 'Caso não encontrado' })
 
     const lastStage = caseData.workflowEvents[0]?.stage || 0
@@ -383,7 +399,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     if (!caseData.service) return reply.status(400).send({ error: 'Caso sem serviço vinculado' })
 
     try {
-      const billingResult = await persistBilling(caseData, request.body as any)
+      const billingResult = await persistBilling(caseData, request.body as any, (request.user as any)?.id)
       return {
         case: billingResult.updated,
         amount: billingResult.finalAmount,
@@ -439,7 +455,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     const billingPayload = request.body as any
     if (Object.keys(billingPayload || {}).length > 0) {
       try {
-        const billingResult = await persistBilling(caseData, billingPayload)
+        const billingResult = await persistBilling(caseData, billingPayload, (request.user as any)?.id)
         currentCase = billingResult.updated
       } catch (error: any) {
         return reply.status(400).send({ error: error.message || 'Falha ao salvar faturamento' })
@@ -499,6 +515,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     const { caseId } = request.params as { caseId: string }
     const { trackingCode, carrier } = ((request.body as any) || {}) as { trackingCode?: string; carrier?: string }
 
+    if (user.role === Role.SELLER) return reply.status(403).send({ error: 'Acesso negado' })
     if (!trackingCode?.trim()) return reply.status(400).send({ error: 'Código de rastreio obrigatório' })
 
     const caseData = await fastify.prisma.case.findUnique({

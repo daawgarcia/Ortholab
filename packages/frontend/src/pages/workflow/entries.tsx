@@ -42,13 +42,13 @@ const entryTypeIcons: Record<string, React.ReactNode> = {
 
 function formatDate(d: string | null) {
   if (!d) return '-'
-  return new Date(d).toLocaleDateString('pt-BR')
+  return new Date(d).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
 }
 
 function formatDateTime(d: string | null) {
   if (!d) return '-'
   const date = new Date(d)
-  return `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+  return `${date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}`
 }
 
 export function EntriesPage() {

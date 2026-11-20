@@ -12,6 +12,7 @@ import { ArrowLeft, Upload, CheckCircle, RefreshCw, Send, FileText, X, Loader2 }
 import { toast } from '@/hooks/use-toast'
 import { useDropzone } from 'react-dropzone'
 import { ChecagemCard } from '@/components/cases/checagem-card'
+import { rotuloCaso } from '@/lib/rotulo'
 
 function DocUploader({ caseId, type, label, onDone }: any) {
   const [uploading, setUploading] = useState(false)
@@ -179,10 +180,10 @@ export default function CaseDetailPage() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5" /></Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold">Caso #{c.caseNumber} — {c.patientName}</h1>
+              <h1 className="text-xl font-bold">{rotuloCaso({ box: c.patient?.boxNumber, paciente: c.patient?.name || c.patientName, dentista: c.dentist?.name })}</h1>
               <StatusBadge status={c.status} />
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">Criado em {formatDate(c.createdAt)}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Caso nº {c.caseNumber} · criado em {formatDate(c.createdAt)}</p>
           </div>
         </div>
         <div className="flex gap-2">

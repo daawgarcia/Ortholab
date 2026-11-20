@@ -2,12 +2,18 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload, requireRole } from '../../plugins/auth'
 import { Role, UserStatus } from '@prisma/client'
 import { buscarDentistas, ordenarPor } from '../busca/busca'
+import { paisesDoUsuario, whereDentistaPais, dentistaNoEscopo } from '../acesso/escopo'
 
 export async function dentistRoutes(fastify: FastifyInstance) {
-  fastify.get('/', { preHandler: authenticate }, async (request) => {
+  fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    // Dentista não pesquisa outros dentistas
+    if (user.role === Role.DENTIST) return reply.status(403).send({ error: 'Acesso negado' })
     const { search, page = '1', limit = '30' } = request.query as any
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const where: any = { role: Role.DENTIST }
+    const paises = await paisesDoUsuario(fastify.prisma, user)
+    if (paises) Object.assign(where, whereDentistaPais(paises))
     const termo = String(search || '').trim()
     if (termo.length >= 2 && termo !== '**') {
       const r = await buscarDentistas(fastify.prisma, termo, { limit: parseInt(limit), offset: skip })
@@ -46,6 +52,10 @@ export async function dentistRoutes(fastify: FastifyInstance) {
 
   fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string }
+    const eu = request.user as JwtPayload
+    if (eu.role === Role.DENTIST ? eu.id !== id : !(await dentistaNoEscopo(fastify.prisma, eu, id))) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
     const dentist = await fastify.prisma.user.findUnique({
       where: { id, role: Role.DENTIST },
       select: {
@@ -82,8 +92,12 @@ export async function dentistRoutes(fastify: FastifyInstance) {
     return dentist
   })
 
-  fastify.patch('/:id', { preHandler: authenticate }, async (request) => {
+  fastify.patch('/:id', { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string }
+    const eu = request.user as JwtPayload
+    if (eu.role === Role.DENTIST ? eu.id !== id : !(await dentistaNoEscopo(fastify.prisma, eu, id))) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
     const {
       deliveryStreet, deliveryNumber, deliveryComplement, deliveryNeighborhood,
       deliveryCity, deliveryState, deliveryZip, deliveryPhone, deliveryMobile,
@@ -101,8 +115,12 @@ export async function dentistRoutes(fastify: FastifyInstance) {
     })
   })
 
-  fastify.get('/:id/patients', { preHandler: authenticate }, async (request) => {
+  fastify.get('/:id/patients', { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string }
+    const eu = request.user as JwtPayload
+    if (eu.role === Role.DENTIST ? eu.id !== id : !(await dentistaNoEscopo(fastify.prisma, eu, id))) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
     const { search } = request.query as any
     const where: any = { dentistId: id }
     if (search) where.name = { contains: search, mode: 'insensitive' }

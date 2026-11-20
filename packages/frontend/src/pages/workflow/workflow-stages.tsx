@@ -5,17 +5,23 @@ import api from '@/lib/api'
 import { Loader2, ArrowRight, Send, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
+import { useAuthStore } from '@/store/auth'
+import { caixaFmt } from '@/lib/rotulo'
 
 const PAISES = [
   { v: '', l: 'Todos' }, { v: 'brasil', l: 'Brasil' }, { v: 'colombia', l: 'Colômbia' },
-  { v: 'mexico', l: 'México' }, { v: 'portugal', l: 'Portugal' }, { v: 'peru', l: 'Peru' },
+  { v: 'mexico', l: 'México' }, { v: 'portugal', l: 'Portugal' }, { v: 'peru', l: 'Peru' }, { v: 'espanha', l: 'Espanha' },
 ]
 
 /** Laboratórios por país (como no Ortholab 1). O servidor só devolve os países liberados para o usuário. */
 function AbasPais({ valor, onChange }: { valor: string; onChange: (v: string) => void }) {
+  const paises = useAuthStore(s => s.user?.paises)
+  // funcionário estrangeiro só enxerga o próprio país (o servidor também filtra)
+  const visiveis = paises && paises.length ? PAISES.filter(p => p.v && paises.includes(p.v)) : PAISES
+  if (visiveis.length <= 1) return visiveis[0] ? <span className="rounded-full bg-primary px-3 py-1 text-xs text-white">{visiveis[0].l}</span> : null
   return (
     <div className="flex flex-wrap gap-1">
-      {PAISES.map(p => (
+      {visiveis.map(p => (
         <button key={p.v} onClick={() => onChange(p.v)}
           className={`rounded-full px-3 py-1 text-xs ring-1 ${valor === p.v ? 'bg-primary text-white ring-primary' : 'bg-white text-gray-600 ring-gray-200 hover:ring-gray-300'}`}>
           {p.l}
@@ -90,7 +96,7 @@ function WorkflowList({
             <div className="p-8 text-center text-gray-400 text-sm">Nenhum caso</div>
           )}
           {cases.map((c: any) => {
-            const label = `${formatDate(c.createdAt)} | ${c.patientName} : ${String(c.caseNumber).padStart(6, '0')}`
+            const label = `${caixaFmt(c.patient?.boxNumber)} – ${c.patientName}`
             return (
               <div key={c.id} className="px-5 py-3 flex items-center gap-4">
                 <button
@@ -144,7 +150,7 @@ function ShipRow({ c, onShipped }: { c: any; onShipped: () => void }) {
     },
   })
 
-  const label = `${formatDate(c.createdAt)} | ${c.patientName} : ${String(c.caseNumber).padStart(6, '0')}`
+  const label = `${caixaFmt(c.patient?.boxNumber)} – ${c.patientName}`
 
   return (
     <div className="divide-y">

@@ -193,7 +193,7 @@ export function applyPercentageDiscount(amount: number, percentage: number) {
 }
 
 /** Tipos que entram no desconto progressivo (EA AIR² e EA MIO ficam fora). */
-export const PROGRESSIVE_TYPES = ['UNIDADE', 'MID', 'FULL']
+export const PROGRESSIVE_TYPES = ['MID', 'FULL'] // EA Unidade não tem desconto progressivo
 
 /**
  * Desconto progressivo do mês (por dentista, pela data de APROVAÇÃO, zera todo mês):

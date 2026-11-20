@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { Loader2, Pencil, Plus } from 'lucide-react'
+import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 
 type ServiceForm = {
   id?: string
@@ -114,6 +114,14 @@ export default function AdminServicesPage() {
   const isFull = form.type === 'FULL'
   const isAir = form.type === 'AIR'
   const modalTitle = form.id ? 'Editar Serviço' : 'Novo Serviço'
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/services/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services-all'] })
+      toast({ title: 'Serviço removido da lista' })
+    },
+    onError: (err: any) => toast({ variant: 'destructive', title: 'Erro ao remover', description: err?.response?.data?.error }),
+  })
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -194,6 +202,11 @@ export default function AdminServicesPage() {
                   <span className={`text-xs px-2 py-0.5 rounded-full ${service.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{service.active ? 'Ativo' : 'Inativo'}</span>
                   <Button size="sm" variant="outline" onClick={() => openEdit(service)} className="gap-2">
                     <Pencil className="w-4 h-4" /> Editar
+                  </Button>
+                  <Button size="sm" variant="outline" title="Apagar serviço" className="text-red-600 hover:bg-red-50"
+                    disabled={removeMutation.isPending}
+                    onClick={() => { if (window.confirm(`Apagar o serviço "${service.name}"? Ele sai da lista e não poderá mais ser escolhido (casos antigos continuam com o histórico).`)) removeMutation.mutate(service.id) }}>
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
