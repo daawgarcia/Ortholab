@@ -56,7 +56,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const [users, total] = await Promise.all([
       fastify.prisma.user.findMany({
         where,
-        select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, phone: true, createdAt: true, firstCaseCouponEligible: true },
+        select: { id: true, name: true, email: true, role: true, status: true, cro: true, clinic: true, phone: true, createdAt: true, firstCaseCouponEligible: true, allowedCountries: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: parseInt(limit),
@@ -76,6 +76,16 @@ export async function adminRoutes(fastify: FastifyInstance) {
     })
     await fastify.audit.log(request, { action: 'admin.user_status', resource: 'User', resourceId: id, metadata: { status } })
     return { user }
+  })
+
+  // Laboratórios por país: países que o funcionário pode ver (vazio = todos)
+  fastify.patch('/users/:id/countries', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
+    const { id } = request.params as { id: string }
+    const { countries } = request.body as { countries: string[] }
+    const lista = (Array.isArray(countries) ? countries : []).map((c) => String(c).toLowerCase().trim()).filter(Boolean)
+    const user = await fastify.prisma.user.update({ where: { id }, data: { allowedCountries: lista }, select: { id: true, allowedCountries: true } })
+    await fastify.audit.log(request, { action: 'admin.user_countries', resource: 'User', resourceId: id, metadata: { countries: lista } })
+    return user
   })
 
   fastify.patch('/users/:id/role', { preHandler: requireRole(Role.ADMIN) }, async (request) => {

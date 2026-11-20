@@ -146,6 +146,11 @@ export default function AdminUsersPage() {
     mutationFn: ({ id, role }: { id: string; role: string }) => api.patch(`/admin/users/${id}/role`, { role }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast({ title: 'Perfil atualizado!' }) },
   })
+  const updateCountries = useMutation({
+    mutationFn: ({ id, countries }: { id: string; countries: string[] }) => api.patch(`/admin/users/${id}/countries`, { countries }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+
 
   const updateFirstCaseCoupon = useMutation({
     mutationFn: ({ id, firstCaseCouponEligible }: { id: string; firstCaseCouponEligible: boolean }) => api.patch(`/admin/users/${id}/first-case-coupon`, { firstCaseCouponEligible }),
@@ -217,6 +222,20 @@ export default function AdminUsersPage() {
                   {u.clinic && <p>{u.clinic}</p>}
                   {u.cro && <p className="text-gray-400">CRO: {u.cro}</p>}
                   {u.role === 'DENTIST' && u.firstCaseCouponEligible && <p className="text-amber-700">Elegível PRIMEIROCASO</p>}
+                  {['LAB_TECH', 'EXPEDITION', 'FINANCIAL'].includes(u.role) && (
+                    <div className="mt-1 flex flex-wrap gap-1" title="Países que este funcionário vê no workflow (nenhum marcado = todos)">
+                      {['brasil', 'colombia', 'mexico', 'portugal', 'peru'].map(p => {
+                        const on = (u.allowedCountries || []).includes(p)
+                        return (
+                          <button key={p} type="button"
+                            onClick={() => updateCountries.mutate({ id: u.id, countries: on ? u.allowedCountries.filter((x: string) => x !== p) : [...(u.allowedCountries || []), p] })}
+                            className={`rounded px-1.5 py-0.5 text-[10px] ring-1 ${on ? 'bg-primary text-white ring-primary' : 'text-gray-500 ring-gray-200'}`}>
+                            {p === 'brasil' ? 'BR' : p === 'colombia' ? 'CO' : p === 'mexico' ? 'MX' : p === 'portugal' ? 'PT' : 'PE'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div className="col-span-1"><StatusBadge status={u.status} /></div>
                 <div className="col-span-1 text-xs text-muted-foreground">{formatDate(u.createdAt)}</div>

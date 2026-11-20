@@ -6,6 +6,25 @@ import { Loader2, ArrowRight, Send, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 
+const PAISES = [
+  { v: '', l: 'Todos' }, { v: 'brasil', l: 'Brasil' }, { v: 'colombia', l: 'Colômbia' },
+  { v: 'mexico', l: 'México' }, { v: 'portugal', l: 'Portugal' }, { v: 'peru', l: 'Peru' },
+]
+
+/** Laboratórios por país (como no Ortholab 1). O servidor só devolve os países liberados para o usuário. */
+function AbasPais({ valor, onChange }: { valor: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {PAISES.map(p => (
+        <button key={p.v} onClick={() => onChange(p.v)}
+          className={`rounded-full px-3 py-1 text-xs ring-1 ${valor === p.v ? 'bg-primary text-white ring-primary' : 'bg-white text-gray-600 ring-gray-200 hover:ring-gray-300'}`}>
+          {p.l}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('pt-BR')
 }
@@ -26,17 +45,18 @@ function WorkflowList({
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [advancing, setAdvancing] = useState<string | null>(null)
+  const [pais, setPais] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['workflow', status],
-    queryFn: () => api.get(`/cases?status=${status}&limit=200`).then(r => r.data),
+    queryKey: ['workflow', status, pais],
+    queryFn: () => api.get(`/cases?status=${status}&limit=500${pais ? `&pais=${pais}` : ''}`).then(r => r.data),
   })
   const cases = data?.cases || []
 
   const advanceMutation = useMutation({
     mutationFn: (caseId: string) => api.post(`/workflow/case/${caseId}/advance`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['workflow', status] })
+      qc.invalidateQueries({ queryKey: ['workflow', status] }) // inclui todas as abas de país
       toast({ title: 'Caso avançado com sucesso' })
       setAdvancing(null)
     },
@@ -55,7 +75,10 @@ function WorkflowList({
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">{title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">{title}</h1>
+        <AbasPais valor={pais} onChange={setPais} />
+      </div>
 
       <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
         <div className="px-5 py-3 border-b bg-gray-50">
@@ -210,15 +233,19 @@ export function LaboratoryPage() {
 
 export function ExpeditionPage() {
   const qc = useQueryClient()
+  const [pais, setPais] = useState('')
   const { data, isLoading } = useQuery({
-    queryKey: ['workflow', 'EXPEDITION'],
-    queryFn: () => api.get('/cases?status=EXPEDITION&limit=200').then(r => r.data),
+    queryKey: ['workflow', 'EXPEDITION', pais],
+    queryFn: () => api.get(`/cases?status=EXPEDITION&limit=500${pais ? `&pais=${pais}` : ''}`).then(r => r.data),
   })
   const cases = data?.cases || []
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Expedição (BR)</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-500 uppercase">Expedição</h1>
+        <AbasPais valor={pais} onChange={setPais} />
+      </div>
       <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
         <div className="px-5 py-3 border-b bg-gray-50">
           <p className="text-sm font-semibold text-gray-700">Casos a enviar</p>

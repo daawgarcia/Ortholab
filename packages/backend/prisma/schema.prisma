@@ -95,6 +95,7 @@ model User {
   password                String
   role                    Role       @default(DENTIST)
   status                  UserStatus @default(PENDING)
+  allowedCountries        String[]  @default([]) // equipe: países que pode ver no workflow (vazio = todos)
   cro                     String?
   clinic                  String?
   cnpj                    String?
@@ -171,6 +172,9 @@ model Case {
   gender            String?
   notes             String?
   planningFormData  Json?
+  deliveryMethod    String?   // ENTREGA (frete cobrado) ou RETIRA (sem frete)
+  freightAmount     Decimal?  @db.Decimal(10, 2)
+  avisoChecagemEm   DateTime? // aviso de 25 dias da checagem já enviado
   approvedAt        DateTime? // data de aprovação do caso (base do desconto progressivo do mês)
   checagem          Json?     // indicação da Checagem Virtual 3D lida do PDF do planejamento
   status            CaseStatus   @default(DRAFT)
@@ -791,4 +795,29 @@ model TermsAcceptance {
 
   @@unique([userId, document, version])
   @@index([userId])
+}
+
+/// Duplo fator: código de 6 dígitos enviado por e-mail no login de admin e financeiro
+model LoginCode {
+  id        String    @id @default(uuid())
+  userId    String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Tabela de frete por localidade (cidade específica ou estado inteiro quando cidade vazia)
+model FreightRate {
+  id        String   @id @default(uuid())
+  uf        String
+  cidade    String?
+  valor     Decimal  @db.Decimal(10, 2)
+  prazoDias Int?
+  updatedAt DateTime @updatedAt
+
+  @@index([uf])
 }

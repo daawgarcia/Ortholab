@@ -1,3 +1,4 @@
+import { TextoComRastreio } from '@/lib/rastreio'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -278,7 +279,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                     </div>
                     <div className="divide-y">
                       {WORKFLOW_STAGES.map(s => {
-                        const event = events.find((e: any) => e.stage === s.n)
+                        const event = [...events].reverse().find((e: any) => e.stage === s.n)
                         const done = !!event
                         const current = currentStage + 1 === s.n
                         return (
@@ -287,6 +288,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                             <div className="flex-1 min-w-0">
                               <p className={`text-xs font-medium ${done ? 'text-green-700' : current ? 'text-primary' : 'text-gray-400'}`}>{s.label}</p>
                               {event && <p className="text-xs text-gray-400">{event.performer?.name} · {new Date(event.createdAt).toLocaleDateString('pt-BR')}</p>}
+                              {event?.notes && <p className="mt-0.5"><TextoComRastreio texto={event.notes} /></p>}
                             </div>
                           </div>
                         )

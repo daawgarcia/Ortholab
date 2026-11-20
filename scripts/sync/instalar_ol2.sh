@@ -38,10 +38,28 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 U
+cat > /etc/systemd/system/ortholab2-backup.service <<'U'
+[Unit]
+Description=Ortholab 2 - backup diario do banco no S3
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/ortholab2/app/scripts/backup/backup_diario.sh
+StandardOutput=append:/opt/ortholab2/logs/backup.log
+StandardError=append:/opt/ortholab2/logs/backup.log
+U
+cat > /etc/systemd/system/ortholab2-backup.timer <<'U'
+[Unit]
+Description=Ortholab 2 - backup diario as 03:40
+[Timer]
+OnCalendar=*-*-* 03:40:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+U
 mkdir -p /opt/ortholab2/logs
 # script da máquina temporária fica no S3 para ela baixar
 aws s3 cp /opt/ortholab2/app/scripts/sync/ol1_snapshot_dump.sh s3://ortholab2-arquivos-ea/sync/scripts/ol1_snapshot_dump.sh --only-show-errors
 aws s3 cp /opt/ortholab2/app/scripts/sync/instalar_temp.sh s3://ortholab2-arquivos-ea/sync/scripts/instalar_temp.sh --only-show-errors
 systemctl daemon-reload
-systemctl enable --now ortholab2-sync.timer ortholab2-copia-incremental.timer
+systemctl enable --now ortholab2-sync.timer ortholab2-copia-incremental.timer ortholab2-backup.timer
 echo "ortholab2-sync.timer ativo"

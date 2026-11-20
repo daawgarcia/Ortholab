@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { authenticate, JwtPayload } from '../../plugins/auth'
 import { Role } from '@prisma/client'
 import { EventMailer } from '../mailer/event-mailer'
+import { calcularOrcamento } from '../orcamento/orcamento'
 import { applyCouponDiscount, getAllowedInstallmentOptions, getChargeAmountForCase, isAlignerService, normalizeInstallmentOption, serviceMatchesProductType } from '../services/pricing.utils'
 
 const WORKFLOW_STAGES = [
@@ -131,7 +132,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
   }
 
   async function persistBilling(caseData: any, payload: any) {
-    const { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive, serviceId } = payload
+    const { billingType, installmentOption, dropoutInsurance, discountCoupon, packActive, serviceId, deliveryMethod } = payload
     const wantsPricing = !!(billingType || installmentOption || discountCoupon || serviceId)
     const service = await resolveService(caseData, billingType, serviceId)
 
@@ -216,6 +217,7 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
         discountCoupon: service && isAlignerService(service.type) ? (normalizedCoupon || null) : null,
         packActive: typeof packActive === 'boolean' ? packActive : !!caseData.packActive,
         serviceId: service?.id || caseData.serviceId || null,
+        deliveryMethod: deliveryMethod ? (String(deliveryMethod).toUpperCase() === 'RETIRA' ? 'RETIRA' : 'ENTREGA') : caseData.deliveryMethod || null,
       },
       include: {
         dentist: true,
@@ -232,13 +234,16 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
 
     if (updated.service) {
       try {
-        const baseAmount = getChargeAmountForCase(updated.service, updated.installmentOption)
-        const finalAmount = coupon ? applyCouponDiscount(baseAmount, coupon) : baseAmount
-        await syncDentistInvoice(updated, finalAmount)
-        return { updated, baseAmount, finalAmount, requiresManualPricing: false }
+        // orçamento completo: desconto progressivo do mês, quantidade (Unidade), taxa da checagem e frete
+        const orc = await calcularOrcamento(fastify.prisma, updated, updated.service, {
+          installmentOption: updated.installmentOption, deliveryMethod: updated.deliveryMethod, coupon,
+        })
+        await fastify.prisma.case.update({ where: { id: updated.id }, data: { freightAmount: orc.frete.valor ?? null } })
+        await syncDentistInvoice(updated, orc.total)
+        return { updated, baseAmount: orc.valorCheio, finalAmount: orc.total, orcamento: orc, requiresManualPricing: orc.frete.valor === null }
       } catch (error: any) {
         const message = String(error?.message || '')
-        const isMissingPrice = message.includes('Preco nao configurado') || message.includes('Preco invalido')
+        const isMissingPrice = message.includes('Preco nao configurado') || message.includes('Preco invalido') || message.includes('Quantidade de alinhadores')
         if (!isMissingPrice) throw error
 
         // When there is no configured table for this product yet, allow billing save

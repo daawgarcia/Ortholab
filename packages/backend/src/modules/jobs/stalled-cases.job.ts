@@ -83,29 +83,28 @@ async function checkStalledCases(fastify: FastifyInstance) {
       ...labTechs.map(u => u.id),
     ]
 
-    // Criar notificações PUSH para cada grupo
-    for (const [dentistId, cases] of Object.entries(casesByDentist)) {
-      const caseList = cases.slice(0, 5).map(c => `#${String(c.caseNumber).padStart(6, '0')} - ${c.patientName}`).join(', ')
-      const moreCount = cases.length > 5 ? ` e mais ${cases.length - 5} caso(s)` : ''
-
-      // Notificar usuários internos
-      if (internalUserIds.length > 0) {
+    // Um único aviso-resumo por dia (antes era um aviso por dentista a cada hora — com os
+    // casos importados do Ortholab 1 isso virava centenas de avisos para a equipe).
+    void casesByDentist
+    if (internalUserIds.length > 0) {
+      const jaAvisou = await fastify.prisma.pushNotification.findFirst({
+        where: { createdById: 'system', title: { startsWith: '⚠️ Casos parados' }, createdAt: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+        select: { id: true },
+      })
+      if (!jaAvisou) {
         await fastify.prisma.pushNotification.create({
           data: {
             createdById: 'system',
             title: `⚠️ Casos parados há mais de ${STALLED_DAYS} dias`,
-            body: `${cases.length} caso(s) estão parados: ${caseList}${moreCount}`,
+            body: `${stalledCases.length} caso(s) em andamento sem movimentação há mais de ${STALLED_DAYS} dias. Confira no Planning Center.`,
             level: PushLevel.WARNING,
             targetType: 'ROLE',
             targetId: `${Role.ADMIN},${Role.LAB_TECH}`,
             link: '/workflow/planning-center',
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expira em 24h
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
           },
         })
       }
-
-      // Log para debug
-      console.log(`[StalledCasesJob] ${cases.length} casos parados para dentista ${dentistId}`)
     }
 
     console.log(`[StalledCasesJob] Verificação concluída. ${stalledCases.length} casos parados encontrados.`)

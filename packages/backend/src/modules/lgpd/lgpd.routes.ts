@@ -11,6 +11,9 @@ export async function prepararLgpd(fastify: FastifyInstance) {
     const existe = await fastify.prisma.contentPage.findUnique({ where: { slug } })
     if (!existe) {
       await fastify.prisma.contentPage.create({ data: { slug, title: MINUTAS[slug].title, body: MINUTAS[slug].body } })
+    } else if (!existe.updatedById && existe.body?.startsWith('MINUTA') && existe.body !== MINUTAS[slug].body) {
+      // minuta ainda não editada por ninguém: atualiza para a versão nova do rascunho
+      await fastify.prisma.contentPage.update({ where: { slug }, data: { title: MINUTAS[slug].title, body: MINUTAS[slug].body } })
     }
   }
 }

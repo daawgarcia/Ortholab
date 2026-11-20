@@ -39,12 +39,26 @@ export async function caseRoutes(fastify: FastifyInstance) {
     }
     if (status) where.status = status
     if (search) where.patientName = { contains: search, mode: 'insensitive' }
+    // Laboratórios por país: equipe só vê casos de dentistas dos países liberados para ela
+    const { pais } = request.query as any
+    if (user.role !== Role.DENTIST && user.role !== Role.SELLER) {
+      const eu = await fastify.prisma.user.findUnique({ where: { id: user.id }, select: { allowedCountries: true } })
+      let paises = (eu?.allowedCountries || []).map((p) => p.toLowerCase())
+      if (user.role === Role.ADMIN) paises = []
+      if (pais) paises = paises.length ? paises.filter((p) => p === String(pais).toLowerCase()) : [String(pais).toLowerCase()]
+      if (paises.length) {
+        const nomes = paises.flatMap((p) => (p === 'brasil' ? ['brasil', 'br'] : [p]))
+        where.dentist = { is: { OR: nomes.map((p) => ({ country: { equals: p, mode: 'insensitive' } })) } }
+      } else if ((eu?.allowedCountries || []).length && user.role !== Role.ADMIN) {
+        where.id = '00000000-0000-0000-0000-000000000000' // país pedido não está liberado
+      }
+    }
 
     const [cases, total] = await Promise.all([
       fastify.prisma.case.findMany({
         where,
         include: {
-          dentist: { select: { name: true, clinic: true, email: true } },
+          dentist: { select: { name: true, clinic: true, email: true, country: true } },
           patient: { select: { boxNumber: true } },
           service: true,
           workflowEvents: { orderBy: { stage: 'desc' }, take: 1 },

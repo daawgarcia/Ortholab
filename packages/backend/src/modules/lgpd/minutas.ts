@@ -55,7 +55,7 @@ Execução de contrato com o dentista, cumprimento de obrigação legal, exercí
 Somente com fornecedores necessários à operação, sob contrato e obrigação de confidencialidade: hospedagem em nuvem (Amazon Web Services, região São Paulo), ERP (TOTVS), meios de pagamento (CAIXA e Rede) e envio de e-mails. Não vendemos dados.
 
 6. Por quanto tempo guardamos
-Pelo tempo necessário às finalidades acima e aos prazos legais (prontuário odontológico, documentos fiscais e contábeis). Depois disso, os dados são eliminados ou anonimizados.
+Os dados são mantidos por tempo indeterminado, para garantir a continuidade e o histórico dos tratamentos (prontuário odontológico), o cumprimento de obrigações legais, fiscais e contábeis e o exercício regular de direitos. O titular pode solicitar a anonimização quando legalmente cabível.
 
 7. Segurança
 Conexão criptografada (HTTPS), arquivos em armazenamento privado com links temporários, controle de acesso por perfil, senhas criptografadas e registro de acessos.

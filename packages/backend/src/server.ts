@@ -47,6 +47,9 @@ import { whatsappRoutes } from './modules/whatsapp/whatsapp.routes'
 import { reportsRoutes } from './modules/reports/reports.routes'
 import { buscaRoutes, prepararBusca } from './modules/busca/busca'
 import { lgpdRoutes, prepararLgpd, registrarAuditoriaDeAcesso } from './modules/lgpd/lgpd.routes'
+import { orcamentoRoutes } from './modules/orcamento/orcamento'
+import { prepararFrete } from './modules/orcamento/frete'
+import { startAvisoChecagemJob } from './modules/jobs/aviso-checagem.job'
 import { startStalledCasesJob } from './modules/jobs/stalled-cases.job'
 
 const env = validateEnv()
@@ -275,11 +278,14 @@ const start = async () => {
   await app.register(reportsRoutes, { prefix: '/api/reports' })
   await app.register(buscaRoutes, { prefix: '/api/busca' })
   await app.register(lgpdRoutes, { prefix: '/api/lgpd' })
+  await app.register(orcamentoRoutes, { prefix: '/api/orcamento' })
+  prepararFrete(app.prisma).catch((e) => app.log.error(e, 'frete'))
   prepararLgpd(app).catch((e) => app.log.error(e, 'lgpd: minutas'))
   prepararBusca(app.prisma).catch(() => {})
 
   // Iniciar job de verificação de casos parados
   startStalledCasesJob(app)
+  startAvisoChecagemJob(app)
 
   app.get(
     '/api/uploads/*',

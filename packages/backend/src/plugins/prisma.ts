@@ -13,9 +13,14 @@ const prismaPlugin: FastifyPluginAsync = fp(async (server) => {
   // Quando um caso vira APROVADO por qualquer rota, grava a data de aprovação
   // (usada no desconto progressivo do mês e na taxa da Checagem 3D após 30 dias).
   prisma.$use(async (params, next) => {
-    if (params.model === 'Case' && (params.action === 'update' || params.action === 'updateMany')) {
+    // Aprovação: as rotas levam o caso para APPROVED ou direto para PRINTING_3D
+    if (params.model === 'Case' && params.action === 'update') {
       const data = params.args?.data
-      if (data && data.status === 'APPROVED' && data.approvedAt === undefined) data.approvedAt = new Date()
+      const id = params.args?.where?.id
+      if (data && id && (data.status === 'APPROVED' || data.status === 'PRINTING_3D') && data.approvedAt === undefined) {
+        const atual = await prisma.case.findUnique({ where: { id }, select: { approvedAt: true } })
+        if (atual && !atual.approvedAt) data.approvedAt = new Date()
+      }
     }
     return next(params)
   })

@@ -36,6 +36,7 @@ const adminNav = [
   { label: 'Usuários', href: '/admin/users', icon: Users },
   { label: 'Gestão de Carteira', href: '/admin/seller-clients', icon: Briefcase },
   { label: 'Serviços e Preços', href: '/admin/services', icon: Package },
+  { label: 'Frete', href: '/admin/frete', icon: Send },
   { label: 'Pagamentos PIX', href: '/admin/pix-payments', icon: CreditCard },
   { label: 'Pagamentos Cartão', href: '/admin/card-payments', icon: CreditCard },
   { label: 'Cupons', href: '/admin/coupons', icon: CreditCard },

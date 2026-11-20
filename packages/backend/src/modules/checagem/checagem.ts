@@ -16,6 +16,9 @@ export interface Checagem {
   /** estimativa única, quando o PDF não separa por arcada */
   estimativaGeral?: { min: number; max: number }
   versao?: number
+  /** guia de attachments citada no planejamento e quantidade estimada (1 por arcada tratada) */
+  guiaAttachment?: boolean
+  guias?: number
   seriesFaseSuperior?: number
   seriesFaseInferior?: number
   tipoIndicado?: 'UNIDADE' | 'MID' | 'FULL' | null
@@ -49,6 +52,10 @@ export function interpretarTexto(texto: string): Omit<Checagem, 'lidoEm'> | null
   if (fi) out.seriesFaseInferior = +fi[1]
   const ambos = trecho.match(/(\d{1,3})\s*s[ée]ries?\s+(?:superiores?\s+e\s+inferiores?|em\s+ambas)/i)
   if (ambos && !fs && !fi) { out.seriesFaseSuperior = +ambos[1]; out.seriesFaseInferior = +ambos[1] }
+  if (/\bguias?\b/i.test(t) && /attachment/i.test(t)) {
+    out.guiaAttachment = true
+    out.guias = (out.seriesFaseSuperior ? 1 : 0) + (out.seriesFaseInferior ? 1 : 0) || 1
+  }
   const achou = out.estimativaSuperior || out.estimativaInferior || out.estimativaGeral || out.seriesFaseSuperior != null || out.seriesFaseInferior != null
   return achou ? out : null
 }
@@ -77,7 +84,7 @@ export async function lerChecagemDoPdf(buffer: Buffer, arquivo?: string): Promis
       const r = interpretarTexto(paginas[i])
       if (r) {
         r.tipoIndicado = classificar(r)
-        return { ...r, pagina: i + 1, arquivo, versao: 3, lidoEm: new Date().toISOString() }
+        return { ...r, pagina: i + 1, arquivo, versao: 4, lidoEm: new Date().toISOString() }
       }
     }
     return null

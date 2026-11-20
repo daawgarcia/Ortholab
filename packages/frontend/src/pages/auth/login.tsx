@@ -19,6 +19,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [warmingUp, setWarmingUp] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+  const [desafio, setDesafio] = useState<{ challengeId: string; email: string } | null>(null)
+  const [codigo, setCodigo] = useState('')
+
+  const verificarCodigo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!desafio) return
+    setLoading(true)
+    try {
+      const res = await api.post('/auth/login/verify', { challengeId: desafio.challengeId, code: codigo })
+      setAuth(res.data.user, res.data.accessToken, res.data.refreshToken, res.data.pendingPushes)
+      navigate('/')
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Código inválido', description: err.response?.data?.error || 'Tente novamente' })
+      if (err.response?.status === 401 && /expirado/i.test(err.response?.data?.error || '')) setDesafio(null)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const onSubmit = async (data: any) => {
     setLoading(true)
@@ -26,6 +44,11 @@ export default function LoginPage() {
     const warmTimer = setTimeout(() => setWarmingUp(true), 5000)
     try {
       const res = await api.post('/auth/login', data)
+      if (res.data.twoFactorRequired) {
+        setDesafio({ challengeId: res.data.challengeId, email: res.data.email })
+        setCodigo('')
+        return
+      }
       setAuth(res.data.user, res.data.accessToken, res.data.refreshToken, res.data.pendingPushes)
       navigate('/')
     } catch (err: any) {
@@ -69,6 +92,25 @@ export default function LoginPage() {
             <p className="text-muted-foreground mt-1">Entre com suas credenciais para acessar</p>
           </div>
 
+          {desafio ? (
+            <form onSubmit={verificarCodigo} className="space-y-5">
+              <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+                Por segurança, enviamos um código de 6 dígitos para <strong>{desafio.email}</strong>. Ele vale por 10 minutos.
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="codigo">Código de acesso</Label>
+                <Input id="codigo" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6}
+                  value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ''))}
+                  className="text-center text-2xl tracking-[0.5em] font-semibold" placeholder="••••••" />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || codigo.length !== 6}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Entrar
+              </Button>
+              <button type="button" onClick={() => setDesafio(null)} className="w-full text-center text-sm text-muted-foreground hover:underline">
+                Voltar e reenviar código
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
@@ -88,6 +130,7 @@ export default function LoginPage() {
               {warmingUp ? 'Aquecendo servidor...' : 'Entrar'}
             </Button>
           </form>
+          )}
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Não tem conta?{' '}

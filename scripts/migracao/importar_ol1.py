@@ -28,6 +28,9 @@ import pymysql
 PLACEHOLDER_DOMAIN = "sem-email.ortholab2.local"
 
 # Papéis do Ortholab 1 -> Role do Ortholab 2
+PAIS_DO_PAPEL = {"worker": "brasil", "worker_pt": "portugal", "worker_co": "colombia",
+                 "worker_mx": "mexico", "worker_pe": "peru"}
+
 ROLE_MAP = {
     "admin": "ADMIN",
     "worker": "LAB_TECH",
@@ -182,7 +185,8 @@ def main():
             f'ON CONFLICT ("{key}") DO UPDATE SET {updates}'
         )
         tmpl = "(" + ", ".join(
-            f"%({c})s::\"Role\"" if c == "role" else f"%({c})s::\"UserStatus\"" if c == "status" else f"%({c})s"
+            f"%({c})s::\"Role\"" if c == "role" else f"%({c})s::\"UserStatus\"" if c == "status"
+            else f"%({c})s::text[]" if c == "allowedCountries" else f"%({c})s"
             for c in cols
         ) + ")"
         psycopg2.extras.execute_values(p, sql, rows, template=tmpl, page_size=500)
@@ -258,6 +262,9 @@ def main():
             "role": role,
             "status": "INACTIVE" if ("blocked" in rset or no_role) else "ACTIVE",
             "emailVerified": bool(u.get("confirmed_at")),
+            # laboratórios por país (Ortholab 1: worker=brasil, worker_pt, worker_co, worker_mx, worker_pe)
+            "allowedCountries": [] if "admin" in rset else sorted(
+                {PAIS_DO_PAPEL[r] for r in rset if r in PAIS_DO_PAPEL}),
             "createdAt": u.get("created_at") or now,
             "updatedAt": u.get("updated_at") or now,
         })

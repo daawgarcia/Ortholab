@@ -48,6 +48,7 @@ import AdminPixPaymentsPage from '@/pages/admin/pix-payments'
 import AdminWhatsAppPage from '@/pages/admin/whatsapp'
 import AdminReportsPage from '@/pages/admin/reports'
 import AdminLgpdPage from '@/pages/admin/lgpd'
+import AdminFretePage from '@/pages/admin/frete'
 import AdminCardPaymentsPage from '@/pages/admin/card-payments'
 import ProjectsPage from '@/pages/projects'
 
@@ -136,6 +137,7 @@ export default function App() {
           <Route path="admin/card-payments" element={<ProtectedRoute roles={['ADMIN','FINANCIAL']}><AdminCardPaymentsPage /></ProtectedRoute>} />
           <Route path="admin/whatsapp" element={<ProtectedRoute roles={['ADMIN']}><AdminWhatsAppPage /></ProtectedRoute>} />
           <Route path="admin/reports" element={<ProtectedRoute roles={['ADMIN']}><AdminReportsPage /></ProtectedRoute>} />
+          <Route path="admin/frete" element={<ProtectedRoute roles={['ADMIN']}><AdminFretePage /></ProtectedRoute>} />
           <Route path="admin/lgpd" element={<ProtectedRoute roles={['ADMIN']}><AdminLgpdPage /></ProtectedRoute>} />
 
           <Route path="dentist-financial" element={<ProtectedRoute roles={['DENTIST']}><DentistFinancialPage /></ProtectedRoute>} />

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AprovacaoRapida } from '@/components/cases/aprovacao-rapida'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,6 +78,12 @@ export default function DashboardPage() {
   })
 
   const cases = casesData?.cases || []
+  const { data: aguardandoData } = useQuery({
+    queryKey: ['aguardando-aprovacao'],
+    queryFn: () => api.get('/cases?status=WAITING_APPROVAL&limit=50').then(r => r.data),
+    enabled: user?.role === 'DENTIST',
+  })
+  const aguardando: any[] = aguardandoData?.cases || []
   const recentCases = cases.slice(0, 5)
   const total = casesData?.total || 0
 
@@ -140,6 +147,19 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {user?.role === 'DENTIST' && aguardando.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-500 px-2 text-xs font-bold text-white">{aguardando.length}</span>
+            <h2 className="text-lg font-semibold text-gray-900">Aguardando sua aprovação</h2>
+          </div>
+          <p className="text-sm text-gray-500 -mt-2">Veja a checagem 3D, escolha o pacote e aprove — o valor final já aparece com desconto do mês e frete.</p>
+          <div className="space-y-3">
+            {aguardando.map((c: any) => <AprovacaoRapida key={c.id} caso={c} />)}
+          </div>
+        </section>
+      )}
 
       {showImpersonate && user?.role === 'ADMIN' && (
         <Card className="border-orange-200 bg-orange-50">

@@ -159,7 +159,7 @@ function DireitosTitular() {
         <h3 className="font-semibold text-gray-900">Anonimizar paciente</h3>
         <p className="mt-1 text-sm text-gray-600">
           Remove nome, data de nascimento, sexo, observações e fotos do Ortholab 2. O histórico clínico e financeiro fica sem identificação.
-          <strong> Atenção:</strong> o prontuário odontológico tem prazo legal de guarda — anonimize só com orientação do encarregado/jurídico.
+          <strong> Atenção:</strong> a política da Esthetic Aligner é guardar os dados por tempo indeterminado — anonimize só com orientação do encarregado/jurídico.
           O Ortholab 1 não é alterado.
         </p>
         {sel ? (
@@ -186,7 +186,7 @@ function Documentos() {
     <div className="max-w-2xl space-y-3 text-sm text-gray-700">
       <p>Os textos dos <strong>Termos de Uso</strong> e da <strong>Política de Privacidade</strong> foram criados como <strong>minuta</strong> e precisam ser revisados pelo jurídico e completados com os dados da empresa e do encarregado (DPO).</p>
       <p>Para editar, vá em <Link to="/admin/content" className="text-primary hover:underline">Administração → Conteúdo</Link> (páginas <code>termos-de-uso</code> e <code>politica-de-privacidade</code>). Sempre que o texto for salvo, todos os usuários aceitam a nova versão no próximo acesso — o aceite fica registrado com data, IP e versão.</p>
-      <p className="flex items-center gap-2 text-gray-500"><FileText className="h-4 w-4" /> Sessões da equipe encerram após 30 minutos sem uso.</p>
+      <p className="flex items-center gap-2 text-gray-500"><FileText className="h-4 w-4" /> Prazo de guarda definido pela Esthetic Aligner: os dados são mantidos por tempo indeterminado.</p>
     </div>
   )
 }

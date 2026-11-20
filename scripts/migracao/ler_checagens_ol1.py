@@ -34,7 +34,7 @@ GERAL = re.compile(r"Estima\w*[^;0-9]{0,80}?:\s*" + FAIXA, re.I)
 PROD = re.compile(r"produ(?:[çc][ãa]o|cci[óo]n)\s+de\s+(.{0,120}?)\s+para\s+esta", re.I)
 FS = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+superiores?", re.I)
 FI = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+inferiores?", re.I)
-VERSAO_LEITURA = 3
+VERSAO_LEITURA = 4
 
 
 def log(m):
@@ -56,6 +56,9 @@ def interpretar(texto):
         out["seriesFaseSuperior"] = int(m[1])
     if (m := FI.search(trecho)):
         out["seriesFaseInferior"] = int(m[1])
+    if re.search(r"\bguias?\b", t, re.I) and re.search(r"attachment", t, re.I):
+        out["guiaAttachment"] = True
+        out["guias"] = (1 if out.get("seriesFaseSuperior") else 0) + (1 if out.get("seriesFaseInferior") else 0) or 1
     return out or None
 
 

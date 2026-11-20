@@ -53,6 +53,10 @@ function safeStringEq(a: string, b: string) {
   return timingSafeEqual(ba, bb)
 }
 
+const DOIS_FATORES_ROLES: string[] = [Role.ADMIN, Role.FINANCIAL]
+const hashCode = (c: string) => createHash('sha256').update(`ortholab2fa:${c}`).digest('hex')
+const mascararEmail = (e: string) => e.replace(/^(.{2}).*(@.*)$/, '$1•••$2')
+
 export async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/register', async (request, reply) => {
     const data = registerSchema.parse(request.body)
@@ -153,6 +157,47 @@ export async function authRoutes(fastify: FastifyInstance) {
       })
     }
 
+    // Duplo fator para perfis com acesso amplo (admin e financeiro): código por e-mail
+    if (DOIS_FATORES_ROLES.includes(user.role) && process.env.TWO_FACTOR !== 'off') {
+      const code = String(Math.floor(100000 + Math.random() * 900000))
+      const desafio = await fastify.prisma.loginCode.create({
+        data: { userId: user.id, codeHash: hashCode(code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+      })
+      await fastify.mailer.send({
+        to: user.email,
+        subject: `Seu código de acesso ao Ortholab: ${code}`,
+        html: `<p>Olá, ${user.name}.</p><p>Seu código de acesso ao Ortholab é:</p>
+               <p style="font-size:28px;font-weight:bold;letter-spacing:6px">${code}</p>
+               <p>Ele vale por 10 minutos. Se não foi você que tentou entrar, troque sua senha e avise a TI.</p>`,
+      }).catch((err: any) => fastify.log.error(err, '2FA: falha ao enviar e-mail'))
+      await fastify.audit.log(request, { action: 'auth.2fa_enviado', resource: 'User', resourceId: user.id })
+      return { twoFactorRequired: true, challengeId: desafio.id, email: mascararEmail(user.email) }
+    }
+
+    return concluirLogin(user, request)
+  })
+
+  fastify.post('/login/verify', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
+    const { challengeId, code } = (request.body || {}) as { challengeId?: string; code?: string }
+    if (!challengeId || !code) return reply.status(400).send({ error: 'Informe o código' })
+    const desafio = await fastify.prisma.loginCode.findUnique({ where: { id: challengeId } })
+    if (!desafio || desafio.usedAt || desafio.expiresAt < new Date() || desafio.attempts >= 5) {
+      return reply.status(401).send({ error: 'Código expirado. Faça login novamente.' })
+    }
+    const ok = timingSafeEqual(Buffer.from(hashCode(String(code).trim())), Buffer.from(desafio.codeHash))
+    if (!ok) {
+      await fastify.prisma.loginCode.update({ where: { id: desafio.id }, data: { attempts: { increment: 1 } } })
+      await fastify.audit.log(request, { action: 'auth.2fa', status: 'FAILED', resource: 'User', resourceId: desafio.userId })
+      return reply.status(401).send({ error: 'Código incorreto' })
+    }
+    await fastify.prisma.loginCode.update({ where: { id: desafio.id }, data: { usedAt: new Date() } })
+    const user = await fastify.prisma.user.findUnique({ where: { id: desafio.userId } })
+    if (!user || user.status !== UserStatus.ACTIVE) return reply.status(403).send({ error: 'Conta indisponível' })
+    await fastify.audit.log(request, { action: 'auth.2fa', status: 'OK', resource: 'User', resourceId: user.id })
+    return concluirLogin(user, request)
+  })
+
+  async function concluirLogin(user: any, request: any) {
     const accessToken = fastify.tokens.signAccess(user)
     const refreshToken = fastify.tokens.signRefresh(user)
 
@@ -187,7 +232,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       user: { id: user.id, email: user.email, role: user.role, name: user.name, mustChangePassword: user.mustChangePassword },
       pendingPushes: unreadPushes,
     }
-  })
+  }
 
   fastify.post('/refresh', { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { refreshToken } = (request.body || {}) as { refreshToken?: string }
