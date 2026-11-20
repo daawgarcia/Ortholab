@@ -10,8 +10,9 @@ RUN npm ci --no-audit --no-fund
 FROM deps AS build
 COPY packages ./packages
 RUN cd packages/backend && npx prisma generate --schema=prisma/schema.prisma && npm run build
-# Frontend usa /api relativo (mesmo domínio, via Caddy)
-RUN cd packages/frontend && VITE_API_URL= npm run build
+# Frontend chama a API no mesmo domínio (o Caddy encaminha /api para o backend)
+ARG VITE_API_URL=https://ortholab2.estheticaligner.com.br
+RUN cd packages/frontend && VITE_API_URL=$VITE_API_URL npm run build
 
 FROM node:20-bookworm-slim AS backend
 WORKDIR /app
