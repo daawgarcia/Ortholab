@@ -1,7 +1,8 @@
 const https = require('https');
 const BASE = 'https://ortholab.estheticaligner.com.br';
-const Email = 'marketing@estheticaligner.com.br';
-const Password = 'Otavio2805@';
+const Email = process.env.OL1_EMAIL;
+const Password = process.env.OL1_PASSWORD;
+if (!Email || !Password) { console.error('Defina OL1_EMAIL e OL1_PASSWORD no ambiente (.env, fora do git).'); process.exit(1); }
 
 function request(url, options = {}) {
   return new Promise((resolve, reject) => {

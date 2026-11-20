@@ -10,7 +10,7 @@ if (-not $auth) {
   exit 1
 }
 
-$form = "authenticity_token=$([System.Net.WebUtility]::UrlEncode($auth))&user%5Bemail%5D=marketing%40estheticaligner.com.br&user%5Bpassword%5D=Otavio2805%40&commit=Entrar"
+$form = "authenticity_token=$([System.Net.WebUtility]::UrlEncode($auth))&user%5Bemail%5D=$([System.Net.WebUtility]::UrlEncode($env:OL1_EMAIL))&user%5Bpassword%5D=$([System.Net.WebUtility]::UrlEncode($env:OL1_PASSWORD))&commit=Entrar"
 $post = curl.exe -sS -L -b $cookies -c $cookies -A 'Mozilla/5.0' -H "Origin: $base" -H "Referer: $base/pt-BR/users/sign_in" -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -X POST --data $form "$base/pt-BR/users/sign_in"
 
 if ($post -match 'Email ou senha inválidos|Invalid|sign_in') {
