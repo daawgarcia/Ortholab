@@ -19,7 +19,10 @@ fi
 # apaga diários com mais de 35 dias
 LIMITE=$(date -d '35 days ago' +%F)
 aws s3 ls s3://ortholab2-arquivos-ea/backups/diario/ --region sa-east-1 | awk '{print $4}' | while read -r f; do
-  d=${f%.dump}; [[ "$d" < "$LIMITE" ]] && aws s3 rm "s3://ortholab2-arquivos-ea/backups/diario/$f" --only-show-errors --region sa-east-1 && log "removido $f"
+  d=${f%.dump}
+  if [[ "$d" < "$LIMITE" ]]; then
+    aws s3 rm "s3://ortholab2-arquivos-ea/backups/diario/$f" --only-show-errors --region sa-east-1 && log "removido $f"
+  fi
 done
 rm -f $TMP/ortholab2.dump
 log "backup ok ($((TAM/1024/1024)) MB)"
