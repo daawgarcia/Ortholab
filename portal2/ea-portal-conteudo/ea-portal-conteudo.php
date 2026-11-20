@@ -274,6 +274,15 @@ function eap_capa_do_conteudo($content) {
 /** Links de páginas internas de uma página "índice", na ordem em que aparecem. */
 function eap_links_internos($content) {
     // pega URLs tanto do HTML renderizado quanto dos atributos dos shortcodes (url="", link="", href="")
+    // títulos das seções do acordeão (vc_tta_section) para cada botão de dentro delas
+    $tit_secao = [];
+    if (preg_match_all('~\[vc_tta_section[^\]]*title="([^"]*)"[^\]]*\](.*?)\[/vc_tta_section\]~is', $content, $secs, PREG_SET_ORDER)) {
+        foreach ($secs as $sec) {
+            if (preg_match_all('~link="url:([^|"]+)~', $sec[2], $bl)) foreach ($bl[1] as $u) $tit_secao[rawurldecode($u)] = html_entity_decode($sec[1]);
+        }
+    }
+    // links do WPBakery vêm codificados: link="url:https%3A%2F%2F...|title:..."
+    $content = preg_replace_callback('~link="url:([^|"]+)[^"]*"~', fn($m) => 'link="' . rawurldecode($m[1]) . '"', $content);
     $fontes = $content . "\n" . do_shortcode($content);
     preg_match_all('~(?:href|url|link)\s*=\s*["\']([^"\'#\s]+)["\']~i', $fontes, $mm);
     preg_match_all('~(?:href|url|link)\s*=\s*["\']([^"\'#\s]+)["\'][^>\]]*[>\]]([^<\[]{0,140})~i', $fontes, $tx, PREG_SET_ORDER);
@@ -290,7 +299,7 @@ function eap_links_internos($content) {
         if (!$id) { $p = get_page_by_path(trim((string) parse_url($url, PHP_URL_PATH), '/')); if ($p) $id = $p->ID; }
         if (!$id || isset($vistos[$id])) continue;
         $vistos[$id] = true;
-        $out[] = ['id' => $id, 'texto' => $textos[$url] ?? ''];
+        $out[] = ['id' => $id, 'texto' => $tit_secao[$url] ?? ($textos[$url] ?? '')];
     }
     return $out;
 }
@@ -341,8 +350,7 @@ function eap_importar() {
             $v = eap_video_do_conteudo($p->post_content);
             if (!$v) continue;
             $pos++;
-            $titulo = get_the_title($p);
-            if (!$titulo || stripos($titulo, 'assista') !== false) $titulo = $lk['texto'];
+            $titulo = $lk['texto'] && stripos($lk['texto'], 'assista') === false ? $lk['texto'] : get_the_title($p);
             $n_aulas += eap_criar_aula('page-' . $p->ID, html_entity_decode($titulo), $v, $tid, $pos * 10, eap_capa_do_conteudo($p->post_content));
         }
     }
@@ -352,7 +360,8 @@ function eap_importar() {
         $idx = get_page_by_path($slug);
         if (!$idx) continue;
         $sid = eap_termo('ea_secao', $nome, $ord);
-        $html = do_shortcode($idx->post_content) . "\n" . $idx->post_content;
+        $bruto = preg_replace_callback('~link="url:([^|"]+)[^"]*"~', fn($m) => 'link="' . rawurldecode($m[1]) . '"', $idx->post_content);
+        $html = do_shortcode($idx->post_content) . "\n" . $bruto;
         preg_match_all('~(?:href|url|link)\s*=\s*["\']([^"\']+\.(?:pdf|zip|rar|jpg|jpeg|png|mp4|pptx?|docx?|xlsx?))["\'][^>\]]*[>\]]([^<\[]{0,160})~is', $html, $mm, PREG_SET_ORDER);
         $pos = 0;
         foreach ($mm as $m) {
