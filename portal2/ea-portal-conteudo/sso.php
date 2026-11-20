@@ -113,7 +113,7 @@ add_action('template_redirect', function () {
 // tela de configuração
 add_action('admin_menu', function () {
     add_submenu_page('eap-portal', 'Login único', 'Login único', 'manage_options', 'eap-sso', 'eap_sso_pagina');
-});
+}, 20);
 function eap_sso_pagina() {
     if (isset($_POST['eap_sso_salvar']) && check_admin_referer('eap_sso')) {
         if (!empty($_POST['segredo'])) update_option('eap_sso_segredo', sanitize_text_field(wp_unslash($_POST['segredo'])), false);
