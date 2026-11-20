@@ -10,8 +10,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
 import { Loader2 } from 'lucide-react'
+import { AplicarIdioma, SeletorIdioma } from '@/components/layout/seletor-idioma'
+import { IDIOMA_LOCAL } from '@/lib/i18n'
 
 const schema = z.object({ email: z.string().email('E-mail inválido'), password: z.string().min(1, 'Senha obrigatória') })
+
+/** Quem escolheu ES/PT na tela de login fica com essa escolha; senão vale o idioma do país do cadastro. */
+function salvarIdiomaEscolhido(user: any) {
+  let escolhido: string | null = null
+  try { escolhido = localStorage.getItem(IDIOMA_LOCAL) } catch { /* ignore */ }
+  if ((escolhido === 'es' || escolhido === 'pt') && escolhido !== user?.idioma) {
+    api.patch('/auth/me/idioma', { idioma: escolhido }).catch(() => {})
+    useAuthStore.getState().updateUser({ idioma: escolhido as any })
+  }
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -29,6 +41,7 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login/verify', { challengeId: desafio.challengeId, code: codigo })
       setAuth(res.data.user, res.data.accessToken, res.data.refreshToken, res.data.pendingPushes)
+      salvarIdiomaEscolhido(res.data.user)
       navigate('/')
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Código inválido', description: err.response?.data?.error || 'Tente novamente' })
@@ -50,6 +63,7 @@ export default function LoginPage() {
         return
       }
       setAuth(res.data.user, res.data.accessToken, res.data.refreshToken, res.data.pendingPushes)
+      salvarIdiomaEscolhido(res.data.user)
       navigate('/')
     } catch (err: any) {
       const msg = err.response?.data?.error
@@ -87,6 +101,8 @@ export default function LoginPage() {
 
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
+          <AplicarIdioma />
+          <div className="mb-4 flex justify-end"><SeletorIdioma /></div>
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Bem-vindo de volta</h2>
             <p className="text-muted-foreground mt-1">Entre com suas credenciais para acessar</p>

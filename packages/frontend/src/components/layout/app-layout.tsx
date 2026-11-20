@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
+import { AplicarIdioma } from './seletor-idioma'
 
 export default function AppLayout() {
   const sidebarHidden = useUiStore(s => s.sidebarHidden)
@@ -19,6 +20,7 @@ export default function AppLayout() {
   }, [me, updateUser])
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      <AplicarIdioma />
       <AceiteTermos />
       {!sidebarHidden && <Sidebar />}
       <div className="flex flex-col flex-1 overflow-hidden">

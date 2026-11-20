@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth'
 import { Bell, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useUiStore } from '@/store/ui'
 import { BuscaGlobal } from './busca-global'
+import { SeletorIdioma } from './seletor-idioma'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
 import { useState } from 'react'
@@ -52,6 +53,7 @@ export function Header() {
       </Button>
       <div className="flex-1 flex justify-center px-4"><BuscaGlobal /></div>
       <div className="flex items-center gap-3">
+        <SeletorIdioma />
         <div className="relative">
           <Button variant="ghost" size="icon" onClick={() => setShowNotifs(!showNotifs)}>
             <Bell className="w-5 h-5" />
