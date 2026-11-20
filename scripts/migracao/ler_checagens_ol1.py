@@ -86,7 +86,7 @@ def baixar(work_id, nome, destino):
 def main():
     my = pymysql.connect(host=os.environ.get("MYSQL_HOST", "127.0.0.1"), port=int(os.environ.get("MYSQL_PORT", "3307")),
                          user=os.environ.get("MYSQL_USER", "root"), password=os.environ.get("MYSQL_PASSWORD", ""),
-                         database=os.environ.get("MYSQL_DB", "ol1"), charset="utf8", cursorclass=pymysql.cursors.DictCursor)
+                         database=os.environ.get("MYSQL_DB", "ol1"), charset="utf8", cursorclass=pymysql.cursors.DictCursor, autocommit=True)
     pg = psycopg2.connect(os.environ["PG_DSN"])
     p = pg.cursor()
     p.execute('''SELECT c.id, c."legacyId", pt."legacyId", c.checagem

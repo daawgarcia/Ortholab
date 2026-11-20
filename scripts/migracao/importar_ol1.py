@@ -99,7 +99,7 @@ def main():
         password=os.environ.get("MYSQL_PASSWORD", ""),
         database=os.environ.get("MYSQL_DB", "ol1"),
         charset="utf8",
-        cursorclass=pymysql.cursors.DictCursor,
+        cursorclass=pymysql.cursors.DictCursor, autocommit=True,
     )
     pg = psycopg2.connect(os.environ["PG_DSN"])
     pg.autocommit = False
