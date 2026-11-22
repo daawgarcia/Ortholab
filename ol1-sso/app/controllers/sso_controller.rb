@@ -33,8 +33,13 @@ class SsoController < ApplicationController
 
   private
 
+  # SSO_SECRET no ambiente ou no arquivo config/sso_secret (só leitura do dono)
   def segredo
-    ENV['SSO_SECRET'].to_s
+    @segredo ||= begin
+      v = ENV['SSO_SECRET'].to_s.strip
+      v = File.read(Rails.root.join('config', 'sso_secret')).strip if v.empty? && File.exist?(Rails.root.join('config', 'sso_secret'))
+      v.to_s
+    end
   end
 
   def b64url_dec(s)
