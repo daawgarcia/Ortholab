@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) exit;
 /* ------------------------------------------------------------------ configuração */
 function eap_ia_cfg() {
     $c = get_option('eap_ia');
-    return array_merge(['fornecedor' => 'openai', 'modelo' => 'gpt-5.4-mini', 'acesso' => 'equipe', 'limite' => 20, 'ativo' => 0], is_array($c) ? $c : []);
+    return array_merge(['fornecedor' => 'openai', 'modelo' => 'gpt-5.4-mini', 'acesso' => 'equipe', 'limite' => 20, 'ativo' => 0, 'revisao' => 1], is_array($c) ? $c : []);
 }
 function eap_ia_chave() { return (string) get_option('eap_ia_chave', ''); }
 function eap_ia_base() { $b = get_option('eap_ia_base'); return is_array($b) ? $b : ['vs' => '', 'itens' => []]; }
@@ -259,6 +259,19 @@ add_action('manage_ea_ia_log_posts_custom_column', function ($col, $id) {
     if ($col === 'eap_av') { $a = (int) get_post_meta($id, '_aval', true); echo $a > 0 ? '👍' : ($a < 0 ? '👎' : '—'); }
 }, 10, 2);
 
+/* revisão: uma segunda leitura que só corrige português e nomes, sem mudar o conteúdo */
+function eap_ia_revisar($texto, $modelo) {
+    $r = eap_ia_api('POST', 'responses', ['model' => $modelo, 'store' => false,
+        'instructions' => "Você é revisor de textos em português do Brasil da Esthetic Aligner. Corrija SOMENTE ortografia, acentuação, pontuação, concordância e crase do texto recebido, e escreva corretamente os nomes: Esthetic Aligner, Ortholab, Esthetic Rewards, Envio Fácil, Esthetic Aligner KIDS, EA AIR. NÃO acrescente, remova, resuma nem altere nenhuma informação, número ou orientação. Mantenha a formatação (listas e quebras de linha). Devolva apenas o texto revisado, sem comentários.",
+        'input' => $texto], null, 40);
+    if (!empty($r['erro'])) return eap_ia_nomes($texto);
+    $out = '';
+    foreach ((array) ($r['output'] ?? []) as $o) if (($o['type'] ?? '') === 'message') foreach ((array) ($o['content'] ?? []) as $c) if (($c['type'] ?? '') === 'output_text') $out .= $c['text'];
+    $out = trim($out);
+    $a = mb_strlen($texto); $b = mb_strlen($out);
+    return ($b > $a * 0.8 && $b < $a * 1.2) ? eap_ia_nomes($out) : eap_ia_nomes($texto); // se a revisão "mexeu demais", fica o original
+}
+
 /* ------------------------------------------------------------------ perguntar */
 function eap_ia_instrucoes() {
     return "Você é o Assistente EA do Portal do Credenciado da Esthetic Aligner (alinhadores ortodônticos). Quem pergunta são dentistas credenciados.\n"
@@ -269,6 +282,7 @@ function eap_ia_instrucoes() {
         . "4. Não invente números, prazos, preços, quantidades, protocolos ou nomes que não estejam escritos nos documentos.\n"
         . "5. Responda em português do Brasil, de forma objetiva: até 6 frases ou uma lista curta de passos. Quando houver uma vídeo aula ou material relacionado, diga o nome dele para o dentista abrir.\n"
         . "6. Não mencione 'documentos', 'arquivos' ou 'busca'; fale naturalmente, como o suporte da Esthetic Aligner.\n"
+        . "8. Escreva em português do Brasil correto e profissional: ortografia, acentuação, concordância e pontuação impecáveis, sem gírias. Os textos de origem podem ter erros de transcrição: nunca copie esses erros.\n"
         . "7. Escreva os nomes sempre assim, exatamente: Esthetic Aligner (a empresa e os alinhadores), Ortholab, Esthetic Rewards, Envio Fácil, Esthetic Aligner KIDS, EA AIR. Algumas transcrições de vídeo trazem esses nomes escritos errado; corrija sempre.";
 }
 add_action('wp_ajax_eap_ia_perguntar', function () {
@@ -314,6 +328,10 @@ add_action('wp_ajax_eap_ia_perguntar', function () {
         if (strpos($texto, '[CLINICO]') !== false) $status = 'clinico';
         elseif (strpos($texto, '[SEM_RESPOSTA]') !== false || !$fontes || $texto === '') $status = 'sem'; // sem fonte = não responde
     }
+    if ($status === 'ok' && !empty($cfg['revisao'])) $texto = eap_ia_revisar($texto, $cfg['modelo']);
+    if ($status === 'ok') $texto = trim(preg_replace("/[ \t]+\n/", "\n", $texto));
+    foreach ($fontes as &$fo) $fo['titulo'] = html_entity_decode($fo['titulo'], ENT_QUOTES, 'UTF-8');
+    unset($fo);
     if ($status !== 'ok') { $texto = ''; $fontes = []; }
     $id = wp_insert_post(['post_type' => 'ea_ia_log', 'post_status' => 'private', 'post_author' => $uid, 'post_title' => mb_substr($perg, 0, 180), 'post_content' => $texto ?: ($status === 'erro' ? 'Erro: ' . ($r['erro'] ?? '') : '')]);
     if ($id && !is_wp_error($id)) { update_post_meta($id, '_status', $status); update_post_meta($id, '_fontes', wp_json_encode(array_values($fontes))); update_post_meta($id, '_equipe', user_can($uid, 'edit_pages') ? 1 : 0); }
@@ -340,6 +358,7 @@ function eap_ia_pagina() {
         $c['acesso'] = ($_POST['acesso'] ?? '') === 'todos' ? 'todos' : 'equipe';
         $c['limite'] = max(1, min(200, (int) ($_POST['limite'] ?? 20)));
         $c['modelo'] = sanitize_text_field(wp_unslash($_POST['modelo'] ?? '')) ?: 'gpt-5.4-mini';
+        $c['revisao'] = empty($_POST['revisao']) ? 0 : 1;
         update_option('eap_ia', $c, false);
         $vim = trim((string) wp_unslash($_POST['vimeo'] ?? ''));
         if ($vim !== '') update_option('eap_ia_vimeo', $vim, false);
@@ -368,6 +387,7 @@ function eap_ia_pagina() {
           <tr><th>Chave da API</th><td><input type="password" name="chave" class="regular-text" autocomplete="off" placeholder="<?php echo $ch ? esc_attr('Cadastrada: ••••' . substr($ch, -4) . ' (deixe em branco para manter)') : 'Cole aqui a chave (sk-...)'; ?>"><p class="description">Gerada em platform.openai.com → API keys. Fica guardada só no servidor e nunca aparece de novo na tela.</p></td></tr>
           <tr><th>Modelo</th><td><input type="text" name="modelo" value="<?php echo esc_attr($c['modelo']); ?>" class="regular-text"><p class="description">Padrão: gpt-5.4-mini (rápido e barato). Se a equipe clínica achar as respostas fracas, troque por um modelo maior.</p></td></tr>
           <tr><th>Token do Vimeo</th><td><input type="password" name="vimeo" class="regular-text" autocomplete="off" placeholder="<?php echo get_option('eap_ia_vimeo') ? esc_attr('Cadastrado (deixe em branco para manter)') : 'Cole aqui o token de acesso do Vimeo'; ?>"><p class="description">Para importar as legendas das aulas. Gerado em developer.vimeo.com → My Apps → (seu app) → Generate access token, com os acessos <b>Public</b> e <b>Private</b>.</p></td></tr>
+          <tr><th>Revisão de português</th><td><label><input type="checkbox" name="revisao" value="1" <?php checked($c['revisao']); ?>> Revisar cada resposta antes de mostrar (ortografia, acentuação e nomes da marca)</label><p class="description">Uma segunda leitura que só corrige o português, sem mudar o conteúdo. Deixa a resposta 1 a 3 segundos mais lenta.</p></td></tr>
           <tr><th>Perguntas por dia</th><td><input type="number" name="limite" min="1" max="200" value="<?php echo (int) $c['limite']; ?>" style="width:80px"> <span class="description">por dentista (controla o custo)</span></td></tr>
         </tbody></table>
         <p style="margin:12px 0 0"><button class="button button-primary" name="eap_ia_salvar" value="1">Salvar</button></p>
