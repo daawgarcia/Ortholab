@@ -69,7 +69,7 @@ add_action('template_redirect', function () {
 add_action('wp_ajax_eap_evento', function () {
     if (!check_ajax_referer('eap_evento', '_n', false)) wp_die('', 403);
     $tipo = sanitize_key($_POST['tipo'] ?? '');
-    if (!in_array($tipo, ['download', 'post', 'post_baixar', 'whats', 'orcamento'], true)) wp_die('', 400);
+    if (!in_array($tipo, ['download', 'post', 'post_baixar', 'whats', 'orcamento', 'app'], true)) wp_die('', 400);
     $uid = get_current_user_id();
     $k = 'eap_ev_rl_' . $uid; $n = (int) get_transient($k);
     if ($n > 300) wp_die('', 429);
@@ -281,6 +281,39 @@ function eap_resultados_pagina() {
       $concl = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_curso_concluido_em'");
       $com_marca = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_marca' AND meta_value <> ''");
       ?>
+      <?php
+      // pesquisa de satisfação
+      $notas = array_map('intval', $wpdb->get_col("SELECT pm.meta_value FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id LEFT JOIN {$wpdb->postmeta} e ON e.post_id = p.ID AND e.meta_key = '_equipe' WHERE p.post_type = 'ea_pesquisa' AND pm.meta_key = '_nota'" . ($equipe ? '' : " AND COALESCE(e.meta_value,'0') = '0'")));
+      $nn = count($notas); $prom = count(array_filter($notas, fn($v) => $v >= 9)); $detr = count(array_filter($notas, fn($v) => $v <= 6));
+      $nps = $nn ? round(($prom - $detr) * 100 / $nn) : null; $media = $nn ? array_sum($notas) / $nn : null;
+      $coments = get_posts(['post_type' => 'ea_pesquisa', 'post_status' => 'private', 'numberposts' => 5]);
+      // primeiros passos (toda a base, sem a equipe)
+      $passos = [
+        'Concluíram o Curso do Credenciado' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_curso_concluido_em'"),
+        'Fizeram uma estimativa com IA' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa'"),
+        'Cadastraram a marca' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_marca' AND meta_value <> ''"),
+        'Baixaram um post' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $t WHERE tipo = 'post_baixar' AND equipe = 0"),
+        'Enviaram caso pelo Envio Fácil' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $t WHERE tipo = 'sistema' AND extra = 'enviofacil' AND equipe = 0"),
+        'Instalaram no celular' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $t WHERE tipo = 'app' AND equipe = 0"),
+      ];
+      ?>
+      <div class="eapr__grid">
+        <div class="eapr__box">
+          <h2>Satisfação dos credenciados</h2>
+          <p class="d">“De 0 a 10, quanto o portal te ajuda no dia a dia?” NPS = % de notas 9–10 menos % de notas 0–6.</p>
+          <?php if (!$nn) : ?><div class="eapr__vazio">Ainda sem respostas. A pergunta aparece a partir do 3º dia de uso de cada credenciado.</div>
+          <?php else : ?>
+            <div style="display:flex;gap:28px;align-items:flex-end;margin-bottom:10px"><div><span style="color:#5b6576;font-size:12.5px">NPS</span><b style="display:block;font-size:34px;color:<?php echo $nps >= 50 ? '#22a565' : ($nps >= 0 ? '#d9861c' : '#e2574c'); ?>"><?php echo (int) $nps; ?></b></div><div><span style="color:#5b6576;font-size:12.5px">Nota média</span><b style="display:block;font-size:26px"><?php echo number_format_i18n($media, 1); ?></b></div><div><span style="color:#5b6576;font-size:12.5px">Respostas</span><b style="display:block;font-size:26px"><?php echo $num($nn); ?></b></div></div>
+            <ul class="eapr__lista"><?php foreach ($coments as $c) { $txt = trim($c->post_content); if ($txt === '') continue; echo '<li><span title="' . esc_attr($txt) . '">“' . esc_html($txt) . '”</span><b>' . (int) get_post_meta($c->ID, '_nota', true) . '</b></li>'; } ?></ul>
+            <p class="d" style="margin:8px 0 0"><a href="<?php echo esc_url(admin_url('edit.php?post_type=ea_pesquisa')); ?>">Ver todas as respostas →</a></p>
+          <?php endif; ?>
+        </div>
+        <div class="eapr__box">
+          <h2>Primeiros passos</h2>
+          <p class="d">Quantos credenciados já fizeram cada passo do checklist do início (total, sem a equipe).</p>
+          <ul class="eapr__lista"><?php foreach ($passos as $r => $n) echo '<li><span>' . esc_html($r) . '</span><em>' . $pct($n, $total_cred) . '%</em><b>' . $num($n) . '</b></li>'; ?></ul>
+        </div>
+      </div>
       <h2 style="font-size:15px;margin:4px 0 12px">Ferramentas do dentista</h2>
       <div class="eapr__cards">
         <div class="eapr__card"><span>Posts baixados com a marca</span><b><?php echo $num($marca_un); ?></b><span>um a um, no período</span></div>
@@ -370,6 +403,8 @@ function eap_resultados_pagina() {
           <p style="margin:16px 0 0"><a class="button" href="<?php echo esc_url($csv(60)); ?>">Baixar planilha: sem acesso há mais de 60 dias</a> <a class="button" href="<?php echo esc_url($csv(180)); ?>">Sem acesso há mais de 180 dias</a></p>
         </div>
       </div>
+      <?php if (!empty($_GET['limpo'])) echo '<div class="notice notice-success"><p>Seus dados de teste foram apagados. A sua conta está como a de um credenciado novo.</p></div>'; ?>
+      <p style="margin-top:22px"><a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=eap_limpar_testes'), 'eap_limpar_testes')); ?>" onclick="return confirm('Apagar os seus dados de teste (marca, aulas assistidas, certificado, cliques)? Os dados dos credenciados não são afetados.')">Limpar meus dados de teste</a> <span class="description">Deixa a sua conta como a de um credenciado novo, para demonstrações. Não mexe nos dados dos credenciados.</span></p>
       <p class="eapr__nota">Os números de uso começaram a ser contados em <?php echo esc_html(wp_date('d/m/Y', (int) get_option('eap_novo_desde', time()))); ?>. O último acesso de antes disso vem do registro de login do portal antigo. Por padrão, os acessos da equipe (quem edita o portal) não entram na conta.</p>
     </div>
     <?php

@@ -183,6 +183,7 @@
   }
   document.addEventListener('click', function (e) { if (e.target.closest('[data-eap-marca-editar]')) modalMarca(); });
   pintarBarra();
+  if (location.hash === '#minha-marca' && document.querySelector('[data-eap-marca-barra]')) setTimeout(function () { modalMarca(); }, 300);
 
   /* botão "Baixar com a minha marca" na janela do post */
   var pm = document.querySelector('[data-eap-modal]');

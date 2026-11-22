@@ -27,7 +27,7 @@ add_action('wp_enqueue_scripts', function () {
     }
     if (is_user_logged_in()) wp_enqueue_script('eapt-ferramentas', get_stylesheet_directory_uri() . '/assets/eap-ferramentas.js', [], (string) filemtime($dir . '/assets/eap-ferramentas.js'), true);
     if (is_user_logged_in() && function_exists('eap_aulas_feitas')) {
-        wp_add_inline_script('eapt-portal', 'window.EAP_FEITAS=' . wp_json_encode(['ids' => array_map('strval', eap_aulas_feitas()), 'u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_feitas')]) . ';', 'before');
+        wp_add_inline_script('eapt-portal', 'window.EAP_FEITAS=' . wp_json_encode(['tem' => metadata_exists('user', get_current_user_id(), 'eap_aulas_feitas'), 'ids' => array_map('strval', eap_aulas_feitas()), 'u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_feitas')]) . ';', 'before');
     }
 }, 100);
 
@@ -464,6 +464,8 @@ add_action('wp_footer', function () {
       function instalar(){if(!pedido){abrir();return;}pedido.prompt();pedido.userChoice.then(function(){pedido=null;faixa.hidden=true;fechar();});}
       btInst.addEventListener('click',instalar);
       document.querySelectorAll('[data-eap-app-link]').forEach(function(a){a.hidden=!!app;a.addEventListener('click',function(e){e.preventDefault();abrir();});});
+      if(app){try{if(!localStorage.getItem('eap-app-ev')&&window.eapEvento){window.eapEvento('app');localStorage.setItem('eap-app-ev','1');}}catch(e){}}
+      window.addEventListener('appinstalled',function(){window.eapEvento&&window.eapEvento('app');});
       var fechada=0;try{fechada=+localStorage.getItem(K)||0;}catch(e){}
       if(cel&&!app&&Date.now()-fechada>20*864e5){faixa.hidden=false;}
       faixa.querySelector('[data-eap-app-abrir]').addEventListener('click',function(){pedido&&!ios?instalar():abrir();});
@@ -527,3 +529,36 @@ add_action('wp_footer', function () {
 }, 56);
 
 add_action('wp_footer', function () { if (is_user_logged_in() && is_page('simulador-de-estimativa-e-pacote')) echo '<span data-eap-orc-pagina hidden></span>'; }, 1);
+
+
+/* ------------------------------------------------------------------ pesquisa de satisfação */
+add_action('wp_footer', function () {
+    if (!is_user_logged_in() || is_admin() || eapt_pagina_livre() || !function_exists('eap_pesquisa_mostrar') || !eap_pesquisa_mostrar()) return;
+    ?>
+    <div class="eap-nps" data-eap-nps hidden>
+      <button type="button" class="eap-nps__x" data-eap-nps-depois aria-label="Agora não">×</button>
+      <div data-eap-nps-p1>
+        <strong>De 0 a 10, quanto o portal te ajuda no dia a dia?</strong>
+        <div class="eap-nps__notas"><?php for ($i = 0; $i <= 10; $i++) echo '<button type="button" data-nota="' . $i . '">' . $i . '</button>'; ?></div>
+        <div class="eap-nps__leg"><span>Nada</span><span>Muito</span></div>
+      </div>
+      <div data-eap-nps-p2 hidden>
+        <strong data-eap-nps-tit>Obrigado! O que podemos melhorar?</strong>
+        <textarea rows="3" maxlength="1000" placeholder="Opcional: conte o que faria o portal ainda mais útil para você." data-eap-nps-txt></textarea>
+        <button type="button" class="eap-btn eap-btn--cheio" data-eap-nps-enviar>Enviar</button>
+      </div>
+      <div data-eap-nps-p3 hidden><strong>Obrigado pela resposta! 💙</strong><span>Ela vai direto para a nossa equipe.</span></div>
+    </div>
+    <script>(function(){
+      var b=document.querySelector('[data-eap-nps]'),n=-1,U=<?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>,N=<?php echo wp_json_encode(wp_create_nonce('eap_ferr')); ?>;
+      function env(d){var f=new FormData();f.append('action','eap_pesquisa');f.append('_n',N);Object.keys(d).forEach(function(k){f.append(k,d[k]);});return fetch(U,{method:'POST',body:f,credentials:'same-origin'});}
+      setTimeout(function(){b.hidden=false;},<?php echo isset($_GET['eap_pesquisa']) ? 300 : 8000; ?>);
+      b.querySelector('[data-eap-nps-depois]').addEventListener('click',function(){b.hidden=true;if(n<0)env({acao:'depois'});});
+      b.querySelectorAll('[data-nota]').forEach(function(x){x.addEventListener('click',function(){n=+x.getAttribute('data-nota');
+        b.querySelector('[data-eap-nps-tit]').textContent=n>=9?'Que bom! O que você mais gosta no portal?':(n>=7?'Obrigado! O que falta para ser nota 10?':'Obrigado pela sinceridade. O que podemos melhorar?');
+        b.querySelector('[data-eap-nps-p1]').hidden=true;b.querySelector('[data-eap-nps-p2]').hidden=false;});});
+      b.querySelector('[data-eap-nps-enviar]').addEventListener('click',function(){var t=b.querySelector('[data-eap-nps-txt]').value;
+        env({nota:n,coment:t}).then(function(){b.querySelector('[data-eap-nps-p2]').hidden=true;b.querySelector('[data-eap-nps-p3]').hidden=false;setTimeout(function(){b.hidden=true;},3500);});});
+    })();</script>
+    <?php
+}, 57);

@@ -14,6 +14,26 @@ $nome = trim($u->first_name) ?: $u->display_name;
   </div>
 </section>
 
+<?php if (function_exists('eap_passos') && eapt_visivel('primeiros-passos') && !get_user_meta(get_current_user_id(), 'eap_passos_ocultos', true)) :
+  $ps = eap_passos(); $feitos = count(array_filter($ps, fn($p) => $p[3])); $tot = count($ps);
+  if ($tot && $feitos < $tot) : ?>
+<section class="eap-wrap">
+  <div class="eap-passos" data-eap-passos>
+    <div class="eap-passos__topo">
+      <div><strong>Primeiros passos no portal</strong><span><?php echo (int) $feitos; ?> de <?php echo (int) $tot; ?> concluídos</span></div>
+      <div class="eap-passos__barra"><i style="width:<?php echo round($feitos * 100 / $tot); ?>%"></i></div>
+      <button type="button" class="eap-passos__x" data-eap-passos-ocultar data-n="<?php echo esc_attr(wp_create_nonce('eap_ferr')); ?>" title="Não mostrar mais">Ocultar</button>
+    </div>
+    <ol class="eap-passos__lista">
+      <?php foreach ($ps as $k => [$tit, $desc, $url, $ok]) : ?>
+        <li class="<?php echo $ok ? 'is-ok' : ''; ?>"><a href="<?php echo esc_url($url); ?>"<?php echo $k === 'app' ? ' data-eap-app-link' : ''; ?><?php echo $k === 'caso' ? ' target="_blank" rel="noopener"' : ''; ?>><i><?php echo $ok ? '✓' : ''; ?></i><span><b><?php echo esc_html($tit); ?></b><em><?php echo esc_html($desc); ?></em></span></a></li>
+      <?php endforeach; ?>
+    </ol>
+  </div>
+</section>
+<script>(function(){var b=document.querySelector('[data-eap-passos-ocultar]');if(!b)return;b.addEventListener('click',function(){var f=new FormData();f.append('action','eap_passos_ocultar');f.append('_n',b.getAttribute('data-n'));fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>',{method:'POST',body:f,credentials:'same-origin'});document.querySelector('[data-eap-passos]').closest('section').remove();});})();</script>
+<?php endif; endif; ?>
+
 <?php $ia1 = eapt_visivel('ia-estimativa'); $ia2 = eapt_visivel('ia-ronco'); if ($ia1 || $ia2) : ?>
 <section class="eap-wrap eap-ia">
   <div class="eap-ia__tag"><span></span>Powered by AI</div>

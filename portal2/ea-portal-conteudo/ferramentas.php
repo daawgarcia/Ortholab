@@ -90,3 +90,80 @@ function eap_ferr_cfg() {
     return ['u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_ferr'), 'marca' => eap_marca() ?: null, 'valores' => eap_valores(),
         'dentista' => ['nome' => trim($u->first_name . ' ' . $u->last_name) ?: $u->display_name, 'cro' => $cro, 'whats' => function_exists('eap_dado_atual') ? eap_dado_atual($u->ID, 'whats') : '']];
 }
+
+/* ------------------------------------------------------------------ primeiros passos do credenciado */
+function eap_passos($uid = 0) {
+    global $wpdb;
+    $uid = $uid ?: get_current_user_id();
+    $t = function_exists('eap_met_tabela') ? eap_met_tabela() : '';
+    $ev = [];
+    if ($t) foreach ($wpdb->get_results($wpdb->prepare("SELECT tipo, extra FROM $t WHERE user_id = %d AND tipo IN ('post_baixar','sistema','app') GROUP BY tipo, extra", $uid)) as $r) $ev[$r->tipo . ':' . $r->extra] = 1;
+    $tem = fn($tipo, $extra = null) => $extra === null ? (bool) array_filter(array_keys($ev), fn($k) => strpos($k, $tipo . ':') === 0) : isset($ev[$tipo . ':' . $extra]);
+    $est = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa' AND post_author = %d", $uid));
+    $p = [
+        'curso'      => ['Assista ao Curso do Credenciado', 'As 13 aulas liberam o seu certificado.', home_url('/video-aulas/?trilha=curso-do-credenciado'), function_exists('eap_curso_concluido') && eap_curso_concluido($uid), 'video-aulas'],
+        'estimativa' => ['Faça sua primeira estimativa com IA', 'Descubra o pacote indicado para um paciente.', home_url('/simulador-de-estimativa-e-pacote/'), $est > 0, 'ia-estimativa'],
+        'marca'      => ['Coloque a sua marca nos posts', 'Logo e WhatsApp do consultório, uma vez só.', home_url('/marketing/#minha-marca'), !empty(eap_marca($uid)['nome']), 'marketing'],
+        'post'       => ['Baixe um post para suas redes', 'Pronto para postar, com a sua marca.', home_url('/marketing/'), $tem('post_baixar'), 'posts-marketing'],
+        'caso'       => ['Envie um caso pelo Envio Fácil', 'Os arquivos do paciente já identificados pelo portal.', home_url('/?eap_ir=enviofacil'), $tem('sistema', 'enviofacil'), 'enviofacil'],
+        'app'        => ['Instale o portal no celular', 'Abra direto da tela inicial, como um app.', '#instalar', $tem('app'), ''],
+    ];
+    if (function_exists('eap_visivel')) $p = array_filter($p, fn($x) => !$x[4] || eap_visivel($x[4]));
+    return $p;
+}
+add_action('wp_ajax_eap_passos_ocultar', function () {
+    if (!check_ajax_referer('eap_ferr', '_n', false)) wp_send_json_error('', 403);
+    update_user_meta(get_current_user_id(), 'eap_passos_ocultos', 1);
+    wp_send_json_success();
+});
+
+/* ------------------------------------------------------------------ pesquisa de satisfação (0 a 10) */
+add_action('init', function () {
+    register_post_type('ea_pesquisa', ['labels' => ['name' => 'Pesquisa de satisfação', 'singular_name' => 'Resposta'], 'public' => false, 'show_ui' => true, 'show_in_menu' => 'eap-portal',
+        'capabilities' => ['create_posts' => 'do_not_allow'], 'map_meta_cap' => true, 'supports' => ['title']]);
+});
+add_filter('manage_ea_pesquisa_posts_columns', fn($c) => ['cb' => $c['cb'], 'title' => 'Credenciado', 'eap_nota' => 'Nota', 'eap_coment' => 'Comentário', 'date' => 'Data']);
+add_action('manage_ea_pesquisa_posts_custom_column', function ($col, $id) {
+    if ($col === 'eap_nota') { $n = (int) get_post_meta($id, '_nota', true); echo '<b style="color:' . ($n >= 9 ? '#22a565' : ($n >= 7 ? '#d9861c' : '#e2574c')) . '">' . $n . '</b>'; }
+    if ($col === 'eap_coment') echo esc_html(get_post_field('post_content', $id));
+}, 10, 2);
+
+/** Mostra a pesquisa a partir do 3º dia de uso, no máximo a cada 90 dias; "agora não" adia 14 dias. */
+function eap_pesquisa_mostrar($uid = 0) {
+    $uid = $uid ?: get_current_user_id();
+    if (!$uid || (function_exists('eap_visivel') && !eap_visivel('pesquisa'))) return false;
+    if (isset($_GET['eap_pesquisa']) && user_can($uid, 'edit_pages')) return true; // para a equipe testar/mostrar
+    if ((int) get_user_meta($uid, 'eap_pesquisa_ate', true) > time()) return false;
+    global $wpdb;
+    $dias = function_exists('eap_met_tabela') ? (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM ' . eap_met_tabela() . " WHERE user_id = %d AND tipo = 'acesso'", $uid)) : 0;
+    return $dias >= 3;
+}
+add_action('wp_ajax_eap_pesquisa', function () {
+    if (!check_ajax_referer('eap_ferr', '_n', false)) wp_send_json_error('', 403);
+    $uid = get_current_user_id();
+    if (($_POST['acao'] ?? '') === 'depois') { update_user_meta($uid, 'eap_pesquisa_ate', time() + 14 * DAY_IN_SECONDS); wp_send_json_success(); }
+    $nota = (int) ($_POST['nota'] ?? -1);
+    if ($nota < 0 || $nota > 10) wp_send_json_error('nota', 400);
+    $u = wp_get_current_user();
+    $id = wp_insert_post(['post_type' => 'ea_pesquisa', 'post_status' => 'private', 'post_author' => $uid,
+        'post_title' => (trim($u->first_name . ' ' . $u->last_name) ?: $u->display_name) . ' – nota ' . $nota,
+        'post_content' => mb_substr(sanitize_textarea_field(wp_unslash($_POST['coment'] ?? '')), 0, 1000)]);
+    if ($id && !is_wp_error($id)) { update_post_meta($id, '_nota', $nota); update_post_meta($id, '_equipe', user_can($uid, 'edit_pages') ? 1 : 0); }
+    update_user_meta($uid, 'eap_pesquisa_ate', time() + 90 * DAY_IN_SECONDS);
+    wp_send_json_success();
+});
+
+/* ------------------------------------------------------------------ limpar meus dados de teste (equipe) */
+add_action('admin_post_eap_limpar_testes', function () {
+    if (!current_user_can('edit_pages') || !check_admin_referer('eap_limpar_testes')) wp_die('Sem permissão');
+    global $wpdb;
+    $uid = get_current_user_id();
+    foreach (['eap_marca', 'eap_valores', 'eap_curso_concluido_em', 'eap_nome_certificado', 'eap_ultima_aula', 'eap_avisos_vistos', 'eap_passos_ocultos', 'eap_pesquisa_ate', 'eap_acesso_dia', 'eap_ultimo_acesso'] as $k) delete_user_meta($uid, $k);
+    update_user_meta($uid, 'eap_aulas_feitas', []); // fica "vazio, mas definido": o navegador não reenvia marcações antigas
+    if (function_exists('eap_met_tabela')) $wpdb->query('DELETE FROM ' . eap_met_tabela() . ' WHERE equipe = 1 OR user_id = ' . (int) $uid);
+    foreach (get_posts(['post_type' => 'ea_pesquisa', 'post_status' => 'any', 'numberposts' => -1, 'meta_key' => '_equipe', 'meta_value' => 1, 'fields' => 'ids']) as $p) wp_delete_post($p, true);
+    if (!empty($_GET['avisos'])) foreach (get_posts(['post_type' => 'ea_aviso', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids']) as $p) { update_post_meta($p, '_eap_vistos', 0); update_post_meta($p, '_eap_cliques', 0); } // só antes de lançar
+    delete_transient('eap_met_base');
+    wp_safe_redirect(admin_url('admin.php?page=eap-resultados&limpo=1'));
+    exit;
+});

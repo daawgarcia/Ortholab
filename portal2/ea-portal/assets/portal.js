@@ -27,8 +27,8 @@
   }
   (function () {
     var S = window.EAP_FEITAS; if (!S) return;
-    if (S.ids.length) gravarFeitas(S.ids, false);
-    else if (lerFeitas().length) gravarFeitas(lerFeitas());
+    if (S.tem) gravarFeitas(S.ids, false);          // a conta manda (mesmo vazia)
+    else if (lerFeitas().length) gravarFeitas(lerFeitas()); // primeira vez: sobe o que estava no navegador
   })();
   function pintar() {
     var f = lerFeitas();
