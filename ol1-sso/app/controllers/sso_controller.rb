@@ -8,9 +8,9 @@ require 'base64'
 require 'json'
 
 class SsoController < ApplicationController
-  skip_before_action :authenticate_user!, raise: false
-  skip_before_action :require_data_consent!, raise: false
-  skip_before_action :verify_authenticity_token, raise: false
+  skip_before_action :authenticate_user!
+  skip_before_action :require_data_consent!
+  skip_before_action :verify_authenticity_token
 
   DESTINO = 'ortholab1'.freeze
 
