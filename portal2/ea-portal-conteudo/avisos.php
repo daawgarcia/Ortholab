@@ -170,7 +170,7 @@ function eap_avisos_render() {
         function fechar() { el.remove(); if (!faixa) document.body.style.overflow = ''; }
         el.querySelectorAll('[data-eap-aviso-fechar]').forEach(function (b) { b.addEventListener('click', function () { marcar(el, 'fechou'); fechar(); }); });
         var c = el.querySelector('[data-eap-aviso-clique]'); if (c) c.addEventListener('click', function () { marcar(el, 'clique'); setTimeout(fechar, 200); });
-        if (!faixa) el.addEventListener('click', function (e) { if (e.target === el) { marcar(el, 'fechou'); fechar(); } });
+        if (!faixa) { el.addEventListener('click', function (e) { if (e.target === el) { marcar(el, 'fechou'); fechar(); } }); document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.body.contains(el)) { marcar(el, 'fechou'); fechar(); } }); }
       });
     })();
     </script>

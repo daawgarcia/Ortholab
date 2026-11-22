@@ -460,3 +460,5 @@ body.eap .eap-suporte h2, body.eap .eap-sec-tit h2, body.eap .eap-mat-grupo__tit
   .eap-aviso-janela__corpo { padding: 20px; }
   .eap-aviso-janela .eap-aviso__btn, .eap-aviso__depois { flex: 1; text-align: center; }
 }
+body.eap .eap-aviso-janela__txt, body.eap .eap-aviso-janela__txt p { font-size: 15.5px !important; line-height: 1.6 !important; color: var(--eap-txt-2) !important; }
+body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-size: 14px !important; color: #fff !important; }
