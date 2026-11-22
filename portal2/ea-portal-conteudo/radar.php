@@ -119,6 +119,15 @@ function eap_radar_pagina() {
         $msg = 'Configurações salvas.';
     }
     if (isset($_POST['eap_radar_agora']) && check_admin_referer('eap_radar')) $msg = eap_radar_enviar() ? 'Radar enviado agora por e-mail.' : 'Não foi possível enviar: confira o e-mail de destino.';
+    if (!empty($_GET['diag']) && current_user_can('manage_options')) { // diagnóstico temporário: campos com telefone
+        global $wpdb; $out = [];
+        foreach ($wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_value FROM {$wpdb->usermeta} WHERE user_id = %d", (int) $_GET['diag'])) as $m) {
+            $d = preg_replace('/\D/', '', (string) $m->meta_value);
+            if (strlen($d) >= 8 && strlen($d) <= 14 && strlen((string) $m->meta_value) < 40) $out[] = $m->meta_key . ' = ' . substr($d, 0, 2) . '…' . substr($d, -2) . ' (' . strlen($d) . ')';
+        }
+        $keys = $wpdb->get_col("SELECT meta_key FROM {$wpdb->usermeta} WHERE meta_key REGEXP 'fone|phone|cel|whats|tel|mobile' GROUP BY meta_key ORDER BY COUNT(*) DESC LIMIT 30");
+        echo '<pre id="eapdiag">' . esc_html(implode("\n", $out) . "\n--\n" . implode(', ', $keys)) . '</pre>';
+    }
     $cfg = eap_radar_cfg();
     $lista = eap_radar_lista();
     $ult = get_option('eap_radar_ultimo');
