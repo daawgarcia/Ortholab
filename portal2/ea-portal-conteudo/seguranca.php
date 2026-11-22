@@ -102,10 +102,17 @@ add_action('wp_footer', function () {
 add_action('template_redirect', function () {
     if (is_admin() || wp_doing_ajax() || isset($_GET['eap_arquivo'])) return;
     ob_start(function ($html) {
-        $html = preg_replace('~<!--\s*(?:Facebook|Meta) Pixel Code\s*-->.*?<!--\s*End (?:Facebook|Meta) Pixel Code\s*-->~is', '', $html);
-        $html = preg_replace('~<script\b[^>]*>(?:(?!</script>).)*?(?:\bfbq\b|fbevents\.js)(?:(?!</script>).)*</script>~is', '', $html);
-        $html = preg_replace('~<noscript>(?:(?!</noscript>).)*facebook\.com/tr(?:(?!</noscript>).)*</noscript>~is', '', $html);
-        $html = preg_replace('~<script\b[^>]*connect\.facebook\.net[^>]*>\s*</script>~is', '', $html);
+        if (stripos($html, 'fbq') === false && stripos($html, 'fbevents') === false && stripos($html, 'facebook.com/tr') === false) return $html;
+        $padroes = [
+            '~<!--\s*(?:Facebook|Meta) Pixel Code\s*-->.*?<!--\s*End (?:Facebook|Meta) Pixel Code\s*-->~is',
+            '~<script\b[^>]*>(?:(?!</script>).)*?(?:\bfbq\b|fbevents\.js)(?:(?!</script>).)*</script>~is',
+            '~<noscript>(?:(?!</noscript>).)*facebook\.com/tr(?:(?!</noscript>).)*</noscript>~is',
+            '~<script\b[^>]*connect\.facebook\.net[^>]*>\s*</script>~is',
+        ];
+        foreach ($padroes as $p) {
+            $novo = preg_replace($p, '', $html);
+            if (is_string($novo)) $html = $novo; // em caso de erro do regex, mantém a página intacta
+        }
         return $html;
     });
 }, 0);
