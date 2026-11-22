@@ -67,8 +67,13 @@
     x.fillStyle = c.linha; x.fillRect(X, Y, W, Math.max(4, H * 0.025));
     var tx = X + pad;
     if (logoImg) {
-      var bh = H * 0.62, bw = W * 0.32, r = Math.min(bw / logoImg.width, bh / logoImg.height), lw = logoImg.width * r, lh = logoImg.height * r;
-      x.drawImage(logoImg, X + pad, Y + (H - lh) / 2 + H * 0.01, lw, lh);
+      var bh = H * (marca.cor !== 'claro' ? 0.52 : 0.62), bw = W * 0.3, r = Math.min(bw / logoImg.width, bh / logoImg.height), lw = logoImg.width * r, lh = logoImg.height * r;
+      var ly = Y + (H - lh) / 2 + H * 0.01;
+      if (marca.cor !== 'claro') { // faixa escura ou azul: logo sobre um cartão branco, para qualquer logo ficar legível
+        var pp = H * 0.07, rr = H * 0.08, ax = X + pad - pp, ay = ly - pp, aw = lw + 2 * pp, ah = lh + 2 * pp;
+        x.fillStyle = '#ffffff'; x.beginPath(); x.moveTo(ax + rr, ay); x.arcTo(ax + aw, ay, ax + aw, ay + ah, rr); x.arcTo(ax + aw, ay + ah, ax, ay + ah, rr); x.arcTo(ax, ay + ah, ax, ay, rr); x.arcTo(ax, ay, ax + aw, ay, rr); x.fill();
+      }
+      x.drawImage(logoImg, X + pad, ly, lw, lh);
       tx = X + pad + lw + pad * 0.8;
       x.fillStyle = c.sub; x.globalAlpha = .35; x.fillRect(tx - pad * 0.4, Y + H * 0.22, Math.max(2, W * 0.002), H * 0.58); x.globalAlpha = 1;
     }
