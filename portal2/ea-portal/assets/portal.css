@@ -674,3 +674,14 @@ body.eap .eap-marca-barra__ok img { height: 36px !important; width: auto !import
   .eap-ia-bt { bottom: 76px; right: 14px; padding: 12px; } .eap-ia-bt b { display: none; }
   .eap-ia-chat { right: 0; left: 0; bottom: 0; width: 100%; max-width: none; height: 85vh; border-radius: 18px 18px 0 0; }
 }
+
+/* revisão final: nada flutuante por cima de outro no celular */
+@media (max-width: 640px) {
+  .eap-nps, .eap-orc-cta, .eap-app-faixa { bottom: 136px; }   /* acima dos botões do Assistente (76px) e do WhatsApp (14px) */
+  .eap-orc-fixo { bottom: 136px; }
+}
+body:has(.eap-whats__painel:not([hidden])) .eap-ia-bt,
+body:has(.eap-nps:not([hidden])) .eap-ia-bt { visibility: hidden; }       /* painel do WhatsApp ou pesquisa abertos: some o botão do Assistente */
+body:has(.eap-ia-chat:not([hidden])) .eap-whats,
+body:has(.eap-ia-chat:not([hidden])) .eap-nps,
+body:has(.eap-ia-chat:not([hidden])) .eap-orc-fixo { visibility: hidden; } /* chat do Assistente aberto: limpa o canto */
