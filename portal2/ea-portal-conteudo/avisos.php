@@ -164,7 +164,7 @@ function eap_avisos_render() {
       }
       document.querySelectorAll('[data-eap-aviso]').forEach(function (el) {
         var faixa = el.classList.contains('eap-aviso-faixa');
-        if (faixa) { var h = document.querySelector('header.eap-topo') || document.querySelector('header'); if (h && h.parentNode && el.parentNode !== h.parentNode) h.parentNode.insertBefore(el, h.nextSibling); }
+        if (faixa) { var h = document.querySelector('header.eap-topo') || document.querySelector('header'); if (h && h.parentNode) h.parentNode.insertBefore(el, h); }
         else { setTimeout(function () { el.hidden = false; document.body.style.overflow = 'hidden'; }, 700); }
         marcar(el, 'visto');
         function fechar() { el.remove(); if (!faixa) document.body.style.overflow = ''; }
