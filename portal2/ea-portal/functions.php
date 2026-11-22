@@ -534,6 +534,8 @@ add_action('wp_footer', function () { if (is_user_logged_in() && is_page('simula
 /* ------------------------------------------------------------------ pesquisa de satisfação */
 add_action('wp_footer', function () {
     if (!is_user_logged_in() || is_admin() || eapt_pagina_livre() || !function_exists('eap_pesquisa_mostrar') || !eap_pesquisa_mostrar()) return;
+    // não disputa a atenção com um aviso em janela que ainda vai aparecer
+    if (!isset($_GET['eap_pesquisa']) && function_exists('eap_avisos_para') && array_filter(eap_avisos_para(get_current_user_id()), fn($x) => $x[1]['formato'] === 'janela')) return;
     ?>
     <div class="eap-nps" data-eap-nps hidden>
       <button type="button" class="eap-nps__x" data-eap-nps-depois aria-label="Agora não">×</button>
