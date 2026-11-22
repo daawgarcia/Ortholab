@@ -65,7 +65,7 @@ function eap_valores($uid = 0) {
 add_action('wp_ajax_eap_marca', function () {
     if (!check_ajax_referer('eap_ferr', '_n', false)) wp_send_json_error('sessao', 403);
     $t = fn($k, $max = 80) => mb_substr(trim(sanitize_text_field(wp_unslash($_POST[$k] ?? ''))), 0, $max);
-    $m = ['nome' => $t('nome'), 'whats' => $t('whats', 30), 'insta' => ltrim($t('insta', 40), '@'), 'site' => $t('site', 60), 'cor' => in_array($_POST['cor'] ?? '', ['claro', 'escuro', 'azul'], true) ? $_POST['cor'] : 'claro', 'logo' => ''];
+    $m = ['nome' => $t('nome'), 'whats' => $t('whats', 30), 'insta' => ltrim($t('insta', 40), '@'), 'site' => $t('site', 60), 'cor' => in_array($_POST['cor'] ?? '', ['auto', 'claro', 'escuro', 'azul'], true) ? $_POST['cor'] : 'auto', 'logo' => ''];
     $logo = (string) wp_unslash($_POST['logo'] ?? '');
     if ($logo !== '') {
         if (strlen($logo) > 600000 || !preg_match('~^data:image/(png|jpeg);base64,([A-Za-z0-9+/=]+)$~', $logo, $mm)) wp_send_json_error('logo', 400);

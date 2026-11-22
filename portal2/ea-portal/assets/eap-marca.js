@@ -2,7 +2,32 @@
 (function () {
   var C = window.EAP_FERR; if (!C || !window.EAPF) return;
   var FONTE = '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-  var CORES = { claro: { fundo: '#ffffff', txt: '#1b2433', sub: '#5b6576', linha: '#2f6fe4' }, escuro: { fundo: '#0d1f42', txt: '#ffffff', sub: 'rgba(255,255,255,.75)', linha: '#3fa2f2' }, azul: { fundo: '#2f6fe4', txt: '#ffffff', sub: 'rgba(255,255,255,.85)', linha: '#ffffff' } };
+  var CORES = { claro: { fundo: '#ffffff', txt: '#1b2433', sub: '#5b6576', linha: '#2f6fe4', wa: '#25D366', ig: '#E1306C' }, escuro: { fundo: '#0d1f42', txt: '#ffffff', sub: 'rgba(255,255,255,.75)', linha: '#3fa2f2', wa: '#25D366', ig: '#ffffff' }, azul: { fundo: '#2f6fe4', txt: '#ffffff', sub: 'rgba(255,255,255,.85)', linha: '#ffffff', wa: '#ffffff', ig: '#ffffff' } };
+  var WA = typeof Path2D !== 'undefined' ? new Path2D('M16 3C9 3 3.3 8.6 3.3 15.6c0 2.2.6 4.4 1.7 6.3L3.2 29l7.3-1.9c1.8 1 3.9 1.5 5.9 1.5h.1c7 0 12.7-5.7 12.7-12.6S23 3 16 3zm0 23.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-4.3 1.1 1.2-4.2-.3-.4a10.4 10.4 0 0 1-1.6-5.6C5.2 9.8 10 5.1 16 5.1c5.8 0 10.6 4.7 10.6 10.5S21.8 26.1 16 26.1zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.4c.2.2 2.4 3.6 5.7 5 .8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z') : null;
+  function icone(x, tipo, X, Y, T, cor) { /* Y = linha de base do texto; T = tamanho do ícone */
+    var top = Y - T * 0.86;
+    x.save();
+    if (tipo === 'whats' && WA) { x.translate(X, top); x.scale(T / 32, T / 32); x.fillStyle = cor; x.fill(WA); }
+    else if (tipo === 'insta') {
+      var lw = Math.max(1.5, T * 0.1), r = T * 0.28; x.strokeStyle = cor; x.fillStyle = cor; x.lineWidth = lw;
+      var a = X + lw / 2, b = top + lw / 2, w = T - lw;
+      x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + w, r); x.arcTo(a + w, b + w, a, b + w, r); x.arcTo(a, b + w, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); x.stroke();
+      x.beginPath(); x.arc(X + T / 2, top + T / 2, T * 0.22, 0, 7); x.stroke();
+      x.beginPath(); x.arc(X + T * 0.76, top + T * 0.24, T * 0.06, 0, 7); x.fill();
+    }
+    x.restore();
+  }
+  /* "Automática": compara a cor da parte de baixo do post com as três faixas e escolhe a que combina mais */
+  function corAuto(x, W, H) {
+    try {
+      var h = Math.max(4, Math.round(H * 0.08)), d = x.getImageData(0, H - h, W, h).data, r = 0, g = 0, b = 0, n = 0;
+      for (var i = 0; i < d.length; i += 16) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+      r /= n; g /= n; b /= n;
+      var op = { claro: [255, 255, 255], escuro: [13, 31, 66], azul: [47, 111, 228] }, melhor = 'claro', dist = 1e9;
+      Object.keys(op).forEach(function (k) { var o = op[k], dd = (r - o[0]) * (r - o[0]) * 0.3 + (g - o[1]) * (g - o[1]) * 0.59 + (b - o[2]) * (b - o[2]) * 0.11; if (dd < dist) { dist = dd; melhor = k; } });
+      return melhor;
+    } catch (e) { return 'claro'; }
+  }
 
   function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
   function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -29,6 +54,7 @@
   /* ---------------------------------------------------------------- faixa com a marca */
   function desenharFaixa(x, marca, X, Y, W, H, logoImg) {
     var c = CORES[marca.cor] || CORES.claro, pad = W * 0.05;
+    var ICONE = { whats: c.wa, insta: c.ig };
     x.fillStyle = c.fundo; x.fillRect(X, Y, W, H);
     x.fillStyle = c.linha; x.fillRect(X, Y, W, Math.max(4, H * 0.025));
     var tx = X + pad;
@@ -39,15 +65,20 @@
       x.fillStyle = c.sub; x.globalAlpha = .35; x.fillRect(tx - pad * 0.4, Y + H * 0.22, Math.max(2, W * 0.002), H * 0.58); x.globalAlpha = 1;
     }
     var larg = X + W - pad - tx, linhas = [];
-    if (marca.whats) linhas.push('WhatsApp ' + fone(marca.whats));
-    if (marca.insta) linhas.push('@' + marca.insta.replace(/^@/, ''));
-    if (marca.site) linhas.push(marca.site);
+    if (marca.whats) linhas.push({ ic: 'whats', t: fone(marca.whats) });
+    if (marca.insta) linhas.push({ ic: 'insta', t: '@' + marca.insta.replace(/^@/, '') });
+    if (marca.site) linhas.push({ ic: '', t: marca.site });
     var tNome = H * 0.2, tLin = H * 0.12, total = tNome + linhas.length * tLin * 1.35 + tLin * 1.2, y = Y + (H - total) / 2 + tNome * 0.85;
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = c.txt;
     var t = tNome; do { x.font = '700 ' + t + 'px ' + FONTE; t -= 2; } while (x.measureText(marca.nome || '').width > larg && t > 12);
     x.fillText(marca.nome || '', tx, y);
     y += tLin * 1.45; x.fillStyle = c.sub;
-    linhas.forEach(function (l) { var tt = tLin; do { x.font = '500 ' + tt + 'px ' + FONTE; tt -= 1; } while (x.measureText(l).width > larg && tt > 10); x.fillText(l, tx, y); y += tLin * 1.35; });
+    linhas.forEach(function (l) {
+      var ti = l.ic ? tLin * 1.05 : 0, gap = l.ic ? tLin * 0.45 : 0, tt = tLin;
+      do { x.font = '500 ' + tt + 'px ' + FONTE; tt -= 1; } while (x.measureText(l.t).width > larg - ti - gap && tt > 10);
+      if (l.ic) icone(x, l.ic, tx, y + tLin * 0.08, ti, ICONE[l.ic]);
+      x.fillStyle = c.sub; x.fillText(l.t, tx + ti + gap, y); y += tLin * 1.35;
+    });
     x.font = '600 ' + (tLin * 0.78) + 'px ' + FONTE; x.globalAlpha = .8; x.fillText('Credenciado Esthetic Aligner', tx, y + tLin * 0.1); x.globalAlpha = 1;
   }
   function logoDe(marca) { return marca && marca.logo ? EAPF.img(marca.logo).catch(function () { return null; }) : Promise.resolve(null); }
@@ -56,7 +87,9 @@
     return Promise.all([EAPF.img(src), logoDe(marca)]).then(function (r) {
       var im = r[0], W = Math.min(im.width, 1440), H = Math.round(im.height * W / im.width), F = Math.round(W * 1.25) - H;
       var c = document.createElement('canvas'); c.width = W; c.height = H + F;
-      var x = c.getContext('2d'); x.drawImage(im, 0, 0, W, H); desenharFaixa(x, marca, 0, H, W, F, r[1]);
+      var x = c.getContext('2d'); x.drawImage(im, 0, 0, W, H);
+      var m = marca; if (!m.cor || m.cor === 'auto') { m = Object.assign({}, marca, { cor: corAuto(x, W, H) }); }
+      desenharFaixa(x, m, 0, H, W, F, r[1]);
       return c;
     });
   }
@@ -73,11 +106,12 @@
         + '<label>Instagram<input data-k="insta" maxlength="40" placeholder="@seuconsultorio"></label>'
         + '<label>Site (opcional)<input data-k="site" maxlength="60" placeholder="www.seuconsultorio.com.br"></label>'
         + '<label>Logo (PNG ou JPG)<input type="file" accept="image/png,image/jpeg" data-logo-arq><span class="eap-ferr-logo"><img data-logo-prev alt="" hidden><button type="button" class="eap-ferr-link" data-logo-tirar hidden>remover logo</button></span></label>'
-        + '<div class="eap-ferr-cores"><span>Cor da faixa</span><button type="button" data-cor="claro">Clara</button><button type="button" data-cor="escuro">Escura</button><button type="button" data-cor="azul">Azul</button></div>'
+        + '<div class="eap-ferr-cores"><span>Cor da faixa</span><button type="button" data-cor="auto">✨ Automática</button><button type="button" data-cor="claro">Clara</button><button type="button" data-cor="escuro">Escura</button><button type="button" data-cor="azul">Azul</button></div>'
+        + '<small class="eap-ferr-dica" data-cor-dica>Automática: o portal analisa as cores de cada post e escolhe a faixa que combina melhor.</small>'
         + '</div><div class="eap-ferr-prev"><canvas data-prev></canvas><small>Prévia</small></div></div>'
         + '<p class="eap-ferr-erro" data-erro hidden></p><button type="button" class="eap-btn eap-btn--cheio eap-ferr-bt" data-salvar>Salvar minha marca</button>');
       var ent = mm.querySelectorAll('[data-k]'), arq = mm.querySelector('[data-logo-arq]'), lp = mm.querySelector('[data-logo-prev]'), lt = mm.querySelector('[data-logo-tirar]'), est = {};
-      function ler() { var m = { cor: est.cor || 'claro', logo: est.logo || '' }; ent.forEach(function (i) { m[i.getAttribute('data-k')] = i.value.trim(); }); return m; }
+      function ler() { var m = { cor: est.cor || 'auto', logo: est.logo || '' }; ent.forEach(function (i) { m[i.getAttribute('data-k')] = i.value.trim(); }); return m; }
       var tPrev = 0;
       function prev() {
         clearTimeout(tPrev); tPrev = setTimeout(function () {
@@ -85,12 +119,12 @@
           var cv = mm.querySelector('[data-prev]'), m = ler(); if (!m.nome) m.nome = 'Nome do seu consultório';
           var desenha = function (c) { cv.width = c.width; cv.height = c.height; cv.getContext('2d').drawImage(c, 0, 0); };
           if (src) comporPost(src, m).then(desenha).catch(function () {});
-          else logoDe(m).then(function (l) { var c = document.createElement('canvas'); c.width = 800; c.height = 200; desenharFaixa(c.getContext('2d'), m, 0, 0, 800, 200, l); desenha(c); });
+          else logoDe(m).then(function (l) { var c = document.createElement('canvas'); c.width = 800; c.height = 200; desenharFaixa(c.getContext('2d'), Object.assign({}, m, { cor: m.cor === 'auto' ? 'claro' : m.cor }), 0, 0, 800, 200, l); desenha(c); });
         }, 150);
       }
       mm._carregar = function () {
         var m = C.marca || {}; ent.forEach(function (i) { var k = i.getAttribute('data-k'); i.value = k === 'whats' ? (m.whats || C.dentista.whats || '') : k === 'nome' ? (m.nome || C.dentista.nome || '') : (m[k] || ''); });
-        est.cor = m.cor || 'claro'; est.logo = m.logo || '';
+        est.cor = m.cor || 'auto'; est.logo = m.logo || '';
         lp.src = est.logo; lp.hidden = lt.hidden = !est.logo;
         mm.querySelectorAll('[data-cor]').forEach(function (b) { b.classList.toggle('is-ativo', b.getAttribute('data-cor') === est.cor); });
         prev();

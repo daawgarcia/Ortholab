@@ -598,3 +598,5 @@ body.eap .eap-marca-barra__ok img { height: 36px !important; width: auto !import
 .eap-material__marca { display: block; width: 100%; margin: -1px 0 0; background: #eef4ff; color: var(--eap-azul); border: 1px dashed #b9c9ea; border-radius: 0 0 12px 12px; padding: 9px 12px; font-weight: 700; font-size: 13.5px; cursor: pointer; }
 .eap-material__marca:hover { background: #e2ecff; }
 .eap-material__marca:disabled { opacity: .8; cursor: progress; }
+
+.eap-ferr-dica { display: block; color: #8a93a3; font-size: 12px; margin-top: -4px; }
