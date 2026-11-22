@@ -159,7 +159,7 @@ add_action('wp_ajax_eap_ia_vimeo', function () {
         if (is_wp_error($r)) $msg = $r->get_error_message();
         else {
             $j = json_decode(wp_remote_retrieve_body($r), true); $cod = wp_remote_retrieve_response_code($r);
-            if ($cod >= 300) $msg = $j['error'] ?? ('HTTP ' . $cod);
+            if ($cod >= 300) $msg = 'HTTP ' . $cod . ' – ' . ($j['developer_message'] ?? $j['error'] ?? '') . (isset($j['error_code']) ? ' (código ' . $j['error_code'] . ')' : '');
             else {
                 $tracks = (array) ($j['data'] ?? []);
                 usort($tracks, function ($a, $b) { $p = fn($t) => (stripos($t['language'] ?? '', 'pt') === 0 ? 10 : 0) + (strpos($t['language'] ?? '', 'autogen') === false ? 2 : 0) + (!empty($t['active']) ? 1 : 0); return $p($b) <=> $p($a); });
