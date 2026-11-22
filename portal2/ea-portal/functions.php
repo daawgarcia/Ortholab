@@ -77,8 +77,17 @@ add_filter('pre_wp_mail', function ($retorno, $atts) {
     $host = parse_url(home_url(), PHP_URL_HOST);
     if ($host !== 'portal2.estheticaligner.com.br') return $retorno;
     $para = is_array($atts['to']) ? implode(', ', $atts['to']) : $atts['to'];
+    // tira cópias (Cc/Bcc) para nada sair do ambiente de teste; anota no assunto quem receberia
+    $hs = $atts['headers'] ?? [];
+    if (!is_array($hs)) $hs = preg_split('/\r?\n/', (string) $hs);
+    $copias = [];
+    $hs = array_values(array_filter($hs, function ($h) use (&$copias) {
+        if (preg_match('/^\s*(cc|bcc)\s*:(.*)$/i', (string) $h, $m)) { $copias[] = trim($m[2]); return false; }
+        return true;
+    }));
+    $extra = $copias ? ' + cópia: ' . implode(', ', $copias) : '';
     remove_all_filters('pre_wp_mail');
-    wp_mail('testeortholab2@estheticaligner.com.br', '[portal2 – era para: ' . $para . '] ' . $atts['subject'], $atts['message'], $atts['headers'] ?? '', $atts['attachments'] ?? []);
+    wp_mail('testeortholab2@estheticaligner.com.br', '[portal2 – era para: ' . $para . $extra . '] ' . $atts['subject'], $atts['message'], $hs, $atts['attachments'] ?? []);
     return true;
 }, 10, 2);
 

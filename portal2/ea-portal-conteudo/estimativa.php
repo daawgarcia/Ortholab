@@ -15,6 +15,9 @@ add_action('init', function () {
     ]);
 });
 
+function eap_est_cc() {
+    return array_values(array_filter(array_map('trim', explode(',', (string) get_option('eap_estimativa_cc', ''))), 'is_email'));
+}
 function eap_est_email() {
     $v = get_option('eap_estimativa_email', '');
     return is_email($v) ? $v : '';
@@ -26,11 +29,14 @@ add_action('admin_menu', function () {
         if (isset($_POST['eap_est_n']) && wp_verify_nonce($_POST['eap_est_n'], 'eap_est')) {
             $e = sanitize_email(wp_unslash($_POST['email'] ?? ''));
             update_option('eap_estimativa_email', is_email($e) ? $e : '', false);
+            $cc = array_filter(array_map('sanitize_email', array_map('trim', explode(',', wp_unslash($_POST['cc'] ?? '')))), 'is_email');
+            update_option('eap_estimativa_cc', implode(', ', $cc), false);
             echo '<div class="notice notice-success"><p>Salvo.</p></div>';
         }
         echo '<div class="wrap"><h1>E-mail das estimativas</h1><p style="max-width:680px">Quando um dentista conclui a <b>Estimativa e pacote – Alinhadores</b>, o resultado vai para este e-mail e fica guardado em <a href="' . esc_url(admin_url('edit.php?post_type=ea_estimativa')) . '">Estimativas recebidas</a>.</p>'
             . '<form method="post">' . wp_nonce_field('eap_est', 'eap_est_n', true, false)
-            . '<p><input type="email" name="email" class="regular-text" value="' . esc_attr(eap_est_email()) . '" placeholder="gerente.vendas@estheticaligner.com.br"></p>'
+            . '<p><label><b>Para</b><br><input type="email" name="email" class="regular-text" value="' . esc_attr(eap_est_email()) . '" placeholder="gerente.vendas@estheticaligner.com.br"></label></p>'
+            . '<p><label><b>Cópia (separe por vírgula)</b><br><input type="text" name="cc" class="regular-text" value="' . esc_attr(implode(', ', eap_est_cc())) . '" placeholder="marketing@estheticaligner.com.br"></label></p>'
             . '<p><button class="button button-primary">Salvar</button></p></form></div>';
     });
 }, 25);
@@ -86,6 +92,7 @@ add_action('wp_ajax_eap_estimativa', function () {
             . '<table style="border-collapse:collapse;width:100%;border:1px solid #e4e8f0">' . $linhas . '</table>'
             . '<p style="margin-top:14px"><a href="' . esc_url(admin_url('edit.php?post_type=ea_estimativa')) . '">Ver todas as estimativas</a></p></div>';
         $headers = ['Content-Type: text/html; charset=UTF-8'];
+        foreach (eap_est_cc() as $c) $headers[] = 'Cc: ' . $c;
         if (is_email($u->user_email)) $headers[] = 'Reply-To: ' . str_replace(["\r", "\n"], '', $conta['Nome no cadastro']) . ' <' . $u->user_email . '>';
         $enviado = wp_mail($para, 'Nova estimativa: ' . $titulo, $html, $headers);
         if ($id) update_post_meta($id, '_email_status', $enviado ? 'enviado' : 'falhou');
