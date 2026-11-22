@@ -100,7 +100,6 @@
     document.querySelectorAll('[data-eap-faq]').forEach(function (d) {
       var ok = !q || norm(d.textContent).indexOf(q) >= 0;
       d.style.display = ok ? '' : 'none';
-      if (q && ok && norm(d.querySelector('summary').textContent).indexOf(q) < 0) d.open = true;
     });
   });
   // Clube: busca + categorias

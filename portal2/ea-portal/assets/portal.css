@@ -402,3 +402,12 @@ body.eap .eap-suporte__faq { min-width: 0; overflow: hidden; }
   .eap-filtros { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
   .eap-filtros button { flex: none; }
 }
+body.eap .eap-suporte h2, body.eap .eap-sec-tit h2, body.eap .eap-mat-grupo__tit, body.eap .eap-materiais-tit { font-weight: 700 !important; }
+.eap-filtros { scrollbar-width: none; }
+.eap-filtros::-webkit-scrollbar { display: none; }
+@media (max-width: 560px) {
+  .eap-atalhos { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .eap-atalho { padding: 14px !important; }
+  .eap-atalho em { font-size: 12.5px !important; }
+  .eap-atalho__ic { width: 40px !important; height: 40px !important; }
+}
