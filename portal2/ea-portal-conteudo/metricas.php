@@ -51,7 +51,7 @@ add_action('template_redirect', function () {
         update_user_meta($uid, 'eap_acesso_dia', $hoje);
         eap_evento('acesso');
     }
-    update_user_meta($uid, 'eap_ultimo_acesso', time());
+    if (time() - (int) get_user_meta($uid, 'eap_ultimo_acesso', true) > 10 * MINUTE_IN_SECONDS) update_user_meta($uid, 'eap_ultimo_acesso', time()); // grava no máximo a cada 10 min
     $o = get_queried_object();
     if ($o instanceof WP_Post && $o->post_type === 'page') {
         eap_evento('pagina', $o->ID, $o->post_name);
@@ -176,8 +176,10 @@ function eap_resultados_pagina() {
     $est = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa' AND post_status = 'private' AND post_date >= %s", $desde));
 
     // credenciados por último acesso
-    $ult = eap_met_ultimos();
     $agora = time();
+    $base = get_transient('eap_met_base');
+    if (!is_array($base)) {
+    $ult = eap_met_ultimos();
     $faixas = ['30' => 0, '90' => 0, '180' => 0, 'mais' => 0, 'nunca' => 0];
     foreach ($ult as $r) {
         $u = (int) $r->ultimo;
@@ -187,7 +189,11 @@ function eap_resultados_pagina() {
         elseif ($u >= $agora - 180 * DAY_IN_SECONDS) $faixas['180']++;
         else $faixas['mais']++;
     }
-    $total_cred = count($ult);
+    $base = ['faixas' => $faixas, 'total' => count($ult)];
+    set_transient('eap_met_base', $base, 30 * MINUTE_IN_SECONDS); // a conta da base inteira roda no máximo a cada 30 min
+    }
+    $faixas = $base['faixas'];
+    $total_cred = $base['total'];
 
     // gráfico: credenciados por dia
     $por_dia = $wpdb->get_results("SELECT DATE(quando) d, COUNT(DISTINCT user_id) n FROM $t WHERE tipo = 'acesso' AND $f GROUP BY DATE(quando)", OBJECT_K);
