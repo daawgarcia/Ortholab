@@ -123,6 +123,38 @@ function eap_met_csv_inativos() {
 }
 add_action('admin_post_eap_met_csv', 'eap_met_csv_inativos');
 
+
+/** Histórico mensal de antes do portal novo: logins do Log de atividades e novos cadastros. */
+function eap_met_historico($meses = 6) {
+    global $wpdb;
+    $equipe = array_map('intval', get_users(['capability' => 'edit_pages', 'fields' => 'ID']));
+    $excl = $equipe ? ' AND user_id NOT IN (' . implode(',', $equipe) . ')' : '';
+    $inicio = strtotime(wp_date('Y-m-01 00:00:00', strtotime('-' . ($meses - 1) . ' months', strtotime(wp_date('Y-m-15')))));
+    $linhas = [];
+    for ($i = 0; $i < $meses; $i++) {
+        $k = wp_date('Y-m', strtotime("+$i months", $inicio + 15 * DAY_IN_SECONDS));
+        $linhas[$k] = ['ativos' => null, 'logins' => null, 'novos' => 0, 'portal' => 0];
+    }
+    $log = $wpdb->prefix . 'aryo_activity_log';
+    $tem_log = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $log)) === $log;
+    $desde_log = null;
+    if ($tem_log) {
+        $desde_log = (int) $wpdb->get_var("SELECT MIN(hist_time) FROM $log WHERE action = 'logged_in'");
+        $tz = wp_date('P');
+        $r = $wpdb->get_results($wpdb->prepare("SELECT DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(hist_time), @@session.time_zone, %s), '%%Y-%%m') m, COUNT(DISTINCT user_id) a, COUNT(*) n FROM $log WHERE action = 'logged_in' AND hist_time >= %d $excl GROUP BY m", $tz, $inicio));
+        foreach ($r as $x) if (isset($linhas[$x->m])) { $linhas[$x->m]['ativos'] = (int) $x->a; $linhas[$x->m]['logins'] = (int) $x->n; }
+        // meses cobertos pelo log sem nenhum login contam como zero
+        foreach ($linhas as $k => &$l) if ($l['ativos'] === null && $desde_log && strtotime($k . '-28') >= $desde_log) { $l['ativos'] = 0; $l['logins'] = 0; }
+        unset($l);
+    }
+    $r = $wpdb->get_results($wpdb->prepare("SELECT DATE_FORMAT(user_registered, '%%Y-%%m') m, COUNT(*) n FROM {$wpdb->users} WHERE user_registered >= %s GROUP BY m", gmdate('Y-m-d H:i:s', $inicio)));
+    foreach ($r as $x) if (isset($linhas[$x->m])) $linhas[$x->m]['novos'] = (int) $x->n;
+    $t = eap_met_tabela();
+    $r = $wpdb->get_results($wpdb->prepare("SELECT DATE_FORMAT(quando, '%%Y-%%m') m, COUNT(DISTINCT user_id) n FROM $t WHERE tipo = 'acesso' AND equipe = 0 AND quando >= %s GROUP BY m", wp_date('Y-m-d H:i:s', $inicio)));
+    foreach ($r as $x) if (isset($linhas[$x->m])) $linhas[$x->m]['portal'] = (int) $x->n;
+    return ['linhas' => $linhas, 'tem_log' => $tem_log, 'desde_log' => $desde_log];
+}
+
 function eap_resultados_pagina() {
     global $wpdb;
     $t = eap_met_tabela();
@@ -196,6 +228,8 @@ function eap_resultados_pagina() {
       .eapr__faixas{display:flex;height:16px;border-radius:999px;overflow:hidden;margin:6px 0 14px}
       .eapr__leg{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}.eapr__leg div{display:flex;align-items:center;gap:8px}
       .eapr__leg i{width:10px;height:10px;border-radius:3px;display:inline-block}.eapr__leg b{margin-left:auto}
+      .eapr__meses{display:flex;gap:14px;align-items:flex-end;height:170px;padding-top:6px}.eapr__mes{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+      .eapr__mes-barras{flex:1;width:100%;display:flex;gap:5px;align-items:flex-end;justify-content:center}.eapr__mes-barras i{width:34%;max-width:34px;border-radius:5px 5px 0 0}.eapr__mes-barras i.a{background:#2f6fe4}.eapr__mes-barras i.n{background:#f2a33a}.eapr__mes b{font-size:12px;color:#5b6576;font-weight:600}
       .eapr__nota{color:#5b6576;font-size:12.5px;margin-top:18px}
     </style>
     <div class="wrap eapr">
@@ -254,6 +288,38 @@ function eap_resultados_pagina() {
         </div>
       </div>
 
+
+      <?php $h = eap_met_historico(6); $mx = 1; foreach ($h['linhas'] as $l) $mx = max($mx, (int) $l['ativos'], (int) $l['novos']);
+      $mes = fn($k) => ucfirst(wp_date('M/y', strtotime($k . '-15'))); ?>
+      <div class="eapr__grid">
+        <div class="eapr__box" style="grid-column:1/-1">
+          <h2>Últimos 6 meses</h2>
+          <p class="d">Credenciados que fizeram login em cada mês (registro do Log de atividades do portal) e novos cadastros no mês. Não inclui a equipe.</p>
+          <div class="eapr__meses">
+            <?php foreach ($h['linhas'] as $k => $l) : ?>
+              <div class="eapr__mes">
+                <div class="eapr__mes-barras">
+                  <i class="a" style="height:<?php echo $l['ativos'] === null ? 0 : max(2, round($l['ativos'] * 100 / $mx)); ?>%" title="<?php echo esc_attr('Entraram: ' . ($l['ativos'] ?? 'sem registro')); ?>"></i>
+                  <i class="n" style="height:<?php echo max(2, round($l['novos'] * 100 / $mx)); ?>%" title="<?php echo esc_attr('Novos cadastros: ' . $l['novos']); ?>"></i>
+                </div>
+                <b><?php echo esc_html($mes($k)); ?></b>
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <div class="eapr__leg" style="grid-template-columns:auto auto;justify-content:start;margin:10px 0 14px"><div><i style="background:#2f6fe4"></i>Credenciados que entraram</div><div><i style="background:#f2a33a"></i>Novos cadastros</div></div>
+          <table class="widefat striped" style="max-width:760px">
+            <thead><tr><th>Mês</th><th>Credenciados que entraram</th><th>Logins</th><th>Logins por credenciado</th><th>Novos cadastros</th></tr></thead>
+            <tbody><?php foreach (array_reverse($h['linhas'], true) as $k => $l) : ?>
+              <tr><td><b><?php echo esc_html($mes($k)); ?></b></td>
+                <td><?php echo $l['ativos'] === null ? '<span style="color:#8a93a3">sem registro</span>' : $num($l['ativos']); ?></td>
+                <td><?php echo $l['logins'] === null ? '—' : $num($l['logins']); ?></td>
+                <td><?php echo ($l['ativos'] ?? 0) ? number_format_i18n($l['logins'] / $l['ativos'], 1) : '—'; ?></td>
+                <td><?php echo $num($l['novos']); ?></td></tr>
+            <?php endforeach; ?></tbody>
+          </table>
+          <p class="d" style="margin:10px 0 0"><?php echo $h['tem_log'] ? ($h['desde_log'] ? 'O Log de atividades tem registros desde ' . esc_html(wp_date('d/m/Y', $h['desde_log'])) . '. Meses antes disso aparecem como “sem registro”.' : 'O Log de atividades ainda não tem logins registrados.') : 'O plugin Log de atividades não está instalado; só os novos cadastros aparecem.'; ?></p>
+        </div>
+      </div>
       <div class="eapr__grid">
         <div class="eapr__box" style="grid-column:1/-1">
           <h2>Credenciados pelo último acesso</h2>

@@ -350,3 +350,103 @@ add_action('wp_footer', function () {
     echo '</div><button type="button" class="eap-whats__bt" aria-label="Falar no WhatsApp" data-eap-whats-bt>' . $ic . '<span>Precisa de ajuda?</span></button></div>';
     echo "<script>(function(){var b=document.querySelector('[data-eap-whats-bt]'),p=document.querySelector('.eap-whats__painel');if(!b)return;b.addEventListener('click',function(e){e.stopPropagation();p.hidden=!p.hidden;});document.addEventListener('click',function(e){if(!e.target.closest('[data-eap-whats-box]'))p.hidden=true;});})();</script>";
 }, 60);
+
+/* ------------------------------------------------------------------ app no celular (PWA) */
+function eapt_pwa_icone($tam) {
+    return content_url('/uploads/' . ($tam === 'apple' ? 'ea-app-apple-180.png' : 'ea-app-' . $tam . '.png'));
+}
+add_action('init', function () {
+    if (empty($_GET['eap_pwa'])) return;
+    $o = $_GET['eap_pwa'];
+    if ($o === 'manifest') {
+        header('Content-Type: application/manifest+json; charset=utf-8');
+        header('Cache-Control: public, max-age=3600');
+        echo wp_json_encode([
+            'name' => 'Portal do Credenciado – Esthetic Aligner', 'short_name' => 'EA Portal',
+            'description' => 'Aulas, materiais, marketing, suporte e sistemas da Esthetic Aligner.',
+            'start_url' => '/area-do-credenciado/?origem=app', 'scope' => '/', 'display' => 'standalone',
+            'background_color' => '#ffffff', 'theme_color' => '#2f6fe4', 'lang' => 'pt-BR', 'id' => '/area-do-credenciado/',
+            'icons' => [
+                ['src' => eapt_pwa_icone('192'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => eapt_pwa_icone('512'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => eapt_pwa_icone('512'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ],
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    if ($o === 'sw') {
+        header('Content-Type: application/javascript; charset=utf-8');
+        header('Service-Worker-Allowed: /');
+        header('Cache-Control: no-cache');
+        // não guarda páginas (o conteúdo é do credenciado logado); só mostra um aviso quando estiver sem internet
+        echo "self.addEventListener('install',function(){self.skipWaiting();});"
+            . "self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});"
+            . "self.addEventListener('fetch',function(e){if(e.request.mode!=='navigate')return;e.respondWith(fetch(e.request).catch(function(){return new Response('<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\"><title>Sem conexão</title><body style=\"font-family:system-ui;text-align:center;padding:60px 24px;color:#1b2433\"><h2>Sem conexão com a internet</h2><p>Confira sua conexão e tente de novo.</p><button onclick=\"location.reload()\" style=\"background:#2f6fe4;color:#fff;border:0;border-radius:999px;padding:12px 22px;font-size:15px\">Tentar de novo</button>',{headers:{'Content-Type':'text/html; charset=utf-8'}});}));});";
+        exit;
+    }
+}, 1);
+
+add_action('wp_head', function () {
+    echo '<link rel="manifest" href="' . esc_url(home_url('/?eap_pwa=manifest')) . '">' . "\n"
+        . '<meta name="theme-color" content="#2f6fe4">' . "\n"
+        . '<link rel="apple-touch-icon" href="' . esc_url(eapt_pwa_icone('apple')) . '">' . "\n"
+        . '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">' . "\n"
+        . '<meta name="apple-mobile-web-app-title" content="EA Portal"><meta name="apple-mobile-web-app-status-bar-style" content="default">' . "\n";
+}, 2);
+
+add_action('wp_footer', function () {
+    $sw = esc_url(home_url('/?eap_pwa=sw'));
+    echo "<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('$sw',{scope:'/'}).catch(function(){});});}</script>";
+    if (!is_user_logged_in() || eapt_pagina_livre()) return;
+    $icone = esc_url(eapt_pwa_icone('192'));
+    $compart = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="vertical-align:-3px"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+    ?>
+    <div class="eap-app-faixa" data-eap-app-faixa hidden>
+      <img src="<?php echo $icone; ?>" alt="">
+      <span><strong>Tenha o portal no celular</strong><em>Abra direto da tela inicial, como um app.</em></span>
+      <button type="button" class="eap-btn eap-btn--cheio" data-eap-app-abrir>Instalar</button>
+      <button type="button" class="eap-app-faixa__x" data-eap-app-fechar aria-label="Agora não">×</button>
+    </div>
+    <div class="eap-modal eap-app-modal" data-eap-app-modal hidden><div class="eap-modal__caixa">
+      <button type="button" class="eap-modal__x" data-eap-app-x aria-label="Fechar">×</button>
+      <div class="eap-app-modal__topo"><img src="<?php echo $icone; ?>" alt=""><div><strong>Instale o portal no seu celular</strong><span>Grátis, sem loja de aplicativos. O ícone da Esthetic Aligner fica na tela inicial e o portal abre em tela cheia, já logado.</span></div></div>
+      <div class="eap-app-abas" role="tablist"><button type="button" data-eap-app-aba="android">Android</button><button type="button" data-eap-app-aba="ios">iPhone</button></div>
+      <ol class="eap-app-passos" data-eap-app-passos="android">
+        <li>Abra o portal no <b>Google Chrome</b> e entre com seu login.</li>
+        <li>Toque nos <b>três pontinhos ⋮</b>, no canto de cima à direita.</li>
+        <li>Toque em <b>“Instalar app”</b> (em alguns celulares aparece <b>“Adicionar à tela inicial”</b>).</li>
+        <li>Confirme em <b>“Instalar”</b>. Pronto: o ícone <b>EA Portal</b> aparece na tela inicial.</li>
+      </ol>
+      <ol class="eap-app-passos" data-eap-app-passos="ios" hidden>
+        <li>Abra o portal no <b>Safari</b> e entre com seu login.</li>
+        <li>Toque no botão <b>Compartilhar</b> <?php echo $compart; ?> na barra de baixo da tela.</li>
+        <li>Role a lista e toque em <b>“Adicionar à Tela de Início”</b>.</li>
+        <li>Toque em <b>“Adicionar”</b>, no canto de cima. Pronto: o ícone <b>EA Portal</b> aparece na tela inicial.</li>
+        <li class="eap-app-dica">Usa o Chrome no iPhone? O botão Compartilhar <?php echo $compart; ?> fica no canto de cima, ao lado do endereço. O resto é igual.</li>
+      </ol>
+      <button type="button" class="eap-btn eap-btn--cheio eap-app-instalar" data-eap-app-instalar hidden>Instalar agora</button>
+    </div></div>
+    <script>(function(){
+      var ua=navigator.userAgent, ios=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),
+          cel=ios||/android|mobile/i.test(ua), app=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone,
+          faixa=document.querySelector('[data-eap-app-faixa]'), modal=document.querySelector('[data-eap-app-modal]'),
+          btInst=modal.querySelector('[data-eap-app-instalar]'), pedido=null, K='eap-app-faixa-fechada';
+      function aba(q){modal.querySelectorAll('[data-eap-app-aba]').forEach(function(b){b.classList.toggle('is-ativo',b.getAttribute('data-eap-app-aba')===q);});
+        modal.querySelectorAll('[data-eap-app-passos]').forEach(function(o){o.hidden=o.getAttribute('data-eap-app-passos')!==q;});
+        btInst.hidden=!(pedido&&q==='android');}
+      function abrir(){aba(ios?'ios':'android');modal.hidden=false;document.body.style.overflow='hidden';}
+      function fechar(){modal.hidden=true;document.body.style.overflow='';}
+      window.eapAppAbrir=abrir;
+      modal.querySelectorAll('[data-eap-app-aba]').forEach(function(b){b.addEventListener('click',function(){aba(b.getAttribute('data-eap-app-aba'));});});
+      modal.addEventListener('click',function(e){if(e.target===modal||e.target.hasAttribute('data-eap-app-x'))fechar();});
+      window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();pedido=e;});
+      function instalar(){if(!pedido){abrir();return;}pedido.prompt();pedido.userChoice.then(function(){pedido=null;faixa.hidden=true;fechar();});}
+      btInst.addEventListener('click',instalar);
+      document.querySelectorAll('[data-eap-app-link]').forEach(function(a){a.hidden=!!app;a.addEventListener('click',function(e){e.preventDefault();abrir();});});
+      var fechada=0;try{fechada=+localStorage.getItem(K)||0;}catch(e){}
+      if(cel&&!app&&Date.now()-fechada>20*864e5){faixa.hidden=false;}
+      faixa.querySelector('[data-eap-app-abrir]').addEventListener('click',function(){pedido&&!ios?instalar():abrir();});
+      faixa.querySelector('[data-eap-app-fechar]').addEventListener('click',function(){faixa.hidden=true;try{localStorage.setItem(K,Date.now());}catch(e){}});
+    })();</script>
+    <?php
+}, 55);

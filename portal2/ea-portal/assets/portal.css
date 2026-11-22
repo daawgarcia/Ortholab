@@ -500,3 +500,29 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
   .eap-whats__bt span { display: none; }
   .eap-whats__bt { padding: 13px; }
 }
+
+/* app no celular */
+.eap-app-faixa { position: fixed; left: 12px; right: 12px; bottom: 84px; z-index: 9989; background: #fff; border-radius: 16px; box-shadow: 0 14px 40px rgba(13,31,66,.22); display: flex; align-items: center; gap: 12px; padding: 12px 14px; max-width: 520px; margin: 0 auto; }
+.eap-app-faixa[hidden] { display: none; }
+.eap-app-faixa img { width: 44px; height: 44px; border-radius: 11px; border: 1px solid var(--eap-linha); flex: none; }
+.eap-app-faixa span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.eap-app-faixa strong { font-size: 14.5px; }
+.eap-app-faixa em { font-style: normal; font-size: 12.5px; color: var(--eap-txt-2); }
+.eap-app-faixa .eap-btn { padding: 9px 16px; font-size: 14px; }
+.eap-app-faixa__x { background: none; border: 0; font-size: 22px; color: #8a93a3; cursor: pointer; padding: 0 2px; }
+.eap-app-modal .eap-modal__caixa { display: block; max-width: 460px; padding: 26px 24px 24px; overflow: auto; }
+.eap-app-modal__topo { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; padding-right: 26px; }
+.eap-app-modal__topo img { width: 58px; height: 58px; border-radius: 14px; border: 1px solid var(--eap-linha); flex: none; }
+.eap-app-modal__topo strong { display: block; font-size: 18px; margin-bottom: 4px; }
+.eap-app-modal__topo span { font-size: 13.5px; color: var(--eap-txt-2); line-height: 1.45; }
+.eap-app-abas { display: flex; background: var(--eap-fundo); border-radius: 999px; padding: 4px; margin-bottom: 16px; }
+.eap-app-abas button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 9px; font-weight: 700; font-size: 14px; color: var(--eap-txt-2); cursor: pointer; }
+.eap-app-abas button.is-ativo { background: #fff; color: var(--eap-azul); box-shadow: 0 2px 8px rgba(17,38,84,.1); }
+.eap-app-passos { margin: 0; padding: 0; list-style: none; counter-reset: p; }
+.eap-app-passos[hidden] { display: none; }
+.eap-app-passos li { counter-increment: p; position: relative; padding: 4px 0 14px 42px; font-size: 14.5px; line-height: 1.5; }
+.eap-app-passos li::before { content: counter(p); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--eap-azul); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+.eap-app-passos li.eap-app-dica { padding-left: 0; font-size: 13px; color: var(--eap-txt-2); background: var(--eap-fundo); border-radius: 10px; padding: 10px 12px; }
+.eap-app-passos li.eap-app-dica::before { display: none; }
+.eap-app-instalar { width: 100%; margin-top: 6px; text-align: center; }
+@media (min-width: 900px) { .eap-app-faixa { display: none !important; } }
