@@ -117,7 +117,7 @@ function eap_met_csv_inativos() {
         if ((int) $r->ultimo >= $lim) continue;
         $cro = function_exists('eap_dado_atual') ? eap_dado_atual($r->ID, 'cro') : '';
         $wh = function_exists('eap_dado_atual') ? eap_dado_atual($r->ID, 'whats') : '';
-        fputcsv($out, [$r->display_name, $r->user_email, $cro, $wh, $r->ultimo ? wp_date('d/m/Y', (int) $r->ultimo) : 'nunca registrado', wp_date('d/m/Y', strtotime($r->user_registered))], ';');
+        fputcsv($out, [$r->display_name, $r->user_email, $cro, $wh, (int) $r->ultimo > 0 ? wp_date('d/m/Y', (int) $r->ultimo) : 'nunca registrado', wp_date('d/m/Y', strtotime($r->user_registered))], ';');
     }
     exit;
 }
