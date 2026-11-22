@@ -80,9 +80,9 @@ function eap_suporte_cfg() {
     return is_array($c) ? array_merge(eap_suporte_padrao(), $c) : eap_suporte_padrao();
 }
 function eap_whats_link($num) {
-    $d = eap_digitos($num);
+    $d = ltrim(eap_digitos($num), '0'); // (011) 9xxxx → 11 9xxxx
     if ($d === '') return '';
-    if (strlen($d) <= 11) $d = '55' . $d;
+    if (!(strlen($d) >= 12 && strpos($d, '55') === 0)) $d = '55' . $d;
     return 'https://wa.me/' . $d;
 }
 
