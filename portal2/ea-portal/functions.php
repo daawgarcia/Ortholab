@@ -266,7 +266,8 @@ add_action('login_enqueue_scripts', function () {
     echo '<style>
     body.login{background:linear-gradient(135deg,#0d1f42 0%,#16305f 45%,#2f6fe4 100%) fixed!important;font-family:"Open Sans",system-ui,sans-serif;color:#1b2433;min-height:100vh;display:flex;align-items:center;justify-content:center}
     body.login #login{width:min(420px,92vw);padding:0;margin:0 auto}
-    body.login h1 a{background:url(' . $logo . ') no-repeat center/contain!important;width:220px!important;height:64px!important;margin:0 auto 18px!important;filter:brightness(0) invert(1)}
+    body.login h1 a{background:url(' . $logo . ') no-repeat center/contain!important;background-color:transparent!important;width:230px!important;height:70px!important;margin:0 auto 18px!important;box-shadow:none!important}
+    body.login #nav{display:none!important}
     body.login form{background:#fff!important;border:0!important;border-radius:18px!important;box-shadow:0 24px 60px rgba(0,0,0,.25)!important;padding:28px 26px!important;margin-top:0!important}
     body.login label{font-weight:600;color:#0d1f42;font-size:14px}
     body.login input[type=text],body.login input[type=email],body.login input[type=password]{border:1.5px solid #e4e8f0!important;border-radius:12px!important;padding:10px 13px!important;font-size:16px!important;box-shadow:none!important;background:#fafbfd!important;min-height:46px}
