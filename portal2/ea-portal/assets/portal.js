@@ -160,4 +160,6 @@
     modal.addEventListener('click', function (e) { if (e.target === modal || e.target.hasAttribute('data-eap-fechar')) fechar(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
   }
+  // pergunta frequente aberta pelo link (#faq-123)
+  if (/^#faq-\d+$/.test(location.hash)) { var fq = document.querySelector(location.hash); if (fq) { fq.open = true; setTimeout(function () { fq.scrollIntoView({ block: 'center' }); }, 200); } }
 })();

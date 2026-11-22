@@ -28,6 +28,7 @@ function eap_secoes_portal() {
         'whats'           => ['Botão de WhatsApp do suporte', 'Botão flutuante no canto de todas as páginas', ''],
         'continuar'       => ['Continue assistindo', 'Cartão no início com a última aula aberta', ''],
         'primeiros-passos'=> ['Primeiros passos', 'Checklist no início para o credenciado começar a usar o portal', ''],
+        'assistente'      => ['Assistente EA (IA)', 'Botão de chat no canto (liberação e chave em Portal do Credenciado → Assistente EA)', ''],
         'pesquisa'        => ['Pesquisa de satisfação', 'Pergunta de 0 a 10 que aparece a partir do 3º dia de uso (no máximo a cada 90 dias)', ''],
     ];
 }

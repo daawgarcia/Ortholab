@@ -32,7 +32,7 @@ $ics = ['suporte', 'lab', 'fin', 'play', 'dica', 'mkt'];
     $faqs = post_type_exists('faq') ? get_posts($args) : [];
     if ($faqs) :
       foreach ($faqs as $f) : ?>
-        <details class="eap-faq" data-eap-faq>
+        <details class="eap-faq" data-eap-faq id="faq-<?php echo (int) $f->ID; ?>">
           <summary><?php echo esc_html(get_the_title($f)); ?></summary>
           <div class="eap-faq__r"><?php echo wp_kses_post(wpautop(do_shortcode($f->post_content))); ?></div>
         </details>

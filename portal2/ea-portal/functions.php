@@ -564,3 +564,53 @@ add_action('wp_footer', function () {
     })();</script>
     <?php
 }, 57);
+
+
+/* ------------------------------------------------------------------ Assistente EA (chat) */
+add_action('wp_footer', function () {
+    if (!is_user_logged_in() || is_admin() || eapt_pagina_livre() || !function_exists('eap_ia_pode') || !eap_ia_pode()) return;
+    $u = wp_get_current_user(); $nome = trim($u->first_name) ?: $u->display_name;
+    $sup = function_exists('eap_suporte_cfg') ? eap_suporte_cfg()['canais'] : [];
+    $wa = ''; $lab = '';
+    foreach ($sup as $c) { if (!$wa && !empty($c['whats'])) $wa = eap_whats_link($c['whats']); if (!$lab && stripos($c['titulo'], 'labor') !== false && !empty($c['whats'])) $lab = eap_whats_link($c['whats']); }
+    $cfg = ['u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_ia'), 'sup' => $wa, 'lab' => $lab ?: $wa, 'nome' => $nome];
+    ?>
+    <button type="button" class="eap-ia-bt" data-eap-ia-bt aria-label="Assistente EA"><span>✨</span><b>Assistente EA</b></button>
+    <div class="eap-ia-chat" data-eap-ia hidden>
+      <div class="eap-ia-chat__topo"><div><strong>✨ Assistente EA</strong><span>Respostas com base no conteúdo do portal</span></div><button type="button" data-eap-ia-x aria-label="Fechar">×</button></div>
+      <div class="eap-ia-chat__msgs" data-eap-ia-msgs>
+        <div class="eap-ia-m eap-ia-m--ia">Olá, <?php echo esc_html($nome); ?>! Pergunte sobre o sistema Esthetic Aligner, protocolos, materiais e o uso do portal. Eu respondo com o conteúdo oficial e mostro a fonte.</div>
+        <div class="eap-ia-sug" data-eap-ia-sug><button type="button">Como envio um caso?</button><button type="button">Como funciona a checagem 3D?</button><button type="button">Onde encontro a ficha de documentação?</button></div>
+      </div>
+      <form class="eap-ia-chat__form" data-eap-ia-form><textarea rows="1" maxlength="600" placeholder="Escreva sua pergunta…" data-eap-ia-txt></textarea><button type="submit" aria-label="Enviar">➤</button></form>
+      <small class="eap-ia-chat__aviso">O assistente não faz diagnóstico nem substitui a avaliação clínica.</small>
+    </div>
+    <script>(function(){
+      var C=<?php echo wp_json_encode($cfg); ?>, box=document.querySelector('[data-eap-ia]'), bt=document.querySelector('[data-eap-ia-bt]'), msgs=box.querySelector('[data-eap-ia-msgs]'),
+          form=box.querySelector('[data-eap-ia-form]'), txt=box.querySelector('[data-eap-ia-txt]'), hist=[], ocupado=false;
+      function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+      function fmt(t){t=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');var l=t.split('\n'),o='',lista=false;l.forEach(function(x){var m=x.match(/^\s*(?:[-•*]|\d+[.)])\s+(.*)/);if(m){if(!lista){o+='<ul>';lista=true;}o+='<li>'+m[1]+'</li>';}else{if(lista){o+='</ul>';lista=false;}if(x.trim())o+='<p>'+x+'</p>';}});return o+(lista?'</ul>':'');}
+      function add(html,cls){var d=document.createElement('div');d.className='eap-ia-m '+cls;d.innerHTML=html;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d;}
+      function abrir(){box.hidden=false;bt.hidden=true;setTimeout(function(){txt.focus();},50);}
+      bt.addEventListener('click',abrir); box.querySelector('[data-eap-ia-x]').addEventListener('click',function(){box.hidden=true;bt.hidden=false;});
+      box.querySelectorAll('[data-eap-ia-sug] button').forEach(function(b){b.addEventListener('click',function(){perguntar(b.textContent);});});
+      txt.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit?form.requestSubmit():form.dispatchEvent(new Event('submit'));}});
+      form.addEventListener('submit',function(e){e.preventDefault();perguntar(txt.value);});
+      function perguntar(p){p=(p||'').trim();if(!p||ocupado)return;ocupado=true;txt.value='';var s=box.querySelector('[data-eap-ia-sug]');if(s)s.remove();
+        add(esc(p),'eap-ia-m--eu');var esp=add('<span class="eap-ia-dig"><i></i><i></i><i></i></span> Procurando no conteúdo do portal…','eap-ia-m--ia eap-ia-m--esp');
+        var f=new FormData();f.append('action','eap_ia_perguntar');f.append('_n',C.n);f.append('pergunta',p);f.append('historico',JSON.stringify(hist));
+        fetch(C.u,{method:'POST',body:f,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){esp.remove();ocupado=false;
+          if(!j.success){add(j.data==='limite'?'Você chegou ao limite de perguntas de hoje. Amanhã libera de novo, ou fale com o <a href="'+esc(C.sup)+'" target="_blank" rel="noopener">suporte no WhatsApp</a>.':'Não consegui responder agora. Tente de novo em instantes.','eap-ia-m--ia');return;}
+          var d=j.data,h='';
+          if(d.status==='ok'){h=fmt(d.texto);if(d.fontes.length){h+='<div class="eap-ia-fontes"><span>Fonte'+(d.fontes.length>1?'s':'')+':</span>'+d.fontes.map(function(x){return '<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.titulo)+' <em>'+esc(x.tipo)+'</em></a>';}).join('')+'</div>';}
+            h+='<div class="eap-ia-aval" data-id="'+d.id+'"><span>Ajudou?</span><button type="button" data-v="1">👍</button><button type="button" data-v="-1">👎</button></div>';
+            hist.push({papel:'user',texto:p},{papel:'assistant',texto:d.texto});}
+          else if(d.status==='clinico'){h='<p>Para dúvidas sobre um caso ou paciente específico, o melhor é falar direto com o nosso laboratório, que acompanha o planejamento.</p>'+(C.lab?'<a class="eap-ia-acao" href="'+esc(C.lab)+'?text='+encodeURIComponent('Olá! Tenho uma dúvida sobre um caso: '+p)+'" target="_blank" rel="noopener">Falar com o laboratório no WhatsApp</a>':'');}
+          else if(d.status==='sem'){h='<p>Não encontrei essa informação no conteúdo do portal, e prefiro não responder sem uma fonte oficial.</p>'+(C.sup?'<a class="eap-ia-acao" href="'+esc(C.sup)+'?text='+encodeURIComponent('Olá! Não encontrei no portal: '+p)+'" target="_blank" rel="noopener">Perguntar ao suporte no WhatsApp</a>':'');}
+          else h='<p>Não consegui responder agora. Tente de novo em instantes.</p>';
+          add(h,'eap-ia-m--ia');
+        }).catch(function(){esp.remove();ocupado=false;add('Sem conexão. Tente de novo.','eap-ia-m--ia');});}
+      msgs.addEventListener('click',function(e){var b=e.target.closest('.eap-ia-aval button');if(!b)return;var w=b.parentNode,f=new FormData();f.append('action','eap_ia_avaliar');f.append('_n',C.n);f.append('id',w.getAttribute('data-id'));f.append('v',b.getAttribute('data-v'));fetch(C.u,{method:'POST',body:f,credentials:'same-origin'});w.innerHTML='<span>Obrigado pelo retorno!</span>';});
+    })();</script>
+    <?php
+}, 58);
