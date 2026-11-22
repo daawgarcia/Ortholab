@@ -17,6 +17,7 @@ require_once __DIR__ . '/visibilidade.php';
 require_once __DIR__ . '/temas.php';
 require_once __DIR__ . '/destaques.php';
 require_once __DIR__ . '/avisos.php';
+require_once __DIR__ . '/seguranca.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {
