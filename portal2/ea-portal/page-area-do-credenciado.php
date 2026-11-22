@@ -44,20 +44,14 @@ $nome = trim($u->first_name) ?: $u->display_name;
   <?php endforeach; ?>
 </section>
 
-<?php if (function_exists('eap_aulas_por_trilha') && eapt_visivel('aulas-recentes') && eapt_visivel('video-aulas')) :
-  $novas = get_posts(['post_type' => 'ea_aula', 'numberposts' => 4, 'orderby' => 'date', 'order' => 'DESC']);
-  if ($novas) : ?>
+<?php if (function_exists('eap_destaques_inicio') && eapt_visivel('aulas-recentes')) :
+  $d = eap_destaques_inicio();
+  if ($d['itens']) : ?>
 <section class="eap-wrap eap-novas">
-  <div class="eap-sec-tit"><h2>Aulas mais recentes</h2><a href="<?php echo esc_url(home_url('/video-aulas/')); ?>">Ver todas →</a></div>
-  <div class="eap-cards-aula">
-    <?php foreach ($novas as $a) : $capa = eap_video_capa($a->ID); ?>
-      <a class="eap-card-aula" href="<?php echo esc_url(add_query_arg('aula', $a->ID, home_url('/video-aulas/'))); ?>">
-        <span class="eap-card-aula__capa"<?php echo $capa ? ' style="background-image:url(' . esc_url($capa) . ')"' : ''; ?>><i>▶</i></span>
-        <strong><?php echo esc_html(get_the_title($a)); ?></strong>
-        <?php $t = get_the_terms($a, 'ea_trilha'); if ($t && !is_wp_error($t)) echo '<em>' . esc_html($t[0]->name) . '</em>'; ?>
-      </a>
-    <?php endforeach; ?>
+  <div class="eap-sec-tit"><h2><?php echo esc_html($d['titulo']); ?></h2><?php if ($d['link']) : ?><a href="<?php echo esc_url($d['link']); ?>">Ver todos →</a><?php endif; ?></div>
+  <div class="eap-dcards<?php echo $d['modo'] === 'posts' ? ' eap-dcards--posts' : ''; ?>">
+    <?php foreach ($d['itens'] as $it) eapt_card_destaque($it); ?>
   </div>
 </section>
-<?php endif; endif; ?>
+<?php eapt_modal_post(); endif; endif; ?>
 <?php get_footer();

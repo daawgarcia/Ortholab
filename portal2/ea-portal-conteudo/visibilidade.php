@@ -14,7 +14,7 @@ function eap_secoes_portal() {
         'ia-estimativa'   => ['Estimativa e pacote – Alinhadores (Powered by AI)', 'Cartão no início', 'simulador-de-estimativa-e-pacote'],
         'ia-ronco'        => ['Prognóstico ronco e apneia – EA AIR (Powered by AI)', 'Cartão no início', 'indicacao-de-uso-ea-air'],
         'video-aulas'     => ['Vídeo aulas', 'Menu, atalho e página', 'video-aulas'],
-        'aulas-recentes'  => ['Aulas mais recentes', 'Bloco no fim do início', ''],
+        'aulas-recentes'  => ['Destaques do início', 'Bloco no fim do início (o conteúdo é escolhido em Destaques do início)', ''],
         'dicas'           => ['Dicas clínicas', 'Atalho no início', ''],
         'downloads'       => ['Downloads', 'Menu, atalho e página', 'downloads'],
         'marketing'       => ['Marketing', 'Menu, atalho e página', 'marketing'],

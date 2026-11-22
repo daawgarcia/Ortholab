@@ -208,3 +208,50 @@ function eapt_img_url($att_id, $tam = 'large') {
 function eapt_thumb_url($post_id, $tam = 'large') {
     return eapt_img_url(get_post_thumbnail_id($post_id), $tam);
 }
+
+
+/** Janela de visualização dos posts (Marketing e destaques do início). */
+function eapt_modal_post() {
+    static $feito = false;
+    if ($feito) return;
+    $feito = true;
+    echo '<div class="eap-modal" data-eap-modal hidden><div class="eap-modal__caixa"><button type="button" class="eap-modal__x" data-eap-fechar aria-label="Fechar">×</button>'
+        . '<img data-eap-modal-img alt=""><div class="eap-modal__lado"><strong data-eap-modal-tit></strong><p data-eap-modal-leg></p>'
+        . '<div class="eap-modal__acoes"><button type="button" class="eap-btn eap-btn--linha" data-eap-copiar-leg>Copiar legenda</button>'
+        . '<a class="eap-btn eap-btn--cheio" data-eap-baixar download>Baixar imagem</a></div></div></div></div>';
+}
+
+/** Um cartão dos destaques do início, conforme o tipo do item. */
+function eapt_card_destaque($p) {
+    $tit = get_the_title($p);
+    switch ($p->post_type) {
+        case 'ea_post':
+            $img = eapt_thumb_url($p->ID, 'large'); $full = eapt_thumb_url($p->ID, 'full');
+            if (!$img) return;
+            echo '<div role="button" tabindex="0" class="eap-dcard eap-dcard--post" data-eap-post data-img="' . esc_url($full) . '" data-titulo="' . esc_attr($tit) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">'
+                . '<span class="eap-dcard__capa" style="background-image:url(' . esc_url($img) . ')"></span>'
+                . '<strong>' . esc_html($tit) . '</strong><em>Post para redes · ver e baixar</em></div>';
+            return;
+        case 'ea_aula':
+            $capa = function_exists('eap_video_capa') ? eap_video_capa($p->ID) : '';
+            $t = get_the_terms($p, 'ea_trilha');
+            echo '<a class="eap-dcard eap-dcard--aula" href="' . esc_url(add_query_arg('aula', $p->ID, home_url('/video-aulas/'))) . '">'
+                . '<span class="eap-dcard__capa"' . ($capa ? ' style="background-image:url(' . esc_url($capa) . ')"' : '') . '><i>▶</i></span>'
+                . '<strong>' . esc_html($tit) . '</strong><em>' . esc_html(($t && !is_wp_error($t)) ? $t[0]->name : 'Vídeo aula') . '</em></a>';
+            return;
+        case 'ea_material':
+            $url = get_post_meta($p->ID, '_eap_arquivo', true);
+            $ext = strtoupper(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION)) ?: 'LINK';
+            if (strlen($ext) > 4) $ext = 'LINK';
+            echo '<a class="eap-dcard eap-dcard--mat" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
+                . '<span class="eap-dcard__capa"><b class="eap-material__tipo eap-tipo-' . esc_attr(strtolower($ext)) . '">' . esc_html($ext) . '</b></span>'
+                . '<strong>' . esc_html($tit) . '</strong><em>Material para baixar</em></a>';
+            return;
+        case 'ea_parceiro':
+            $logo = function_exists('eap_parceiro_logo') ? eap_parceiro_logo($p->ID) : '';
+            echo '<a class="eap-dcard eap-dcard--parc" href="' . esc_url(home_url('/eaclub/')) . '">'
+                . '<span class="eap-dcard__capa"' . ($logo ? ' style="background-image:url(' . esc_url($logo) . ')"' : '') . '></span>'
+                . '<strong>' . esc_html($tit) . '</strong><em>' . esc_html(wp_trim_words($p->post_excerpt, 10) ?: 'Clube de vantagens') . '</em></a>';
+            return;
+    }
+}
