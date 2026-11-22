@@ -21,6 +21,9 @@ add_action('wp_enqueue_scripts', function () {
     $dir = get_stylesheet_directory();
     wp_enqueue_style('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.css', [], (string) filemtime($dir . '/assets/portal.css'));
     wp_enqueue_script('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.js', [], (string) filemtime($dir . '/assets/portal.js'), true);
+    if (is_user_logged_in() && function_exists('eap_aulas_feitas')) {
+        wp_add_inline_script('eapt-portal', 'window.EAP_FEITAS=' . wp_json_encode(['ids' => array_map('strval', eap_aulas_feitas()), 'u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_feitas')]) . ';', 'before');
+    }
 }, 100);
 
 /* ------------------------------------------------------------------ acesso: o portal é só para credenciados */
@@ -329,8 +332,21 @@ function eapt_novo($p, $classe = '') {
 /** Última aula aberta pelo dentista, para o "Continue assistindo" do início. */
 function eapt_ultima_aula() {
     $id = (int) get_user_meta(get_current_user_id(), 'eap_ultima_aula', true);
-    $a = $id ? get_post($id) : null;
-    return ($a && $a->post_type === 'ea_aula' && $a->post_status === 'publish' && empty(get_post_meta($a->ID, '_eap_oculto', true))) ? $a : null;
+    if (!$id || !function_exists('eap_aulas_por_trilha')) return null;
+    $feitas = function_exists('eap_aulas_feitas') ? eap_aulas_feitas() : [];
+    if (!in_array($id, $feitas, true)) {
+        $a = get_post($id);
+        return ($a && $a->post_type === 'ea_aula' && $a->post_status === 'publish' && empty(get_post_meta($a->ID, '_eap_oculto', true))) ? ['aula' => $a, 'rotulo' => 'Continue de onde parou'] : null;
+    }
+    // já assistiu a última: sugere a próxima ainda não assistida (primeiro na mesma categoria, depois nas seguintes)
+    $todas = [];
+    foreach (eap_aulas_por_trilha() as $g) foreach ($g['aulas'] as $a) $todas[] = $a;
+    $pos = array_search($id, array_map(fn($a) => $a->ID, $todas), true);
+    if ($pos === false) return null;
+    for ($i = $pos + 1; $i < count($todas); $i++) {
+        if (!in_array($todas[$i]->ID, $feitas, true)) return ['aula' => $todas[$i], 'rotulo' => 'Próxima aula'];
+    }
+    return null;
 }
 
 /** Botão flutuante de WhatsApp com os canais do suporte e a mensagem já com nome e CRO. */

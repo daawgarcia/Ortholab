@@ -84,6 +84,19 @@ add_action('wp_footer', function () {
     echo "<script>(function(){var C=$c,P=0;function ev(t,o,x){try{var f=new FormData();f.append('action','eap_evento');f.append('_n',C.n);f.append('tipo',t);f.append('obj',o||0);f.append('extra',x||'');navigator.sendBeacon?navigator.sendBeacon(C.u,f):fetch(C.u,{method:'POST',body:f,keepalive:true});}catch(e){}}window.eapEvento=ev;document.addEventListener('click',function(e){var a=e.target.closest('[data-eap-mat]');if(a){ev('download',a.getAttribute('data-eap-mat'));return;}var p=e.target.closest('[data-eap-post]');if(p){P=p.getAttribute('data-id')||0;ev('post',P);return;}if(e.target.closest('[data-eap-baixar]')){ev('post_baixar',P);return;}var w=e.target.closest('[data-eap-whats]');if(w){ev('whats',0,w.getAttribute('data-eap-whats'));}},true);})();</script>";
 }, 50);
 
+/* ------------------------------------------------------------------ aulas assistidas (na conta, vale em qualquer aparelho) */
+function eap_aulas_feitas($uid = 0) {
+    $v = get_user_meta($uid ?: get_current_user_id(), 'eap_aulas_feitas', true);
+    return is_array($v) ? array_values(array_map('intval', $v)) : [];
+}
+add_action('wp_ajax_eap_feitas', function () {
+    if (!check_ajax_referer('eap_feitas', '_n', false)) wp_die('', 403);
+    $ids = array_filter(array_map('intval', explode(',', (string) ($_POST['ids'] ?? ''))));
+    $ids = array_values(array_filter(array_unique($ids), fn($id) => get_post_type($id) === 'ea_aula'));
+    update_user_meta(get_current_user_id(), 'eap_aulas_feitas', array_slice($ids, 0, 2000));
+    wp_send_json_success(count($ids));
+});
+
 /* ------------------------------------------------------------------ painel */
 add_action('admin_menu', function () {
     add_submenu_page('eap-portal', 'Resultados do portal', '📊 Resultados', 'edit_pages', 'eap-resultados', function () {

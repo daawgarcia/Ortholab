@@ -18,7 +18,16 @@
   // aulas assistidas (fica salvo neste navegador)
   var CH = 'eap-aulas-feitas';
   function lerFeitas() { try { return JSON.parse(localStorage.getItem(CH) || '[]'); } catch (e) { return []; } }
-  function gravarFeitas(l) { try { localStorage.setItem(CH, JSON.stringify(l)); } catch (e) { /* sem armazenamento */ } }
+  function gravarFeitas(l, sinc) {
+    try { localStorage.setItem(CH, JSON.stringify(l)); } catch (e) { /* sem armazenamento */ }
+    var S = window.EAP_FEITAS;
+    if (S && sinc !== false) { var f = new FormData(); f.append('action', 'eap_feitas'); f.append('_n', S.n); f.append('ids', l.join(',')); fetch(S.u, { method: 'POST', body: f, credentials: 'same-origin' }).catch(function () {}); }
+  }
+  (function () {
+    var S = window.EAP_FEITAS; if (!S) return;
+    if (S.ids.length) gravarFeitas(S.ids, false);
+    else if (lerFeitas().length) gravarFeitas(lerFeitas());
+  })();
   function pintar() {
     var f = lerFeitas();
     document.querySelectorAll('[data-eap-item]').forEach(function (li) {
