@@ -504,7 +504,7 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
 /* app no celular */
 .eap-app-faixa { position: fixed; left: 12px; right: 12px; bottom: 84px; z-index: 9989; background: #fff; border-radius: 16px; box-shadow: 0 14px 40px rgba(13,31,66,.22); display: flex; align-items: center; gap: 12px; padding: 12px 14px; max-width: 520px; margin: 0 auto; }
 .eap-app-faixa[hidden] { display: none; }
-.eap-app-faixa img { width: 44px; height: 44px; border-radius: 11px; border: 1px solid var(--eap-linha); flex: none; }
+.eap-app-faixa img { width: 44px !important; height: 44px !important; background: #fff !important; border-radius: 11px; border: 1px solid var(--eap-linha); flex: none; }
 .eap-app-faixa span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .eap-app-faixa strong { font-size: 14.5px; }
 .eap-app-faixa em { font-style: normal; font-size: 12.5px; color: var(--eap-txt-2); }
@@ -512,7 +512,7 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
 .eap-app-faixa__x { background: none; border: 0; font-size: 22px; color: #8a93a3; cursor: pointer; padding: 0 2px; }
 .eap-app-modal .eap-modal__caixa { display: block; max-width: 460px; padding: 26px 24px 24px; overflow: auto; }
 .eap-app-modal__topo { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; padding-right: 26px; }
-.eap-app-modal__topo img { width: 58px; height: 58px; border-radius: 14px; border: 1px solid var(--eap-linha); flex: none; }
+.eap-app-modal .eap-app-modal__topo img { width: 58px !important; height: 58px !important; max-height: none; background: #fff !important; object-fit: contain; border-radius: 14px; border: 1px solid var(--eap-linha); flex: none; }
 .eap-app-modal__topo strong { display: block; font-size: 18px; margin-bottom: 4px; }
 .eap-app-modal__topo span { font-size: 13.5px; color: var(--eap-txt-2); line-height: 1.45; }
 .eap-app-abas { display: flex; background: var(--eap-fundo); border-radius: 999px; padding: 4px; margin-bottom: 16px; }
@@ -552,7 +552,7 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
 .eap-marca-barra[hidden] { display: none; }
 .eap-marca-barra > span { flex: 1; min-width: 220px; }
 .eap-marca-barra__ok { display: flex; align-items: center; gap: 12px; }
-.eap-marca-barra__ok img { height: 36px; width: auto; max-width: 110px; object-fit: contain; }
+body.eap .eap-marca-barra__ok img { height: 36px !important; width: auto !important; max-width: 110px !important; object-fit: contain; flex: none; }
 .eap-marca-barra .eap-btn { padding: 9px 16px; font-size: 14px; }
 .eap-btn--marca { order: -1; }
 .eap-modal__nota { display: block; color: #8a93a3; font-size: 12px; margin-top: 8px; }
@@ -566,7 +566,7 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
 .eap-ferr-campos label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--eap-txt-2); }
 .eap-ferr-campos input, .eap-ferr-campos select, .eap-ferr-campos textarea { padding: 11px 13px; border: 1px solid var(--eap-linha); border-radius: 10px; font-size: 15px; font-weight: 400; color: var(--eap-txt); font-family: inherit; width: 100%; box-sizing: border-box; background: #fff; }
 .eap-ferr-logo { display: flex; align-items: center; gap: 10px; }
-.eap-ferr-logo img { height: 40px; width: auto; max-width: 140px; object-fit: contain; border: 1px solid var(--eap-linha); border-radius: 8px; padding: 3px; }
+.eap-ferr-modal .eap-ferr-logo img { height: 40px !important; width: auto !important; max-width: 140px !important; max-height: 40px; background: #fff !important; object-fit: contain; border: 1px solid var(--eap-linha); border-radius: 8px; padding: 3px; }
 .eap-ferr-link { background: none; border: 0; color: var(--eap-azul); text-decoration: underline; cursor: pointer; font-size: 13px; padding: 0; }
 .eap-ferr-cores { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: var(--eap-txt-2); }
 .eap-ferr-cores span { width: 100%; }
