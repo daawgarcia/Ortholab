@@ -102,8 +102,8 @@ function eap_passos($uid = 0) {
     $est = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa' AND post_status = 'private' AND post_author = %d", $uid));
     $p = [
         'curso'      => ['Assista ao Curso do Credenciado', 'As 13 aulas liberam o seu certificado.', home_url('/video-aulas/?trilha=curso-do-credenciado'), function_exists('eap_curso_concluido') && eap_curso_concluido($uid), 'video-aulas'],
-        'estimativa' => ['Faça sua primeira estimativa com IA', 'Descubra o pacote indicado para um paciente.', home_url('/simulador-de-estimativa-e-pacote/'), $est > 0, 'ia-estimativa'],
-        'marca'      => ['Coloque a sua marca nos posts', 'Logo e WhatsApp do consultório, uma vez só.', home_url('/marketing/#minha-marca'), !empty(eap_marca($uid)['nome']), 'marketing'],
+        'marca'      => ['Cadastre a marca do seu consultório', 'Logo e WhatsApp, uma vez só: entram nos posts e no orçamento.', home_url('/marketing/#minha-marca'), !empty(eap_marca($uid)['nome']), 'marketing'],
+        'estimativa' => ['Faça uma estimativa com IA', 'Veja o pacote indicado e gere o orçamento com a sua marca.', home_url('/simulador-de-estimativa-e-pacote/'), $est > 0, 'ia-estimativa'],
         'post'       => ['Baixe um post para suas redes', 'Pronto para postar, com a sua marca.', home_url('/marketing/'), $tem('post_baixar'), 'posts-marketing'],
         'caso'       => ['Envie um caso pelo Envio Fácil', 'Os arquivos do paciente já identificados pelo portal.', home_url('/?eap_ir=enviofacil'), $tem('sistema', 'enviofacil'), 'enviofacil'],
         'app'        => ['Instale o portal no celular', 'Abra direto da tela inicial, como um app.', '#instalar', $tem('app'), ''],
