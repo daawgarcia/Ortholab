@@ -28,7 +28,9 @@ function eap_ia_api($metodo, $caminho, $corpo = null, $multipart = null, $timeou
     if ($multipart) {
         $b = wp_generate_password(24, false);
         $args['headers']['Content-Type'] = 'multipart/form-data; boundary=' . $b;
-        $args['body'] = "--$b\r\nContent-Disposition: form-data; name=\"purpose\"\r\n\r\nassistants\r\n"
+        $campos = $multipart['campos'] ?? ['purpose' => 'assistants']; $corpo_mp = '';
+        foreach ($campos as $ck => $cv) $corpo_mp .= "--$b\r\nContent-Disposition: form-data; name=\"$ck\"\r\n\r\n$cv\r\n";
+        $args['body'] = $corpo_mp
             . "--$b\r\nContent-Disposition: form-data; name=\"file\"; filename=\"" . str_replace('"', '', $multipart['nome']) . "\"\r\nContent-Type: application/octet-stream\r\n\r\n"
             . $multipart['dados'] . "\r\n--$b--\r\n";
     } elseif ($corpo !== null) {
@@ -133,6 +135,12 @@ function eap_vtt_texto($vtt) {
     $txt = ''; foreach (array_chunk($out, 10) as $c) $txt .= implode(' ', $c) . "\n\n";
     return trim($txt);
 }
+function eap_video_local($url) {
+    $up = wp_get_upload_dir();
+    if (!preg_match('~\.(mp4|m4v|mov|webm|mp3|m4a)$~i', parse_url((string) $url, PHP_URL_PATH) ?: '')) return '';
+    $cam = str_replace(set_url_scheme($up['baseurl'], 'https'), $up['basedir'], set_url_scheme((string) $url, 'https'));
+    return is_file($cam) ? $cam : '';
+}
 function eap_vimeo_id($url) { return preg_match('~vimeo\.com/(?:video/)?(\d+)~', (string) $url, $m) ? $m[1] : ''; }
 add_action('wp_ajax_eap_ia_vimeo', function () {
     if (!current_user_can('edit_pages') || !check_ajax_referer('eap_ia_sync', '_n', false)) wp_send_json_error('permissao', 403);
@@ -170,6 +178,24 @@ add_action('wp_ajax_eap_ia_vimeo', function () {
         update_post_meta($id, '_eap_transc_rodada', (int) ($_POST['rodada'] ?? 0));
         $log[] = get_the_title($id) . ': ' . ($st === 'ok' ? '✓ ' : '✗ ') . $msg;
         $feitos++;
+    }
+    wp_send_json_success(['feitos' => $feitos, 'faltam' => max(0, count($pend) - $feitos), 'log' => $log]);
+});
+
+add_action('wp_ajax_eap_ia_transcrever', function () {
+    if (!current_user_can('edit_pages') || !check_ajax_referer('eap_ia_sync', '_n', false)) wp_send_json_error('permissao', 403);
+    if (!eap_ia_chave()) wp_send_json_error('Cadastre a chave da OpenAI primeiro.');
+    @set_time_limit(300);
+    $aulas = get_posts(['post_type' => 'ea_aula', 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'ids', 'suppress_filters' => true]);
+    $pend = array_values(array_filter($aulas, fn($id) => eap_video_local(get_post_meta($id, '_eap_video', true)) && !get_post_meta($id, '_eap_transc_status', true)));
+    $log = []; $feitos = 0;
+    foreach (array_slice($pend, 0, 2) as $id) {
+        $cam = eap_video_local(get_post_meta($id, '_eap_video', true)); $feitos++;
+        if (filesize($cam) > 25 * MB_IN_BYTES) { update_post_meta($id, '_eap_transc_status', 'grande'); $log[] = get_the_title($id) . ': ✗ arquivo acima de 25 MB (limite da OpenAI)'; continue; }
+        $r = eap_ia_api('POST', 'audio/transcriptions', null, ['nome' => basename($cam), 'dados' => file_get_contents($cam), 'campos' => ['model' => 'gpt-4o-mini-transcribe', 'language' => 'pt', 'response_format' => 'json']], 240);
+        if (!empty($r['erro']) || empty($r['text'])) { update_post_meta($id, '_eap_transc_status', 'erro'); $log[] = get_the_title($id) . ': ✗ ' . ($r['erro'] ?? 'sem texto'); continue; }
+        update_post_meta($id, '_eap_transcricao', trim($r['text'])); update_post_meta($id, '_eap_transcricao_fonte', 'openai'); update_post_meta($id, '_eap_transc_status', 'ok');
+        $log[] = get_the_title($id) . ': ✓ ' . number_format_i18n(str_word_count(remove_accents($r['text']))) . ' palavras';
     }
     wp_send_json_success(['feitos' => $feitos, 'faltam' => max(0, count($pend) - $feitos), 'log' => $log]);
 });
@@ -306,9 +332,21 @@ function eap_ia_pagina() {
         <div id="eapIaSyncErros" style="color:#b32d2e"></div>
         <hr><h3 style="margin:10px 0 6px">Transcrições das vídeo aulas</h3>
         <?php $aulas = get_posts(['post_type' => 'ea_aula', 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'ids', 'suppress_filters' => true]); $tr_ok = count(array_filter($aulas, fn($id) => get_post_meta($id, '_eap_transc_status', true) === 'ok')); ?>
+        <?php $n_vim = count(array_filter($aulas, fn($id) => eap_vimeo_id(get_post_meta($id, '_eap_video', true)))); $n_loc = count(array_filter($aulas, fn($id) => eap_video_local(get_post_meta($id, '_eap_video', true)))); ?>
+        <p>Vídeos das aulas: <b><?php echo (int) $n_vim; ?></b> no Vimeo · <b><?php echo (int) $n_loc; ?></b> guardados no próprio site<?php $n_out = count($aulas) - $n_vim - $n_loc; echo $n_out > 0 ? ' · <b>' . (int) $n_out . '</b> em outro lugar (YouTube/links)' : ''; ?>.</p>
         <p>Aulas com transcrição: <b><?php echo (int) $tr_ok; ?></b> de <?php echo count($aulas); ?>. As legendas automáticas do Vimeo viram texto e entram na base na próxima atualização.</p>
         <p><button type="button" class="button" id="eapIaVimeo" <?php disabled(!get_option('eap_ia_vimeo')); ?>>Importar legendas do Vimeo</button> <label style="margin-left:8px"><input type="checkbox" id="eapIaVimeoRefazer"> refazer todas</label> <span id="eapIaVimeoMsg"></span></p>
+        <p><button type="button" class="button" id="eapIaLocal" <?php disabled(!$ch || !$n_loc); ?>>Transcrever os vídeos guardados no site (OpenAI)</button> <span class="description">custo aproximado: centavos por minuto de vídeo</span> <span id="eapIaLocalMsg"></span></p>
         <div id="eapIaVimeoLog" style="max-height:180px;overflow:auto;font-size:12px;color:#5b6576"></div>
+        <script>(function(){var b=document.getElementById('eapIaLocal'),m=document.getElementById('eapIaLocalMsg'),lg=document.getElementById('eapIaVimeoLog');if(!b)return;
+          b.addEventListener('click',function(){b.disabled=true;
+            (function passo(){var f=new FormData();f.append('action','eap_ia_transcrever');f.append('_n','<?php echo esc_js(wp_create_nonce('eap_ia_sync')); ?>');
+              fetch(ajaxurl,{method:'POST',body:f,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+                if(!j.success){m.textContent='Erro: '+j.data;b.disabled=false;return;}
+                (j.data.log||[]).forEach(function(x){var d=document.createElement('div');d.textContent=x;lg.appendChild(d);});m.textContent='Transcrevendo… faltam '+j.data.faltam;
+                if(j.data.faltam>0&&j.data.feitos>0)return passo();
+                m.textContent='✓ Pronto. Agora clique em “Atualizar base agora”.';b.disabled=false;
+              }).catch(function(){m.textContent='Demorou demais ou caiu a conexão. Clique de novo para continuar.';b.disabled=false;});})();});})();</script>
         <script>(function(){var b=document.getElementById('eapIaVimeo'),m=document.getElementById('eapIaVimeoMsg'),lg=document.getElementById('eapIaVimeoLog'),rf=document.getElementById('eapIaVimeoRefazer');if(!b)return;
           b.addEventListener('click',function(){b.disabled=true;lg.innerHTML='';var rod=Date.now()%1000000;
             (function passo(){var f=new FormData();f.append('action','eap_ia_vimeo');f.append('_n','<?php echo esc_js(wp_create_nonce('eap_ia_sync')); ?>');f.append('rodada',rod);if(rf.checked)f.append('refazer','1');

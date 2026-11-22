@@ -161,6 +161,7 @@ add_action('admin_post_eap_limpar_testes', function () {
     foreach (['eap_marca', 'eap_valores', 'eap_curso_concluido_em', 'eap_nome_certificado', 'eap_ultima_aula', 'eap_avisos_vistos', 'eap_passos_ocultos', 'eap_pesquisa_ate', 'eap_acesso_dia', 'eap_ultimo_acesso'] as $k) delete_user_meta($uid, $k);
     update_user_meta($uid, 'eap_aulas_feitas', []); // fica "vazio, mas definido": o navegador não reenvia marcações antigas
     if (function_exists('eap_met_tabela')) $wpdb->query('DELETE FROM ' . eap_met_tabela() . ' WHERE equipe = 1 OR user_id = ' . (int) $uid);
+    foreach (get_posts(['post_type' => 'ea_ia_log', 'post_status' => 'any', 'numberposts' => -1, 'meta_key' => '_equipe', 'meta_value' => 1, 'fields' => 'ids']) as $p) wp_delete_post($p, true);
     foreach (get_posts(['post_type' => 'ea_pesquisa', 'post_status' => 'any', 'numberposts' => -1, 'meta_key' => '_equipe', 'meta_value' => 1, 'fields' => 'ids']) as $p) wp_delete_post($p, true);
     if (!empty($_GET['avisos'])) foreach (get_posts(['post_type' => 'ea_aviso', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids']) as $p) { update_post_meta($p, '_eap_vistos', 0); update_post_meta($p, '_eap_cliques', 0); } // só antes de lançar
     foreach (get_posts(['post_type' => 'ea_estimativa', 'post_status' => 'private', 'author' => $uid, 'numberposts' => -1, 'fields' => 'ids']) as $p) wp_trash_post($p);
