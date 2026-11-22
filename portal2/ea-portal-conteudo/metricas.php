@@ -86,7 +86,9 @@ add_action('wp_footer', function () {
 
 /* ------------------------------------------------------------------ painel */
 add_action('admin_menu', function () {
-    add_submenu_page('eap-portal', 'Resultados do portal', '📊 Resultados', 'edit_pages', 'eap-resultados', 'eap_resultados_pagina', 0);
+    add_submenu_page('eap-portal', 'Resultados do portal', '📊 Resultados', 'edit_pages', 'eap-resultados', function () {
+        try { eap_resultados_pagina(); } catch (\Throwable $e) { echo '<div class="notice notice-error"><p>Erro no painel: ' . esc_html($e->getMessage() . ' (linha ' . $e->getLine() . ')') . '</p></div>'; }
+    }, 0);
 }, 20);
 
 /** Último acesso conhecido: o do portal novo ou, antes dele, o registrado pelo Ultimate Member. */
