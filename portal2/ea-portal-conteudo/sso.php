@@ -13,6 +13,8 @@ function eap_sso_cfg($k) {
         'ortholab' => 'https://ortholab2.estheticaligner.com.br',
         'rewards' => 'https://pontos.estheticaligner.com.br',
         'ortholab_ativo' => '1',
+        'ortholab1' => 'https://ortholab.estheticaligner.com.br',
+        'ortholab_versao' => '1', // qual Ortholab o botão abre: 1 (atual) ou 2
     ];
     $v = get_option('eap_sso_' . $k, null);
     return ($v === null || $v === false) ? $padrao[$k] : $v;
@@ -102,6 +104,13 @@ add_action('template_redirect', function () {
     $dest = sanitize_key($_GET['eap_ir']);
     if (!in_array($dest, ['ortholab', 'rewards'], true)) return;
     if (!is_user_logged_in()) { wp_safe_redirect(home_url('/')); exit; }
+    if ($dest === 'ortholab' && eap_sso_cfg('ortholab_versao') !== '2') {
+        // Ortholab 1 (o que está em uso hoje)
+        $base = untrailingslashit(eap_sso_cfg('ortholab1'));
+        $t = eap_sso_gerar(wp_get_current_user(), 'ortholab1');
+        wp_redirect($t ? $base . '/sso?t=' . rawurlencode($t) : $base . '/users/sign_in');
+        exit;
+    }
     $t = eap_sso_gerar(wp_get_current_user(), $dest);
     $base = untrailingslashit(eap_sso_cfg($dest));
     if (!$t) { wp_redirect($dest === 'ortholab' ? $base . '/login' : $base . '/'); exit; }
@@ -120,6 +129,8 @@ function eap_sso_pagina() {
         update_option('eap_sso_ortholab', esc_url_raw(wp_unslash($_POST['ortholab'] ?? '')));
         update_option('eap_sso_rewards', esc_url_raw(wp_unslash($_POST['rewards'] ?? '')));
         update_option('eap_sso_ortholab_ativo', empty($_POST['ortholab_ativo']) ? '0' : '1');
+        update_option('eap_sso_ortholab1', esc_url_raw(wp_unslash($_POST['ortholab1'] ?? '')));
+        update_option('eap_sso_ortholab_versao', ($_POST['ortholab_versao'] ?? '1') === '2' ? '2' : '1');
         echo '<div class="notice notice-success"><p>Configuração salva.</p></div>';
     }
     $tem = eap_sso_cfg('segredo') !== '';
@@ -129,7 +140,11 @@ function eap_sso_pagina() {
     <form method="post"><?php wp_nonce_field('eap_sso'); ?>
     <table class="form-table">
       <tr><th>Chave compartilhada</th><td><input type="password" name="segredo" class="regular-text" autocomplete="new-password" placeholder="<?php echo $tem ? 'configurada — deixe em branco para manter' : 'cole aqui a mesma chave dos outros sistemas'; ?>"><p class="description">Tem que ser idêntica no Ortholab 2 e no Rewards.</p></td></tr>
-      <tr><th>Endereço do Ortholab</th><td><input type="url" name="ortholab" class="regular-text" value="<?php echo esc_attr(eap_sso_cfg('ortholab')); ?>">
+      <tr><th>Botão "Ortholab" abre</th><td>
+        <label><input type="radio" name="ortholab_versao" value="1" <?php checked(eap_sso_cfg('ortholab_versao'), '1'); ?>> Ortholab 1 (o atual)</label>
+        <label style="margin-left:16px"><input type="radio" name="ortholab_versao" value="2" <?php checked(eap_sso_cfg('ortholab_versao'), '2'); ?>> Ortholab 2</label></td></tr>
+      <tr><th>Endereço do Ortholab 1</th><td><input type="url" name="ortholab1" class="regular-text" value="<?php echo esc_attr(eap_sso_cfg('ortholab1')); ?>"></td></tr>
+      <tr><th>Endereço do Ortholab 2</th><td><input type="url" name="ortholab" class="regular-text" value="<?php echo esc_attr(eap_sso_cfg('ortholab')); ?>">
         <label style="margin-left:10px"><input type="checkbox" name="ortholab_ativo" value="1" <?php checked(eap_sso_cfg('ortholab_ativo'), '1'); ?>> usar login único no botão "Ortholab"</label></td></tr>
       <tr><th>Endereço do Rewards</th><td><input type="url" name="rewards" class="regular-text" value="<?php echo esc_attr(eap_sso_cfg('rewards')); ?>"></td></tr>
     </table>
