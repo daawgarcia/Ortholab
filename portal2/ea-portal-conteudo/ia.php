@@ -118,6 +118,62 @@ add_action('wp_ajax_eap_ia_sync', function () {
     wp_send_json_success(['feitos' => $feitos, 'faltam' => $faltam, 'total' => count($quero), 'erros' => $erros]);
 });
 
+/* ------------------------------------------------------------------ legendas do Vimeo -> transcrição das aulas */
+function eap_vtt_texto($vtt) {
+    $linhas = preg_split('/\r?\n/', (string) $vtt); $out = []; $ult = ''; $bloco_nota = false;
+    foreach ($linhas as $l) {
+        $l = trim($l);
+        if ($l === '') { $bloco_nota = false; continue; }
+        if ($bloco_nota || stripos($l, 'WEBVTT') === 0 || strpos($l, '-->') !== false || ctype_digit($l) || strpos($l, 'Kind:') === 0 || strpos($l, 'Language:') === 0) continue;
+        if (strpos($l, 'NOTE') === 0 || strpos($l, 'STYLE') === 0) { $bloco_nota = true; continue; }
+        $l = trim(html_entity_decode(wp_strip_all_tags($l), ENT_QUOTES, 'UTF-8'));
+        if ($l === '' || $l === $ult) continue;
+        $out[] = $l; $ult = $l;
+    }
+    $txt = ''; foreach (array_chunk($out, 10) as $c) $txt .= implode(' ', $c) . "\n\n";
+    return trim($txt);
+}
+function eap_vimeo_id($url) { return preg_match('~vimeo\.com/(?:video/)?(\d+)~', (string) $url, $m) ? $m[1] : ''; }
+add_action('wp_ajax_eap_ia_vimeo', function () {
+    if (!current_user_can('edit_pages') || !check_ajax_referer('eap_ia_sync', '_n', false)) wp_send_json_error('permissao', 403);
+    $tok = (string) get_option('eap_ia_vimeo', '');
+    if (!$tok) wp_send_json_error('Cadastre o token do Vimeo primeiro.');
+    @set_time_limit(120);
+    $refazer = !empty($_POST['refazer']);
+    $aulas = get_posts(['post_type' => 'ea_aula', 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'ids', 'suppress_filters' => true]);
+    $pend = array_values(array_filter($aulas, fn($id) => eap_vimeo_id(get_post_meta($id, '_eap_video', true)) && ($refazer ? (int) get_post_meta($id, '_eap_transc_rodada', true) !== (int) ($_POST['rodada'] ?? 0) : !get_post_meta($id, '_eap_transc_status', true))));
+    $feitos = 0; $log = [];
+    foreach (array_slice($pend, 0, 4) as $id) {
+        $vid = eap_vimeo_id(get_post_meta($id, '_eap_video', true));
+        $h = ['Authorization' => 'bearer ' . $tok, 'Accept' => 'application/vnd.vimeo.*+json;version=3.4'];
+        $r = wp_remote_get('https://api.vimeo.com/videos/' . $vid . '/texttracks', ['headers' => $h, 'timeout' => 30]);
+        $st = 'erro'; $txt = '';
+        if (is_wp_error($r)) $msg = $r->get_error_message();
+        else {
+            $j = json_decode(wp_remote_retrieve_body($r), true); $cod = wp_remote_retrieve_response_code($r);
+            if ($cod >= 300) $msg = $j['error'] ?? ('HTTP ' . $cod);
+            else {
+                $tracks = (array) ($j['data'] ?? []);
+                usort($tracks, function ($a, $b) { $p = fn($t) => (stripos($t['language'] ?? '', 'pt') === 0 ? 10 : 0) + (strpos($t['language'] ?? '', 'autogen') === false ? 2 : 0) + (!empty($t['active']) ? 1 : 0); return $p($b) <=> $p($a); });
+                $t = $tracks[0] ?? null;
+                if (!$t || empty($t['link'])) { $st = 'sem_legenda'; $msg = 'sem legenda'; }
+                else {
+                    $v = wp_remote_get($t['link'], ['timeout' => 30]);
+                    $txt = is_wp_error($v) ? '' : eap_vtt_texto(wp_remote_retrieve_body($v));
+                    if (mb_strlen($txt) > 50) { $st = 'ok'; $msg = ($t['language'] ?? '') . ', ' . number_format_i18n(str_word_count(remove_accents($txt))) . ' palavras'; }
+                    else { $st = 'sem_legenda'; $msg = 'legenda vazia'; }
+                }
+            }
+        }
+        if ($st === 'ok') { update_post_meta($id, '_eap_transcricao', $txt); update_post_meta($id, '_eap_transcricao_fonte', 'vimeo'); }
+        update_post_meta($id, '_eap_transc_status', $st);
+        update_post_meta($id, '_eap_transc_rodada', (int) ($_POST['rodada'] ?? 0));
+        $log[] = get_the_title($id) . ': ' . ($st === 'ok' ? '✓ ' : '✗ ') . $msg;
+        $feitos++;
+    }
+    wp_send_json_success(['feitos' => $feitos, 'faltam' => max(0, count($pend) - $feitos), 'log' => $log]);
+});
+
 /* ------------------------------------------------------------------ registro das perguntas */
 add_action('init', function () {
     register_post_type('ea_ia_log', ['labels' => ['name' => 'Perguntas ao Assistente', 'singular_name' => 'Pergunta'], 'public' => false, 'show_ui' => true, 'show_in_menu' => 'eap-portal',
@@ -211,9 +267,12 @@ function eap_ia_pagina() {
         $c['limite'] = max(1, min(200, (int) ($_POST['limite'] ?? 20)));
         $c['modelo'] = sanitize_text_field(wp_unslash($_POST['modelo'] ?? '')) ?: 'gpt-5.4-mini';
         update_option('eap_ia', $c, false);
+        $vim = trim((string) wp_unslash($_POST['vimeo'] ?? ''));
+        if ($vim !== '') update_option('eap_ia_vimeo', $vim, false);
         $nova = trim((string) wp_unslash($_POST['chave'] ?? ''));
         if ($nova !== '') update_option('eap_ia_chave', $nova, false);
         $msg = 'Configurações salvas.';
+        if ($vim !== '') { $vr = wp_remote_get('https://api.vimeo.com/me', ['headers' => ['Authorization' => 'bearer ' . $vim, 'Accept' => 'application/vnd.vimeo.*+json;version=3.4'], 'timeout' => 15]); $vj = is_wp_error($vr) ? [] : json_decode(wp_remote_retrieve_body($vr), true); $msg .= !empty($vj['name']) ? ' Vimeo conectado: conta “' . $vj['name'] . '” ✓' : ' Atenção: o Vimeo não aceitou o token.'; }
         if ($nova !== '') { $t = eap_ia_api('GET', 'models/' . rawurlencode($c['modelo'])); $msg .= !empty($t['erro']) ? ' Atenção: a OpenAI respondeu “' . $t['erro'] . '”. Confira a chave e o nome do modelo.' : ' Chave conferida com a OpenAI ✓'; }
     }
     $c = eap_ia_cfg(); $ch = eap_ia_chave(); $base = eap_ia_base();
@@ -234,6 +293,7 @@ function eap_ia_pagina() {
           <tr><th>Fornecedor</th><td>OpenAI <span class="description">(Claude pode ser adicionado depois sem mudar nada para o dentista)</span></td></tr>
           <tr><th>Chave da API</th><td><input type="password" name="chave" class="regular-text" autocomplete="off" placeholder="<?php echo $ch ? esc_attr('Cadastrada: ••••' . substr($ch, -4) . ' (deixe em branco para manter)') : 'Cole aqui a chave (sk-...)'; ?>"><p class="description">Gerada em platform.openai.com → API keys. Fica guardada só no servidor e nunca aparece de novo na tela.</p></td></tr>
           <tr><th>Modelo</th><td><input type="text" name="modelo" value="<?php echo esc_attr($c['modelo']); ?>" class="regular-text"><p class="description">Padrão: gpt-5.4-mini (rápido e barato). Se a equipe clínica achar as respostas fracas, troque por um modelo maior.</p></td></tr>
+          <tr><th>Token do Vimeo</th><td><input type="password" name="vimeo" class="regular-text" autocomplete="off" placeholder="<?php echo get_option('eap_ia_vimeo') ? esc_attr('Cadastrado (deixe em branco para manter)') : 'Cole aqui o token de acesso do Vimeo'; ?>"><p class="description">Para importar as legendas das aulas. Gerado em developer.vimeo.com → My Apps → (seu app) → Generate access token, com os acessos <b>Public</b> e <b>Private</b>.</p></td></tr>
           <tr><th>Perguntas por dia</th><td><input type="number" name="limite" min="1" max="200" value="<?php echo (int) $c['limite']; ?>" style="width:80px"> <span class="description">por dentista (controla o custo)</span></td></tr>
         </tbody></table>
         <p style="margin:12px 0 0"><button class="button button-primary" name="eap_ia_salvar" value="1">Salvar</button></p>
@@ -244,6 +304,20 @@ function eap_ia_pagina() {
         <p class="description">Atualize sempre que cadastrar ou mudar perguntas frequentes, materiais ou aulas. Só o que mudou é enviado.</p>
         <p><button type="button" class="button button-primary" id="eapIaSync" <?php disabled(!$ch); ?>>Atualizar base agora</button> <span id="eapIaSyncMsg"></span></p>
         <div id="eapIaSyncErros" style="color:#b32d2e"></div>
+        <hr><h3 style="margin:10px 0 6px">Transcrições das vídeo aulas</h3>
+        <?php $aulas = get_posts(['post_type' => 'ea_aula', 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'ids', 'suppress_filters' => true]); $tr_ok = count(array_filter($aulas, fn($id) => get_post_meta($id, '_eap_transc_status', true) === 'ok')); ?>
+        <p>Aulas com transcrição: <b><?php echo (int) $tr_ok; ?></b> de <?php echo count($aulas); ?>. As legendas automáticas do Vimeo viram texto e entram na base na próxima atualização.</p>
+        <p><button type="button" class="button" id="eapIaVimeo" <?php disabled(!get_option('eap_ia_vimeo')); ?>>Importar legendas do Vimeo</button> <label style="margin-left:8px"><input type="checkbox" id="eapIaVimeoRefazer"> refazer todas</label> <span id="eapIaVimeoMsg"></span></p>
+        <div id="eapIaVimeoLog" style="max-height:180px;overflow:auto;font-size:12px;color:#5b6576"></div>
+        <script>(function(){var b=document.getElementById('eapIaVimeo'),m=document.getElementById('eapIaVimeoMsg'),lg=document.getElementById('eapIaVimeoLog'),rf=document.getElementById('eapIaVimeoRefazer');if(!b)return;
+          b.addEventListener('click',function(){b.disabled=true;lg.innerHTML='';var rod=Date.now()%1000000;
+            (function passo(){var f=new FormData();f.append('action','eap_ia_vimeo');f.append('_n','<?php echo esc_js(wp_create_nonce('eap_ia_sync')); ?>');f.append('rodada',rod);if(rf.checked)f.append('refazer','1');
+              fetch(ajaxurl,{method:'POST',body:f,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+                if(!j.success){m.textContent='Erro: '+j.data;b.disabled=false;return;}
+                (j.data.log||[]).forEach(function(x){var d=document.createElement('div');d.textContent=x;lg.appendChild(d);});m.textContent='Importando… faltam '+j.data.faltam;
+                if(j.data.faltam>0&&j.data.feitos>0)return passo();
+                m.textContent='✓ Pronto. Agora clique em “Atualizar base agora” para a IA aprender as aulas.';b.disabled=false;
+              }).catch(function(){m.textContent='Falha de conexão. Clique de novo para continuar.';b.disabled=false;});})();});})();</script>
         <p style="margin-bottom:0">Perguntas registradas: <b><?php echo (int) $tot; ?></b> · sem resposta no portal: <b><?php echo (int) $sem; ?></b> <span class="description">(as sem resposta mostram o que falta de conteúdo)</span></p>
       </div>
       <script>(function(){var b=document.getElementById('eapIaSync'),m=document.getElementById('eapIaSyncMsg'),e=document.getElementById('eapIaSyncErros');if(!b)return;
