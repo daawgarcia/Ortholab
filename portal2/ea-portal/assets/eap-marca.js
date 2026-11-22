@@ -159,7 +159,7 @@
   /* ---------------------------------------------------------------- orçamento para o paciente */
   var PAC = { unidade: { nome: 'Compra por Unidade', prazo: '6 a 8 meses' }, mid: { nome: 'Pacote MID', prazo: 'cerca de 10 meses' }, full: { nome: 'Pacote FULL', prazo: 'acima de 10 meses' } };
   function pacoteDe(txt) { txt = (txt || '').toLowerCase(); return txt.indexOf('full') >= 0 ? 'full' : txt.indexOf('mid') >= 0 ? 'mid' : txt.indexOf('unidade') >= 0 ? 'unidade' : ''; }
-  function num(v) { v = String(v || '').replace(/[^\d,.-]/g, ''); if (v.indexOf(',') >= 0) v = v.replace(/\./g, '').replace(',', '.'); var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  function num(v) { v = String(v || '').replace(/[^\d,.]/g, ''); if (v.indexOf(',') >= 0) v = v.replace(/\./g, '').replace(',', '.'); else if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, ''); var n = parseFloat(v); return isNaN(n) ? 0 : n; }
   function brl(n) { return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
   var mo = null;
   function modalOrc(pre) {
@@ -258,7 +258,7 @@
       y += (e ? 300 : 250) + 60;
       if (d.pagamento) { rotulo(x, 'Formas de pagamento', M, y); x.fillStyle = txt; x.font = '500 29px ' + FONTE; caber(x, d.pagamento, M, y + 44, W - 2 * M); y += 100; }
       if (d.obs) { rotulo(x, 'Observações', M, y); x.fillStyle = txt; x.font = '500 27px ' + FONTE; y = quebrar(x, d.obs, M, y + 44, W - 2 * M, 38) + 30; }
-      x.fillStyle = sub; x.font = '500 24px ' + FONTE; x.fillText('Proposta válida até ' + fd(val) + '. O tempo de tratamento é uma estimativa e pode variar conforme cada caso.', M, Math.max(y + 10, 1440));
+      x.fillStyle = sub; x.font = '500 24px ' + FONTE; quebrar(x, 'Proposta válida até ' + fd(val) + '. O tempo de tratamento é uma estimativa e pode variar conforme cada caso.', M, Math.max(y + 10, 1430), W - 2 * M, 34);
       // assinatura
       var ya = 1590; x.fillStyle = '#c9d3e6'; x.fillRect(W / 2 - 260, ya, 520, 2);
       x.textAlign = 'center'; x.fillStyle = txt; x.font = '600 27px ' + FONTE; x.fillText(C.dentista.nome + (C.dentista.cro ? ' · CRO ' + C.dentista.cro : ''), W / 2, ya + 42);
