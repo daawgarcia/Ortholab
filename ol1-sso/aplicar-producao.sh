@@ -5,7 +5,7 @@
 set -e
 CHAVE="$1"; [ ${#CHAVE} -ge 32 ] || { echo "Informe a chave SSO"; exit 1; }
 APP=/home/ubuntu/webapps/easysmile-web
-COMMIT=__COMMIT__
+COMMIT=dd5d25913c0d3fad34363e3bf4f9eb4eb6bd2fed
 BK=/home/ubuntu/backup-sso-$(date +%Y%m%d-%H%M%S)
 mkdir -p $BK
 cp -a $APP/config/routes.rb $BK/routes.rb
