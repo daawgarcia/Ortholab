@@ -72,6 +72,12 @@ class SsoController < ApplicationController
     nil
   end
 
+  def primeiro_nome(v)
+    n = ActiveSupport::Inflector.transliterate(v.to_s).downcase.strip
+    n = n.sub(/\A(dra?|dr\(a\))\.?\s+/, '')
+    n.split(/\s+/).first.to_s
+  end
+
   def digitos(v)
     v.to_s.gsub(/\D/, '')
   end
@@ -108,10 +114,10 @@ class SsoController < ApplicationController
     end
 
     cro = digitos(d['cro'])
-    primeiro = d['nm'].to_s.strip.split(/\s+/).first.to_s.downcase
+    primeiro = primeiro_nome(d['nm'])
     if cro.length >= 3 && primeiro.length >= 2
-      ids = Dentist.where("#{format(SQL_DIGITOS, 'cro')} = ?", cro).to_a
-                   .select { |x| x.name.to_s.strip.downcase.start_with?(primeiro) }.map(&:id)
+      ids = Dentist.where('cro LIKE ?', "%#{cro}%").to_a
+                   .select { |x| digitos(x.cro) == cro && primeiro_nome(x.name) == primeiro }.map(&:id)
       u = de_dentista(usuarios_dos_dentistas(ids))
       return u if u
     end
