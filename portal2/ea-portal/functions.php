@@ -483,7 +483,8 @@ function eapt_cert_faixa($classe = '') {
 }
 add_action('wp_footer', function () {
     if (!is_user_logged_in() || !function_exists('eap_nome_certificado') || !(is_page('video-aulas') || is_page('area-do-credenciado'))) return;
-    $cfg = ['tpl' => get_stylesheet_directory_uri() . '/assets/certificado.jpg', 'fonte' => 'https://fonts.gstatic.com/s/alexbrush/v23/SZc83FzrJKuqFbwMKk6EhUXz7Q.woff2'];
+    $tpl_novo = wp_get_upload_dir()['basedir'] . '/certificado-credenciamento-ea.jpg'; // modelo com o logo atual (enviado pelo painel)
+    $cfg = ['tpl' => file_exists($tpl_novo) ? content_url('/uploads/certificado-credenciamento-ea.jpg') : get_stylesheet_directory_uri() . '/assets/certificado.jpg', 'fonte' => 'https://fonts.gstatic.com/s/alexbrush/v23/SZc83FzrJKuqFbwMKk6EhUXz7Q.woff2'];
     ?>
     <div class="eap-modal eap-cert-modal" data-eap-cert-modal hidden><div class="eap-modal__caixa">
       <button type="button" class="eap-modal__x" data-eap-cert-x aria-label="Fechar">×</button>
