@@ -21,6 +21,10 @@ add_action('wp_enqueue_scripts', function () {
     $dir = get_stylesheet_directory();
     wp_enqueue_style('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.css', [], (string) filemtime($dir . '/assets/portal.css'));
     wp_enqueue_script('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.js', [], (string) filemtime($dir . '/assets/portal.js'), true);
+    if (is_user_logged_in() && function_exists('eap_ferr_cfg') && (is_page('marketing') || is_page('simulador-de-estimativa-e-pacote'))) {
+        wp_enqueue_script('eapt-marca', get_stylesheet_directory_uri() . '/assets/eap-marca.js', ['eapt-ferramentas'], (string) filemtime($dir . '/assets/eap-marca.js'), true);
+        wp_add_inline_script('eapt-marca', 'window.EAP_FERR=' . wp_json_encode(eap_ferr_cfg()) . ';', 'before');
+    }
     if (is_user_logged_in()) wp_enqueue_script('eapt-ferramentas', get_stylesheet_directory_uri() . '/assets/eap-ferramentas.js', [], (string) filemtime($dir . '/assets/eap-ferramentas.js'), true);
     if (is_user_logged_in() && function_exists('eap_aulas_feitas')) {
         wp_add_inline_script('eapt-portal', 'window.EAP_FEITAS=' . wp_json_encode(['ids' => array_map('strval', eap_aulas_feitas()), 'u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_feitas')]) . ';', 'before');
@@ -510,7 +514,7 @@ add_action('wp_footer', function () {
           return Promise.all([EAPF.img(C.tpl),EAPF.fonte('Alex Brush',C.fonte)]).then(function(r){
             var im=r[0],c=document.createElement('canvas');c.width=im.width;c.height=im.height;var x=c.getContext('2d'),k=im.width/842;
             x.drawImage(im,0,0);x.fillStyle='#1f3b6e';x.textAlign='center';x.textBaseline='alphabetic';
-            EAPF.textoCabe(x,j.data.nome,421*k,285*k,440*k,Math.round(44*k),'"Alex Brush", cursive');
+            EAPF.textoCabe(x,j.data.nome,421*k,285*k,440*k,Math.round(50*k),'"Alex Brush", cursive');
             EAPF.textoCabe(x,j.data.data,581*k,481*k,215*k,Math.round(25*k),'"Alex Brush", cursive');
             EAPF.baixar(EAPF.pdf([c],842,595),'Certificado Esthetic Aligner - '+j.data.nome+'.pdf');
             bt.disabled=false;bt.textContent='Baixar de novo';
@@ -520,3 +524,5 @@ add_action('wp_footer', function () {
     })();</script>
     <?php
 }, 56);
+
+add_action('wp_footer', function () { if (is_user_logged_in() && is_page('simulador-de-estimativa-e-pacote')) echo '<span data-eap-orc-pagina hidden></span>'; }, 1);

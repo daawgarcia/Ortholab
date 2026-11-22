@@ -546,3 +546,49 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
 .eap-cert-modal__erro { color: #c0392b !important; }
 .eap-cert-modal__bt { width: 100%; text-align: center; margin-bottom: 10px; }
 .eap-cert-modal small { color: #8a93a3; font-size: 12px; }
+
+/* minha marca e orçamento */
+.eap-marca-barra { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #fff; border: 1px dashed #b9c9ea; border-radius: 14px; padding: 12px 16px; margin: -6px 0 20px; font-size: 14.5px; }
+.eap-marca-barra[hidden] { display: none; }
+.eap-marca-barra > span { flex: 1; min-width: 220px; }
+.eap-marca-barra__ok { display: flex; align-items: center; gap: 12px; }
+.eap-marca-barra__ok img { height: 36px; width: auto; max-width: 110px; object-fit: contain; }
+.eap-marca-barra .eap-btn { padding: 9px 16px; font-size: 14px; }
+.eap-btn--marca { order: -1; }
+.eap-modal__nota { display: block; color: #8a93a3; font-size: 12px; margin-top: 8px; }
+.eap-ferr-modal .eap-modal__caixa { display: block; max-width: 760px; padding: 28px 26px 24px; overflow: auto; }
+.eap-ferr-tit { margin: 0 0 6px; font-size: 21px; }
+.eap-ferr-sub { color: var(--eap-txt-2); font-size: 14px; margin: 0 0 18px; }
+.eap-ferr-grid { display: grid; grid-template-columns: 1fr 260px; gap: 22px; align-items: start; }
+.eap-ferr-campos { display: grid; gap: 12px; }
+.eap-ferr-campos--2 { grid-template-columns: 1fr 1fr; }
+.eap-ferr-campos--2 .l2 { grid-column: 1 / -1; }
+.eap-ferr-campos label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--eap-txt-2); }
+.eap-ferr-campos input, .eap-ferr-campos select, .eap-ferr-campos textarea { padding: 11px 13px; border: 1px solid var(--eap-linha); border-radius: 10px; font-size: 15px; font-weight: 400; color: var(--eap-txt); font-family: inherit; width: 100%; box-sizing: border-box; background: #fff; }
+.eap-ferr-logo { display: flex; align-items: center; gap: 10px; }
+.eap-ferr-logo img { height: 40px; width: auto; max-width: 140px; object-fit: contain; border: 1px solid var(--eap-linha); border-radius: 8px; padding: 3px; }
+.eap-ferr-link { background: none; border: 0; color: var(--eap-azul); text-decoration: underline; cursor: pointer; font-size: 13px; padding: 0; }
+.eap-ferr-cores { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: var(--eap-txt-2); }
+.eap-ferr-cores span { width: 100%; }
+.eap-ferr-cores button { border: 1px solid var(--eap-linha); background: #fff; border-radius: 999px; padding: 7px 14px; cursor: pointer; font-weight: 600; }
+.eap-ferr-cores button.is-ativo { border-color: var(--eap-azul); color: var(--eap-azul); box-shadow: 0 0 0 2px rgba(47,111,228,.15); }
+.eap-ferr-prev { position: sticky; top: 0; text-align: center; }
+.eap-ferr-prev canvas { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 6px 20px rgba(17,38,84,.15); background: #f5f7fb; }
+.eap-ferr-prev small { color: #8a93a3; }
+.eap-ferr-erro { color: #c0392b; font-size: 14px; margin: 12px 0 0; }
+.eap-ferr-erro[hidden] { display: none; }
+.eap-ferr-bt { width: 100%; text-align: center; margin-top: 16px; }
+.eap-ferr-resumo { margin: 16px 0 8px; background: #eef4ff; border-radius: 10px; padding: 12px 14px; font-size: 15px; }
+.eap-ferr-check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--eap-txt-2); }
+.eap-ferr-marca { font-size: 13.5px; color: var(--eap-txt-2); margin: 8px 0 0; }
+.eap-orc-cta { position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px; z-index: 9988; background: #0d1f42; color: #fff; border-radius: 16px; padding: 12px 14px 12px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 14px 40px rgba(13,31,66,.35); max-width: calc(100vw - 140px); }
+.eap-orc-cta[hidden] { display: none; }
+.eap-orc-cta em { font-style: normal; opacity: .85; }
+.eap-orc-cta__x { background: none; border: 0; color: #fff; opacity: .7; font-size: 22px; cursor: pointer; }
+.eap-orc-fixo { position: fixed; left: 20px; bottom: 20px; z-index: 9987; background: #fff; color: var(--eap-azul); border: 1px solid #c9d8f5; border-radius: 999px; padding: 12px 18px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 8px 24px rgba(17,38,84,.15); }
+@media (max-width: 720px) {
+  .eap-ferr-grid, .eap-ferr-campos--2 { grid-template-columns: 1fr; }
+  .eap-ferr-prev { position: static; max-width: 240px; margin: 0 auto; }
+  .eap-orc-cta { left: 12px; right: 12px; transform: none; max-width: none; bottom: 84px; flex-wrap: wrap; }
+  .eap-orc-fixo { bottom: 84px; left: 14px; padding: 10px 14px; font-size: 13px; }
+}
