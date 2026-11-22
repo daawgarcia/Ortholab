@@ -45,6 +45,19 @@ function eap_ia_api($metodo, $caminho, $corpo = null, $multipart = null, $timeou
     return is_array($j) ? $j : ['erro' => 'resposta inválida'];
 }
 
+/* ------------------------------------------------------------------ nomes da marca sempre certos */
+function eap_ia_nomes($t) {
+    $t = (string) $t;
+    // "Estética Aligner", "Aesthetic Aligner", "Esthetic Aliner", "Estetic Align", "Esthetic Line", "Est Aligner"…
+    $t = preg_replace('/\b(?:a?e?st?h?[eé]tic[ao]?|est)\s*-?\s*(?:a?l[iy]n?e?g?n?(?:er|ner|ar|or|e)s?|line|align)\b/iu', 'Esthetic Aligner', $t);
+    $t = preg_replace('/\bEsthetic Aligner\s+Aligner\b/u', 'Esthetic Aligner', $t);
+    $t = preg_replace('/\b(?:orto|ortho)\s*-?\s*lab(?:e|i)?\b/iu', 'Ortholab', $t);
+    $t = preg_replace('/\b(?:esthetic|estética|estetic)\s+rewards?\b/iu', 'Esthetic Rewards', $t);
+    $t = preg_replace('/\bEsthetic Aligner\s+(kids|air|club|day|store|advanced)\b/iu', 'Esthetic Aligner $1', $t);
+    $t = preg_replace_callback('/\bEsthetic Aligner (kids|air|club|day|store|advanced)\b/iu', fn($m) => 'Esthetic Aligner ' . (strtolower($m[1]) === 'air' ? 'AIR' : (strtolower($m[1]) === 'kids' ? 'KIDS' : ucfirst(strtolower($m[1])))), $t);
+    return $t;
+}
+
 /* ------------------------------------------------------------------ o que entra na base */
 function eap_ia_texto($html) {
     $t = wp_strip_all_tags(preg_replace('#<(br|/p|/li|/h\d)[^>]*>#i', "\n", do_shortcode((string) $html)));
@@ -78,6 +91,8 @@ function eap_ia_conteudo() {
         $sec = wp_get_post_terms($m->ID, 'ea_secao', ['fields' => 'names']);
         $itens['mat-' . $m->ID] = ['tipo' => 'Material' . ($sec ? ' – ' . implode(', ', $sec) : ''), 'titulo' => get_the_title($m), 'url' => $url, 'nome' => sanitize_file_name(get_the_title($m)) . '.' . strtolower($ext[1]), 'arquivo' => $cam, 'hash' => md5($cam . filesize($cam) . filemtime($cam))];
     }
+    foreach ($itens as &$i) if (isset($i['dados'])) $i['dados'] = eap_ia_nomes($i['dados']);
+    unset($i);
     foreach ($itens as &$i) if (!isset($i['hash'])) $i['hash'] = md5($i['dados']);
     return $itens;
 }
@@ -253,7 +268,8 @@ function eap_ia_instrucoes() {
         . "3. Não faça diagnóstico, plano de tratamento, indicação clínica nem opinião sobre um paciente ou caso específico. Nesse caso responda exatamente: [CLINICO]\n"
         . "4. Não invente números, prazos, preços, quantidades, protocolos ou nomes que não estejam escritos nos documentos.\n"
         . "5. Responda em português do Brasil, de forma objetiva: até 6 frases ou uma lista curta de passos. Quando houver uma vídeo aula ou material relacionado, diga o nome dele para o dentista abrir.\n"
-        . "6. Não mencione 'documentos', 'arquivos' ou 'busca'; fale naturalmente, como o suporte da Esthetic Aligner.";
+        . "6. Não mencione 'documentos', 'arquivos' ou 'busca'; fale naturalmente, como o suporte da Esthetic Aligner.\n"
+        . "7. Escreva os nomes sempre assim, exatamente: Esthetic Aligner (a empresa e os alinhadores), Ortholab, Esthetic Rewards, Envio Fácil, Esthetic Aligner KIDS, EA AIR. Algumas transcrições de vídeo trazem esses nomes escritos errado; corrija sempre.";
 }
 add_action('wp_ajax_eap_ia_perguntar', function () {
     if (!check_ajax_referer('eap_ia', '_n', false)) wp_send_json_error('sessao', 403);
@@ -294,7 +310,7 @@ add_action('wp_ajax_eap_ia_perguntar', function () {
                 }
             }
         }
-        $texto = trim(preg_replace('/【[^】]*】/u', '', $texto)); // marcadores de citação no meio do texto
+        $texto = eap_ia_nomes(trim(preg_replace('/【[^】]*】/u', '', $texto))); // tira marcadores de citação e corrige o nome da marca
         if (strpos($texto, '[CLINICO]') !== false) $status = 'clinico';
         elseif (strpos($texto, '[SEM_RESPOSTA]') !== false || !$fontes || $texto === '') $status = 'sem'; // sem fonte = não responde
     }
