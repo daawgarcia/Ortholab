@@ -20,14 +20,22 @@
   /* "Automática": compara a cor da parte de baixo do post com as três faixas e escolhe a que combina mais */
   function corAuto(x, W, H) {
     try {
-      var h = Math.max(4, Math.round(H * 0.08)), d = x.getImageData(0, H - h, W, h).data, r = 0, g = 0, b = 0, n = 0;
-      for (var i = 0; i < d.length; i += 16) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
-      r /= n; g /= n; b /= n;
-      var op = { claro: [255, 255, 255], escuro: [13, 31, 66], azul: [47, 111, 228] }, melhor = 'claro', dist = 1e9;
-      Object.keys(op).forEach(function (k) { var o = op[k], dd = (r - o[0]) * (r - o[0]) * 0.3 + (g - o[1]) * (g - o[1]) * 0.59 + (b - o[2]) * (b - o[2]) * 0.11; if (dd < dist) { dist = dd; melhor = k; } });
-      return melhor;
+      function contar(y0, y1) {
+        var d = x.getImageData(0, y0, W, y1 - y0).data, az = 0, es = 0, cl = 0, n = 0;
+        for (var i = 0; i < d.length; i += 4 * 7) {
+          var r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), L = 0.3 * r + 0.59 * g + 0.11 * b; n++;
+          if (L < 70) es++; else if (b > 140 && b - r > 60 && (mx - mn) / mx > 0.4) az++; else if (L > 200) cl++;
+        }
+        return { az: az / n, es: es / n, cl: cl / n };
+      }
+      var base = contar(H - Math.max(4, Math.round(H * 0.12)), H), todo = contar(0, H);
+      if (base.es >= 0.4) return 'escuro';            // post termina escuro: faixa escura continua o post
+      if (base.az >= 0.4) return 'azul';              // post termina azul: faixa azul
+      if (todo.az + todo.es >= 0.45) return todo.es > todo.az * 1.5 ? 'escuro' : 'azul'; // post bem colorido: faixa que conversa com ele
+      return 'claro';                                  // post claro: faixa clara, sem "cortar" a arte
     } catch (e) { return 'claro'; }
   }
+
 
   function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
   function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
