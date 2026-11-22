@@ -156,6 +156,84 @@
     bm.addEventListener('click', function () { if (C.marca && C.marca.nome) baixarMarca(); else modalMarca(baixarMarca); });
   }
 
+  /* ---------------------------------------------------------------- pacotes ZIP de posts com a marca */
+  var CRC = (function () { var t = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(u) { var c = 0xFFFFFFFF; for (var i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function lerZip(buf) {
+    var b = new Uint8Array(buf), dv = new DataView(buf), e = b.length - 22, td = new TextDecoder();
+    while (e > 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+    if (e <= 0) throw new Error('zip');
+    var n = dv.getUint16(e + 10, true), p = dv.getUint32(e + 16, true), lista = [];
+    for (var i = 0; i < n; i++) {
+      var met = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), fl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      var nome = td.decode(b.subarray(p + 46, p + 46 + fl));
+      var ini = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true);
+      lista.push({ nome: nome, met: met, dados: b.subarray(ini, ini + cs) });
+      p += 46 + fl + xl + cl;
+    }
+    return lista;
+  }
+  function abrirEntrada(e) {
+    if (e.met === 0) return Promise.resolve(new Blob([e.dados]));
+    if (e.met !== 8 || !window.DecompressionStream) return Promise.reject(new Error('metodo'));
+    return new Response(new Blob([e.dados]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob();
+  }
+  function montarZip(arqs) {
+    var enc = new TextEncoder(), partes = [], central = [], off = 0;
+    arqs.forEach(function (a) {
+      var nome = enc.encode(a.nome), crc = crc32(a.dados), h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint32(14, crc, true); h.setUint32(18, a.dados.length, true); h.setUint32(22, a.dados.length, true); h.setUint16(26, nome.length, true);
+      partes.push(new Uint8Array(h.buffer), nome, a.dados);
+      var c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint32(16, crc, true); c.setUint32(20, a.dados.length, true); c.setUint32(24, a.dados.length, true); c.setUint16(28, nome.length, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), nome);
+      off += 30 + nome.length + a.dados.length;
+    });
+    var tc = central.reduce(function (s, u) { return s + u.length; }, 0), f = new DataView(new ArrayBuffer(22));
+    f.setUint32(0, 0x06054b50, true); f.setUint16(8, arqs.length, true); f.setUint16(10, arqs.length, true); f.setUint32(12, tc, true); f.setUint32(16, off, true);
+    return new Blob(partes.concat(central, [new Uint8Array(f.buffer)]), { type: 'application/zip' });
+  }
+  function zipComMarca(url, nomeSaida, progresso) {
+    return fetch(url, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('baixar'); return r.arrayBuffer(); }).then(function (buf) {
+      var imgs = lerZip(buf).filter(function (e) { return /\.(png|jpe?g)$/i.test(e.nome) && !/(^|\/)(__MACOSX|\.)/.test(e.nome); });
+      if (!imgs.length) throw new Error('vazio');
+      var saida = [], i = 0;
+      function proximo() {
+        if (i >= imgs.length) return Promise.resolve();
+        var e = imgs[i++]; progresso(i, imgs.length);
+        return abrirEntrada(e).then(function (blob) {
+          var u = URL.createObjectURL(blob);
+          return comporPost(u, C.marca).then(function (c) {
+            URL.revokeObjectURL(u);
+            return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', 0.9); });
+          });
+        }).then(function (jb) { return jb.arrayBuffer(); }).then(function (ab) {
+          saida.push({ nome: e.nome.replace(/\.(png|jpe?g)$/i, '') + ' - minha marca.jpg', dados: new Uint8Array(ab) });
+        }).catch(function () { /* imagem com problema: pula */ }).then(proximo);
+      }
+      return proximo().then(function () { if (!saida.length) throw new Error('vazio'); EAPF.baixar(montarZip(saida), nomeSaida); return saida.length; });
+    });
+  }
+  window.eapZipMarca = zipComMarca;
+  // botão nos pacotes de posts (materiais .zip com "post" ou "arte" no nome) da página Marketing
+  document.querySelectorAll('a.eap-material[href$=".zip"]').forEach(function (a) {
+    var tit = (a.querySelector('strong') || {}).textContent || '';
+    if (!/post|arte/i.test(tit + ' ' + a.getAttribute('href'))) return;
+    var bt = el('<button type="button" class="eap-material__marca">Baixar com a minha marca</button>');
+    var cx = el('<div class="eap-material-cx"></div>'); a.parentNode.insertBefore(cx, a); cx.appendChild(a); cx.appendChild(bt);
+    bt.addEventListener('click', function () {
+      var go = function () {
+        if (!window.DecompressionStream) { alert('Seu navegador é antigo para esta função. Atualize o navegador ou use o computador.'); return; }
+        bt.disabled = true; bt.textContent = 'Baixando o pacote…';
+        var nome = a.getAttribute('href').split('/').pop().replace(/\.zip$/i, '') + ' - minha marca.zip';
+        zipComMarca(a.getAttribute('href'), nome, function (n, t) { bt.textContent = 'Preparando ' + n + ' de ' + t + '…'; })
+          .then(function (n) { bt.disabled = false; bt.textContent = '✓ ' + n + ' posts prontos – baixar de novo'; if (window.eapEvento) window.eapEvento('post_baixar', 0, 'marca_zip'); })
+          .catch(function () { bt.disabled = false; bt.textContent = 'Baixar com a minha marca'; alert('Não foi possível preparar este pacote. Tente de novo pelo computador.'); });
+      };
+      if (C.marca && C.marca.nome) go(); else modalMarca(go);
+    });
+  });
+
   /* ---------------------------------------------------------------- orçamento para o paciente */
   var PAC = { unidade: { nome: 'Compra por Unidade', prazo: '6 a 8 meses' }, mid: { nome: 'Pacote MID', prazo: 'cerca de 10 meses' }, full: { nome: 'Pacote FULL', prazo: 'acima de 10 meses' } };
   function pacoteDe(txt) { txt = (txt || '').toLowerCase(); return txt.indexOf('full') >= 0 ? 'full' : txt.indexOf('mid') >= 0 ? 'mid' : txt.indexOf('unidade') >= 0 ? 'unidade' : ''; }

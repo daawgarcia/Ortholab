@@ -69,7 +69,7 @@ add_action('template_redirect', function () {
 add_action('wp_ajax_eap_evento', function () {
     if (!check_ajax_referer('eap_evento', '_n', false)) wp_die('', 403);
     $tipo = sanitize_key($_POST['tipo'] ?? '');
-    if (!in_array($tipo, ['download', 'post', 'post_baixar', 'whats'], true)) wp_die('', 400);
+    if (!in_array($tipo, ['download', 'post', 'post_baixar', 'whats', 'orcamento'], true)) wp_die('', 400);
     $uid = get_current_user_id();
     $k = 'eap_ev_rl_' . $uid; $n = (int) get_transient($k);
     if ($n > 300) wp_die('', 429);
@@ -272,6 +272,23 @@ function eap_resultados_pagina() {
         <div class="eapr__card"><span>Posts baixados</span><b><?php echo $num($posts); ?></b><span>para redes sociais</span></div>
         <div class="eapr__card eapr__card--ia"><span>Estimativas (IA)</span><b><?php echo $num($est); ?></b><span>enviadas para vendas</span></div>
         <div class="eapr__card"><span>Entradas nos sistemas</span><b><?php echo $num($tot_sis); ?></b><span>sem digitar senha</span></div>
+      </div>
+      <?php
+      $marca_un = (int) $wpdb->get_var("SELECT COUNT(*) FROM $t WHERE tipo = 'post_baixar' AND extra = 'marca' AND $f");
+      $marca_zip = (int) $wpdb->get_var("SELECT COUNT(*) FROM $t WHERE tipo = 'post_baixar' AND extra = 'marca_zip' AND $f");
+      $orc = $conta('orcamento');
+      $cert = $conta('certificado');
+      $concl = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_curso_concluido_em'");
+      $com_marca = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_marca' AND meta_value <> ''");
+      ?>
+      <h2 style="font-size:15px;margin:4px 0 12px">Ferramentas do dentista</h2>
+      <div class="eapr__cards">
+        <div class="eapr__card"><span>Posts baixados com a marca</span><b><?php echo $num($marca_un); ?></b><span>um a um, no período</span></div>
+        <div class="eapr__card"><span>Pacotes ZIP com a marca</span><b><?php echo $num($marca_zip); ?></b><span>no período</span></div>
+        <div class="eapr__card"><span>Consultórios com marca</span><b><?php echo $num($com_marca); ?></b><span>cadastrada (total)</span></div>
+        <div class="eapr__card eapr__card--ia"><span>Orçamentos para pacientes</span><b><?php echo $num($orc); ?></b><span>gerados no período</span></div>
+        <div class="eapr__card"><span>Curso do Credenciado</span><b><?php echo $num($concl); ?></b><span>concluíram (total)</span></div>
+        <div class="eapr__card"><span>Certificados emitidos</span><b><?php echo $num($cert); ?></b><span>no período</span></div>
       </div>
 
       <div class="eapr__grid">

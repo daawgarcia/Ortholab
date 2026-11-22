@@ -592,3 +592,9 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
   .eap-orc-cta { left: 12px; right: 12px; transform: none; max-width: none; bottom: 84px; flex-wrap: wrap; }
   .eap-orc-fixo { bottom: 84px; left: 14px; padding: 10px 14px; font-size: 13px; }
 }
+
+.eap-material-cx { display: flex; flex-direction: column; }
+.eap-material-cx .eap-material { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }
+.eap-material__marca { display: block; width: 100%; margin: -1px 0 0; background: #eef4ff; color: var(--eap-azul); border: 1px dashed #b9c9ea; border-radius: 0 0 12px 12px; padding: 9px 12px; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+.eap-material__marca:hover { background: #e2ecff; }
+.eap-material__marca:disabled { opacity: .8; cursor: progress; }
