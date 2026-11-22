@@ -64,13 +64,30 @@
     });
   });
 
-  // busca de materiais
-  var bm = document.querySelector('[data-eap-busca-mat]');
-  if (bm) bm.addEventListener('input', function () {
-    var q = norm(bm.value.trim());
-    document.querySelectorAll('[data-eap-mat]').forEach(function (a) {
-      a.style.display = !q || norm(a.textContent).indexOf(q) >= 0 ? '' : 'none';
+  // busca e temas dos materiais
+  var bm = document.querySelector('[data-eap-busca-mat]'), temaAtivo = '';
+  function filtrarMat() {
+    var q = bm ? norm(bm.value.trim()) : '';
+    document.querySelectorAll('[data-eap-grupo]').forEach(function (g) {
+      var noTema = !temaAtivo || g.getAttribute('data-eap-grupo') === temaAtivo, vis = 0;
+      g.querySelectorAll('[data-eap-mat]').forEach(function (a) {
+        var ok = noTema && (!q || norm(a.textContent).indexOf(q) >= 0);
+        a.style.display = ok ? '' : 'none'; if (ok) vis++;
+      });
+      g.style.display = vis ? '' : 'none';
     });
+  }
+  if (bm) bm.addEventListener('input', filtrarMat);
+  document.querySelectorAll('[data-eap-chips-mat] button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      temaAtivo = b.getAttribute('data-tema');
+      document.querySelectorAll('[data-eap-chips-mat] button').forEach(function (x) { x.classList.toggle('is-ativo', x === b); });
+      filtrarMat();
+    });
+  });
+  // posts: teclado
+  document.querySelectorAll('[data-eap-post]').forEach(function (c) {
+    c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); c.click(); } });
   });
 })();
 

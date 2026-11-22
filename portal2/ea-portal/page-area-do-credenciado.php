@@ -14,23 +14,25 @@ $nome = trim($u->first_name) ?: $u->display_name;
   </div>
 </section>
 
+<?php $ia1 = eapt_visivel('ia-estimativa'); $ia2 = eapt_visivel('ia-ronco'); if ($ia1 || $ia2) : ?>
 <section class="eap-wrap eap-ia">
   <div class="eap-ia__tag"><span></span>Powered by AI</div>
-  <div class="eap-ia__grid">
-    <a class="eap-ia__card" href="<?php echo esc_url(home_url('/simulador-de-estimativa-e-pacote/')); ?>">
+  <div class="eap-ia__grid<?php echo ($ia1 && $ia2) ? '' : ' eap-ia__grid--um'; ?>">
+    <?php if ($ia1) : ?><a class="eap-ia__card" href="<?php echo esc_url(home_url('/simulador-de-estimativa-e-pacote/')); ?>">
       <span class="eap-ia__ic"><?php echo eapt_icone('calc'); ?></span>
       <span class="eap-ia__txt"><strong>Estimativa e pacote – Alinhadores</strong>
         <em>Selecione os objetivos do tratamento e receba a estimativa e o pacote indicado.</em></span>
       <span class="eap-seta">→</span>
-    </a>
-    <a class="eap-ia__card eap-ia__card--air" href="<?php echo esc_url(home_url('/indicacao-de-uso-ea-air/')); ?>">
+    </a><?php endif; ?>
+    <?php if ($ia2) : ?><a class="eap-ia__card eap-ia__card--air" href="<?php echo esc_url(home_url('/indicacao-de-uso-ea-air/')); ?>">
       <span class="eap-ia__ic"><?php echo eapt_icone('sono'); ?></span>
       <span class="eap-ia__txt"><strong>Prognóstico ronco e apneia – EA AIR</strong>
         <em>Responda às perguntas e receba o prognóstico do paciente.</em></span>
       <span class="eap-seta">→</span>
-    </a>
+    </a><?php endif; ?>
   </div>
 </section>
+<?php endif; ?>
 
 <section class="eap-wrap eap-atalhos">
   <?php foreach (eapt_atalhos() as $a) : [$tit, $desc, $url, $ic] = $a; $ext = !empty($a[4]); ?>
@@ -42,7 +44,7 @@ $nome = trim($u->first_name) ?: $u->display_name;
   <?php endforeach; ?>
 </section>
 
-<?php if (function_exists('eap_aulas_por_trilha')) :
+<?php if (function_exists('eap_aulas_por_trilha') && eapt_visivel('aulas-recentes') && eapt_visivel('video-aulas')) :
   $novas = get_posts(['post_type' => 'ea_aula', 'numberposts' => 4, 'orderby' => 'date', 'order' => 'DESC']);
   if ($novas) : ?>
 <section class="eap-wrap eap-novas">

@@ -110,30 +110,37 @@ function eapt_icone($nome) {
 }
 
 function eapt_atalhos() {
-    return [
-        ['Vídeo aulas', 'Curso do credenciado, webinars, mentorias, dicas clínicas e podcast.', home_url('/video-aulas/'), 'play'],
-        ['Ortholab', 'Envio de casos, documentação digital e acompanhamento do paciente.', eapt_link_ortholab(), 'lab', true],
-        ['Esthetic Rewards', 'Seus pontos, categoria e prêmios do programa de fidelidade.', eapt_link_rewards(), 'clube', true],
-        ['Downloads', 'Guia de início rápido, fichas, checagem 3D, preços e serviços, manuais.', home_url('/downloads/'), 'download'],
-        ['Marketing', 'Folders, vídeos e posts para divulgar o tratamento.', home_url('/marketing/'), 'mkt'],
-        ['Suporte ao credenciado', 'Dúvidas frequentes e chamado com nossa equipe de ortodontistas.', home_url('/suporte/'), 'suporte'],
-        ['Clube de vantagens', 'Descontos e benefícios com parceiros Esthetic Aligner.', home_url('/eaclub/'), 'loja'],
+    $todos = [
+        ['Vídeo aulas', 'Curso do credenciado, webinars, mentorias, dicas clínicas e podcast.', home_url('/video-aulas/'), 'play', false, 'video-aulas'],
+        ['Ortholab', 'Envio de casos, documentação digital e acompanhamento do paciente.', eapt_link_ortholab(), 'lab', true, 'ortholab'],
+        ['Esthetic Rewards', 'Seus pontos, categoria e prêmios do programa de fidelidade.', eapt_link_rewards(), 'clube', true, 'rewards'],
+        ['Downloads', 'Guia de início rápido, fichas, checagem 3D, preços e serviços, manuais.', home_url('/downloads/'), 'download', false, 'downloads'],
+        ['Marketing', 'Folders, vídeos e posts para divulgar o tratamento.', home_url('/marketing/'), 'mkt', false, 'marketing'],
+        ['Suporte ao credenciado', 'Dúvidas frequentes e chamado com nossa equipe de ortodontistas.', home_url('/suporte/'), 'suporte', false, 'suporte'],
+        ['Clube de vantagens', 'Descontos e benefícios com parceiros Esthetic Aligner.', home_url('/eaclub/'), 'loja', false, 'clube'],
         // Área financeira (consulta de títulos) oculta até a integração funcionar
-        ['Esthetic Aligner Store', 'Confira nossa loja.', home_url('/esthetic-aligner-store/'), 'loja'],
-        ['Dicas clínicas', 'Vídeos curtos com dicas práticas para o dia a dia.', add_query_arg('trilha', 'dicas-clinicas', home_url('/video-aulas/')), 'dica'],
+        ['Esthetic Aligner Store', 'Confira nossa loja.', home_url('/esthetic-aligner-store/'), 'loja', false, 'store'],
+        ['Dicas clínicas', 'Vídeos curtos com dicas práticas para o dia a dia.', add_query_arg('trilha', 'dicas-clinicas', home_url('/video-aulas/')), 'dica', false, 'dicas'],
     ];
+    return array_values(array_filter($todos, fn($a) => eapt_visivel($a[5])));
+}
+
+/** Seção ligada em "O que aparece no portal" (plugin). Sem o plugin, tudo aparece. */
+function eapt_visivel($chave) {
+    return !function_exists('eap_visivel') || eap_visivel($chave);
 }
 
 function eapt_menu() {
-    return [
-        ['Início', home_url('/area-do-credenciado/'), 'area-do-credenciado'],
-        ['Vídeo aulas', home_url('/video-aulas/'), 'video-aulas'],
-        ['Downloads', home_url('/downloads/'), 'downloads'],
-        ['Marketing', home_url('/marketing/'), 'marketing'],
-        ['Suporte', home_url('/suporte/'), 'suporte'],
-        ['Clube', home_url('/eaclub/'), 'eaclub'],
-        ['Ortholab', eapt_link_ortholab(), ''],
+    $todos = [
+        ['Início', home_url('/area-do-credenciado/'), 'area-do-credenciado', ''],
+        ['Vídeo aulas', home_url('/video-aulas/'), 'video-aulas', 'video-aulas'],
+        ['Downloads', home_url('/downloads/'), 'downloads', 'downloads'],
+        ['Marketing', home_url('/marketing/'), 'marketing', 'marketing'],
+        ['Suporte', home_url('/suporte/'), 'suporte', 'suporte'],
+        ['Clube', home_url('/eaclub/'), 'eaclub', 'clube'],
+        ['Ortholab', eapt_link_ortholab(), '', 'ortholab'],
     ];
+    return array_values(array_filter($todos, fn($m) => !$m[3] || eapt_visivel($m[3])));
 }
 
 function eapt_ativo($slug) {

@@ -13,6 +13,8 @@ define('EAP_VERSION', '1.1.0');
 require_once __DIR__ . '/sso.php';
 require_once __DIR__ . '/clube-suporte.php';
 require_once __DIR__ . '/confirmar-dados.php';
+require_once __DIR__ . '/visibilidade.php';
+require_once __DIR__ . '/temas.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {
@@ -51,7 +53,7 @@ add_action('admin_menu', function () {
     add_menu_page('Portal do Credenciado', 'Portal do Credenciado', 'edit_pages', 'eap-portal', 'eap_pagina_inicio', 'dashicons-id-alt', 3);
     add_submenu_page('eap-portal', 'Início', 'Início', 'edit_pages', 'eap-portal', 'eap_pagina_inicio');
     add_submenu_page('eap-portal', 'Categorias de aula', 'Categorias de aula', 'edit_pages', 'edit-tags.php?taxonomy=ea_trilha&post_type=ea_aula');
-    add_submenu_page('eap-portal', 'Seções de materiais', 'Seções de materiais', 'edit_pages', 'edit-tags.php?taxonomy=ea_secao&post_type=ea_material');
+    add_submenu_page('eap-portal', 'Seções e temas de materiais', 'Seções e temas', 'edit_pages', 'edit-tags.php?taxonomy=ea_secao&post_type=ea_material');
     add_submenu_page('eap-portal', 'Importar conteúdo antigo', 'Importar conteúdo antigo', 'manage_options', 'eap-importar', 'eap_pagina_importar');
 });
 

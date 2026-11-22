@@ -4,14 +4,14 @@ if (!defined('ABSPATH')) exit;
 require get_stylesheet_directory() . '/templates-materiais.php';
 add_action('eapt_antes_materiais', function () {
     $posts = post_type_exists('ea_post') ? get_posts(['post_type' => 'ea_post', 'numberposts' => 24, 'orderby' => ['menu_order' => 'ASC', 'date' => 'DESC']]) : [];
-    if (!$posts) return;
+    if (!$posts || !eapt_visivel('posts-marketing')) return;
     echo '<div class="eap-sec-tit"><h2>Posts prontos para suas redes</h2><span>Clique para ver, copiar a legenda e baixar</span></div><div class="eap-posts">';
     foreach ($posts as $p) {
         $img = eapt_thumb_url($p->ID, 'large');
         $full = eapt_thumb_url($p->ID, 'full');
         if (!$img) continue;
-        echo '<button type="button" class="eap-post-card" data-eap-post data-img="' . esc_url($full) . '" data-titulo="' . esc_attr(get_the_title($p)) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">';
-        echo '<img src="' . esc_url($img) . '" alt="' . esc_attr(get_the_title($p)) . '" loading="lazy"></button>';
+        echo '<div role="button" tabindex="0" class="eap-post-card" data-eap-post data-img="' . esc_url($full) . '" data-titulo="' . esc_attr(get_the_title($p)) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">';
+        echo '<img src="' . esc_url($img) . '" alt="' . esc_attr(get_the_title($p)) . '" loading="lazy"></div>';
     }
     echo '</div>';
     echo '<div class="eap-modal" data-eap-modal hidden><div class="eap-modal__caixa"><button type="button" class="eap-modal__x" data-eap-fechar aria-label="Fechar">×</button>'

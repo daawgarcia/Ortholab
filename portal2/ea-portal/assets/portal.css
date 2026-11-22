@@ -368,3 +368,37 @@ body.eap input.eap-busca { padding-left: 38px !important; height: auto !importan
   .eap-modal__caixa { grid-template-columns: 1fr; overflow: auto; }
   .eap-modal__caixa img { max-height: 50vh; }
 }
+
+/* ---------------------------------------------------------------- ajustes 22/11 */
+/* Powered by AI: os dois cartões em laranja */
+.eap-ia__tag { background: linear-gradient(90deg, #f08a1c, #f6b04a) !important; color: #fff !important; box-shadow: 0 6px 16px rgba(240, 138, 28, .3); }
+.eap-ia__tag span { background: #fff !important; box-shadow: 0 0 0 4px rgba(255, 255, 255, .35) !important; }
+.eap-ia__card, .eap-ia__card--air { background: linear-gradient(135deg, #fff8ee 0%, #ffffff 70%) !important; border: 1px solid #f8d9ad !important; }
+.eap-ia__card::before, .eap-ia__card--air::before { background: linear-gradient(180deg, #f08a1c, #f6b04a) !important; width: 5px; }
+.eap-ia__card .eap-ia__ic, .eap-ia__card--air .eap-ia__ic { background: #ffe9cc !important; color: #e07a0b !important; }
+.eap-ia__card .eap-seta { color: #e07a0b !important; }
+.eap-ia__card:hover { border-color: #f2b867 !important; }
+.eap-ia__grid--um { grid-template-columns: 1fr !important; }
+
+/* Marketing: posts quadrados, sem corte */
+body.eap .eap-post-card { display: block; border-radius: 14px !important; aspect-ratio: 1 / 1; overflow: hidden; background: #eef2f8; cursor: zoom-in; }
+body.eap .eap-post-card img { border-radius: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover; }
+body.eap .eap-post-card:focus-visible { outline: 3px solid var(--eap-azul); outline-offset: 2px; }
+
+/* Materiais por tema */
+.eap-mat-topo { display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+.eap-mat-topo .eap-busca { max-width: 420px; margin: 0 !important; }
+.eap-mat-grupo { margin-bottom: 26px; }
+.eap-mat-grupo__tit { font-family: 'Montserrat', sans-serif; font-size: 17px !important; color: var(--eap-navy) !important; margin: 0 0 12px !important; padding-bottom: 8px; border-bottom: 2px solid #e8eef8; display: flex; align-items: center; gap: 8px; }
+.eap-mat-grupo__tit small { font-size: 12px; font-weight: 700; color: var(--eap-azul); background: #e8f0fe; border-radius: 99px; padding: 2px 8px; }
+
+/* Busca (FAQ, materiais, clube): não estoura o cartão */
+body.eap input.eap-busca { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; min-width: 0 !important; margin-left: 0 !important; margin-right: 0 !important; float: none !important; -webkit-appearance: none; appearance: none; line-height: 1.4 !important; }
+body.eap .eap-suporte__faq { min-width: 0; overflow: hidden; }
+
+/* Responsivo */
+@media (max-width: 820px) {
+  .eap-mat-topo .eap-busca { max-width: none; }
+  .eap-filtros { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .eap-filtros button { flex: none; }
+}
