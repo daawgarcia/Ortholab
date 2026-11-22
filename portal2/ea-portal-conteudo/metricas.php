@@ -126,7 +126,8 @@ add_action('admin_post_eap_met_csv', 'eap_met_csv_inativos');
 function eap_resultados_pagina() {
     global $wpdb;
     $t = eap_met_tabela();
-    $dias = in_array((int) ($_GET['dias'] ?? 30), [7, 30, 90], true) ? (int) $_GET['dias'] : 30;
+    $dias = (int) ($_GET['dias'] ?? 30);
+    if (!in_array($dias, [7, 30, 90], true)) $dias = 30;
     $equipe = !empty($_GET['equipe']);
     $desde = wp_date('Y-m-d 00:00:00', time() - ($dias - 1) * DAY_IN_SECONDS);
     $f = $wpdb->prepare('quando >= %s', $desde) . ($equipe ? '' : ' AND equipe = 0');
@@ -160,7 +161,7 @@ function eap_resultados_pagina() {
     $por_dia = $wpdb->get_results("SELECT DATE(quando) d, COUNT(DISTINCT user_id) n FROM $t WHERE tipo = 'acesso' AND $f GROUP BY DATE(quando)", OBJECT_K);
     $serie = [];
     for ($i = $dias - 1; $i >= 0; $i--) { $d = wp_date('Y-m-d', $agora - $i * DAY_IN_SECONDS); $serie[$d] = isset($por_dia[$d]) ? (int) $por_dia[$d]->n : 0; }
-    $max = max(1, max($serie));
+    $max = max(1, ...array_values($serie ?: [0]));
 
     $paginas = $wpdb->get_results("SELECT extra, COUNT(*) n FROM $t WHERE tipo = 'pagina' AND $f GROUP BY extra ORDER BY n DESC LIMIT 8");
     $nomes_pag = ['area-do-credenciado' => 'Início', 'video-aulas' => 'Vídeo aulas', 'downloads' => 'Downloads', 'marketing' => 'Marketing', 'suporte' => 'Suporte', 'eaclub' => 'Clube de vantagens', 'simulador-de-estimativa-e-pacote' => 'Estimativa e pacote (IA)', 'indicacao-de-uso-ea-air' => 'Prognóstico EA AIR (IA)', 'confirmar-dados' => 'Confirmar dados'];
