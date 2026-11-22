@@ -21,7 +21,9 @@
   function gravarFeitas(l, sinc) {
     try { localStorage.setItem(CH, JSON.stringify(l)); } catch (e) { /* sem armazenamento */ }
     var S = window.EAP_FEITAS;
-    if (S && sinc !== false) { var f = new FormData(); f.append('action', 'eap_feitas'); f.append('_n', S.n); f.append('ids', l.join(',')); fetch(S.u, { method: 'POST', body: f, credentials: 'same-origin' }).catch(function () {}); }
+    if (S && sinc !== false) { var f = new FormData(); f.append('action', 'eap_feitas'); f.append('_n', S.n); f.append('ids', l.join(',')); fetch(S.u, { method: 'POST', body: f, credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.data && j.data.curso) { document.querySelectorAll('[data-eap-cert-faixa]').forEach(function (x) { x.hidden = false; }); if (j.data.novo && window.eapCertAbrir) window.eapCertAbrir(true); }
+    }).catch(function () {}); }
   }
   (function () {
     var S = window.EAP_FEITAS; if (!S) return;

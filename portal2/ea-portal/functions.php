@@ -21,6 +21,7 @@ add_action('wp_enqueue_scripts', function () {
     $dir = get_stylesheet_directory();
     wp_enqueue_style('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.css', [], (string) filemtime($dir . '/assets/portal.css'));
     wp_enqueue_script('eapt-portal', get_stylesheet_directory_uri() . '/assets/portal.js', [], (string) filemtime($dir . '/assets/portal.js'), true);
+    if (is_user_logged_in()) wp_enqueue_script('eapt-ferramentas', get_stylesheet_directory_uri() . '/assets/eap-ferramentas.js', [], (string) filemtime($dir . '/assets/eap-ferramentas.js'), true);
     if (is_user_logged_in() && function_exists('eap_aulas_feitas')) {
         wp_add_inline_script('eapt-portal', 'window.EAP_FEITAS=' . wp_json_encode(['ids' => array_map('strval', eap_aulas_feitas()), 'u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_feitas')]) . ';', 'before');
     }
@@ -466,3 +467,56 @@ add_action('wp_footer', function () {
     })();</script>
     <?php
 }, 55);
+
+
+/* ------------------------------------------------------------------ certificado do Curso do Credenciado */
+function eapt_cert_faixa($classe = '') {
+    if (!function_exists('eap_curso_concluido')) return;
+    $ok = eap_curso_concluido();
+    echo '<div class="eap-cert-faixa ' . esc_attr($classe) . '" data-eap-cert-faixa' . ($ok ? '' : ' hidden') . '><span class="eap-cert-faixa__ic">🎓</span>'
+        . '<span class="eap-cert-faixa__txt"><strong>Parabéns! Você concluiu o Curso do Credenciado.</strong><em>Seu certificado está pronto para baixar.</em></span>'
+        . '<button type="button" class="eap-btn eap-btn--cheio" data-eap-cert-abrir>Baixar certificado</button></div>';
+}
+add_action('wp_footer', function () {
+    if (!is_user_logged_in() || !function_exists('eap_nome_certificado') || !(is_page('video-aulas') || is_page('area-do-credenciado'))) return;
+    $cfg = ['tpl' => get_stylesheet_directory_uri() . '/assets/certificado.jpg', 'fonte' => 'https://fonts.gstatic.com/s/alexbrush/v23/SZc83FzrJKuqFbwMKk6EhUXz7Q.woff2'];
+    ?>
+    <div class="eap-modal eap-cert-modal" data-eap-cert-modal hidden><div class="eap-modal__caixa">
+      <button type="button" class="eap-modal__x" data-eap-cert-x aria-label="Fechar">×</button>
+      <div class="eap-cert-modal__ic">🎓</div>
+      <strong class="eap-cert-modal__tit" data-eap-cert-tit>Certificado do Curso do Credenciado</strong>
+      <p>Confira seu nome <b>exatamente como deve aparecer</b> no certificado (nome completo, com acentos).</p>
+      <label class="eap-cert-modal__campo"><span>Nome no certificado</span><input type="text" maxlength="80" data-eap-cert-nome value="<?php echo esc_attr(eap_nome_certificado()); ?>" autocomplete="name"></label>
+      <p class="eap-cert-modal__erro" data-eap-cert-erro hidden></p>
+      <button type="button" class="eap-btn eap-btn--cheio eap-cert-modal__bt" data-eap-cert-gerar>Gerar certificado (PDF)</button>
+      <small>A data é a do dia em que você concluiu as aulas. Se precisar, você pode gerar de novo quando quiser.</small>
+    </div></div>
+    <script>(function(){
+      var C=<?php echo wp_json_encode($cfg); ?>, m=document.querySelector('[data-eap-cert-modal]'), inp=m.querySelector('[data-eap-cert-nome]'),
+          bt=m.querySelector('[data-eap-cert-gerar]'), err=m.querySelector('[data-eap-cert-erro]'), tit=m.querySelector('[data-eap-cert-tit]');
+      function abrir(festa){tit.textContent=festa?'Parabéns! Você concluiu o curso 🎉':'Certificado do Curso do Credenciado';err.hidden=true;m.hidden=false;document.body.style.overflow='hidden';setTimeout(function(){inp.focus();},50);}
+      function fechar(){m.hidden=true;document.body.style.overflow='';}
+      window.eapCertAbrir=abrir;
+      document.addEventListener('click',function(e){if(e.target.closest('[data-eap-cert-abrir]'))abrir(false);});
+      m.addEventListener('click',function(e){if(e.target===m||e.target.hasAttribute('data-eap-cert-x'))fechar();});
+      function erro(t){err.textContent=t;err.hidden=false;bt.disabled=false;bt.textContent='Gerar certificado (PDF)';}
+      bt.addEventListener('click',function(){
+        var nome=inp.value.trim().replace(/\s+/g,' ');
+        if(nome.split(' ').length<2||nome.length<5){erro('Digite seu nome completo.');return;}
+        bt.disabled=true;bt.textContent='Gerando…';
+        var S=window.EAP_FEITAS,f=new FormData();f.append('action','eap_certificado');f.append('_n',S.n);f.append('nome',nome);
+        fetch(S.u,{method:'POST',body:f,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+          if(!j.success){erro(j.data==='incompleto'?'Marque todas as aulas do Curso do Credenciado como assistidas para liberar o certificado.':'Não foi possível gerar agora. Tente de novo.');return;}
+          return Promise.all([EAPF.img(C.tpl),EAPF.fonte('Alex Brush',C.fonte)]).then(function(r){
+            var im=r[0],c=document.createElement('canvas');c.width=im.width;c.height=im.height;var x=c.getContext('2d'),k=im.width/842;
+            x.drawImage(im,0,0);x.fillStyle='#1f3b6e';x.textAlign='center';x.textBaseline='alphabetic';
+            EAPF.textoCabe(x,j.data.nome,421*k,285*k,440*k,Math.round(44*k),'"Alex Brush", cursive');
+            EAPF.textoCabe(x,j.data.data,581*k,481*k,215*k,Math.round(25*k),'"Alex Brush", cursive');
+            EAPF.baixar(EAPF.pdf([c],842,595),'Certificado Esthetic Aligner - '+j.data.nome+'.pdf');
+            bt.disabled=false;bt.textContent='Baixar de novo';
+          });
+        }).catch(function(){erro('Não foi possível gerar agora. Tente de novo.');});
+      });
+    })();</script>
+    <?php
+}, 56);

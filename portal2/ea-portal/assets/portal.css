@@ -526,3 +526,23 @@ body.eap .eap-aviso-faixa__txt, body.eap .eap-aviso-faixa__txt strong { font-siz
 .eap-app-passos li.eap-app-dica::before { display: none; }
 .eap-app-instalar { width: 100%; margin-top: 6px; text-align: center; }
 @media (min-width: 900px) { .eap-app-faixa { display: none !important; } }
+
+/* certificado */
+.eap-cert-faixa { display: flex; align-items: center; gap: 14px; background: linear-gradient(120deg, #fff8ec, #fff); border: 1px solid #f6d9a8; border-radius: var(--eap-raio); padding: 14px 18px; margin: 22px 0 0; }
+.eap-cert-faixa[hidden] { display: none; }
+.eap-cert-faixa__ic { font-size: 30px; line-height: 1; }
+.eap-cert-faixa__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.eap-cert-faixa__txt strong { font-size: 15.5px; }
+.eap-cert-faixa__txt em { font-style: normal; color: var(--eap-txt-2); font-size: 13.5px; }
+.eap-cert-faixa--aulas { margin: 22px 0 -6px; }
+@media (max-width: 640px) { .eap-cert-faixa { flex-wrap: wrap; } .eap-cert-faixa .eap-btn { width: 100%; text-align: center; } }
+.eap-cert-modal .eap-modal__caixa { display: block; max-width: 440px; padding: 30px 26px 24px; text-align: center; overflow: auto; }
+.eap-cert-modal__ic { font-size: 42px; }
+.eap-cert-modal__tit { display: block; font-size: 20px; margin: 6px 0 8px; }
+.eap-cert-modal p { color: var(--eap-txt-2); font-size: 14px; margin: 0 0 14px; }
+.eap-cert-modal__campo { display: block; text-align: left; margin-bottom: 12px; }
+.eap-cert-modal__campo span { display: block; font-size: 12.5px; font-weight: 700; color: var(--eap-txt-2); margin-bottom: 5px; }
+.eap-cert-modal__campo input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--eap-linha); border-radius: 10px; font-size: 16px; }
+.eap-cert-modal__erro { color: #c0392b !important; }
+.eap-cert-modal__bt { width: 100%; text-align: center; margin-bottom: 10px; }
+.eap-cert-modal small { color: #8a93a3; font-size: 12px; }

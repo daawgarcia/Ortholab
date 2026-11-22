@@ -93,8 +93,11 @@ add_action('wp_ajax_eap_feitas', function () {
     if (!check_ajax_referer('eap_feitas', '_n', false)) wp_die('', 403);
     $ids = array_filter(array_map('intval', explode(',', (string) ($_POST['ids'] ?? ''))));
     $ids = array_values(array_filter(array_unique($ids), fn($id) => get_post_type($id) === 'ea_aula'));
-    update_user_meta(get_current_user_id(), 'eap_aulas_feitas', array_slice($ids, 0, 2000));
-    wp_send_json_success(count($ids));
+    $uid = get_current_user_id();
+    $antes = (string) get_user_meta($uid, 'eap_curso_concluido_em', true);
+    update_user_meta($uid, 'eap_aulas_feitas', array_slice($ids, 0, 2000));
+    $agora = function_exists('eap_curso_concluido') ? eap_curso_concluido($uid) : '';
+    wp_send_json_success(['n' => count($ids), 'curso' => (bool) $agora, 'novo' => $agora && !$antes]);
 });
 
 /* ------------------------------------------------------------------ painel */

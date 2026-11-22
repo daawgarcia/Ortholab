@@ -22,6 +22,7 @@ $link = fn($a) => add_query_arg('aula', $a->ID, get_permalink());
 <?php if (!$atual) : ?>
   <section class="eap-conteudo"><div class="eap-wrap"><div class="eap-vazio">Ainda não há aulas cadastradas.<?php if (current_user_can('edit_pages')) echo ' <a href="' . esc_url(admin_url('admin.php?page=eap-importar')) . '">Importar as aulas do portal antigo</a>.'; ?></div></div></section>
 <?php else : ?>
+<div class="eap-wrap"><?php eapt_cert_faixa('eap-cert-faixa--aulas'); ?></div>
 <section class="eap-wrap eap-curso" data-eap-curso>
   <div class="eap-curso__player">
     <div class="eap-video"><?php echo eap_video_embed(get_post_meta($atual->ID, '_eap_video', true)); ?></div>
