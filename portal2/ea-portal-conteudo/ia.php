@@ -386,7 +386,8 @@ function eap_ia_pagina() {
             var n=au.length,mono=new Float32Array(n);for(var c=0;c<au.numberOfChannels;c++){var d=au.getChannelData(c);for(var i=0;i<n;i++)mono[i]+=d[i]/au.numberOfChannels;}ctx.close();
             var passo=SR*600,total=Math.ceil(n/passo);
             for(var k=0;k<total;k++){m.textContent='Transcrevendo “'+a.titulo+'”: parte '+(k+1)+' de '+total+'…';
-              var j=await post({action:'eap_ia_transc_parte',id:a.id,parte:k,total:total,audio:wav(mono.subarray(k*passo,Math.min(n,(k+1)*passo)),SR)});
+              var pedaco=wav(mono.subarray(k*passo,Math.min(n,(k+1)*passo)),SR),j=null;
+              for(var t=0;t<3;t++){try{j=await post({action:'eap_ia_transc_parte',id:a.id,parte:k,total:total,audio:pedaco});}catch(e){j={success:false,data:'conexão'};}if(j.success)break;await new Promise(function(r){setTimeout(r,4000);});}
               if(!j.success)throw new Error(j.data);if(j.data.fim)log(a.titulo+': ✓ '+j.data.palavras+' palavras ('+total+' partes)');}
           }
           b.addEventListener('click',async function(){b.disabled=true;try{var l=await post({action:'eap_ia_grandes'});if(!l.success)throw new Error(l.data);
