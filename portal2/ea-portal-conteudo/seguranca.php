@@ -214,6 +214,6 @@ add_action('wp_login', function ($login) {
 }, 10, 1);
 // mesma mensagem para usuário inexistente e senha errada (não revela quem tem cadastro)
 add_filter('login_errors', function ($msg) {
-    if (strpos($msg, 'Acesso pausado') !== false) return $msg;
+    if (strpos($msg, 'Acesso pausado') !== false || ($_REQUEST['action'] ?? 'login') !== 'login') return $msg;
     return '<strong>Erro:</strong> e-mail ou senha incorretos.';
 });
