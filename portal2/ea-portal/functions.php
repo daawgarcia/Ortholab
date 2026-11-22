@@ -46,13 +46,14 @@ add_action('template_redirect', function () {
 }, 1);
 
 // login com erro volta para a tela de login do portal (e não para o wp-login padrão)
-add_action('wp_login_failed', function () {
+add_action('wp_login_failed', function ($username = '', $erro = null) {
     $ref = wp_get_referer();
     if ($ref && strpos($ref, 'wp-login') === false && strpos($ref, 'wp-admin') === false) {
-        wp_safe_redirect(add_query_arg('login', 'erro', remove_query_arg('login', $ref)));
+        $tipo = (is_wp_error($erro) && $erro->get_error_code() === 'eap_bloqueado') ? 'bloqueado' : 'erro';
+        wp_safe_redirect(add_query_arg('login', $tipo, remove_query_arg('login', $ref)));
         exit;
     }
-});
+}, 10, 2);
 add_filter('authenticate', function ($user, $username, $password) {
     if (isset($_POST['eapt_login']) && (empty($username) || empty($password))) {
         wp_safe_redirect(add_query_arg('login', 'vazio', home_url('/')));
@@ -256,3 +257,51 @@ function eapt_card_destaque($p) {
             return;
     }
 }
+
+
+/* ------------------------------------------------------------------ telas de senha (wp-login.php) com a cara do portal */
+add_action('login_enqueue_scripts', function () {
+    wp_enqueue_style('eapt-fontes', 'https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap', [], null);
+    $logo = esc_url(EAPT_LOGO);
+    echo '<style>
+    body.login{background:linear-gradient(135deg,#0d1f42 0%,#16305f 45%,#2f6fe4 100%) fixed!important;font-family:"Open Sans",system-ui,sans-serif;color:#1b2433;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    body.login #login{width:min(420px,92vw);padding:0;margin:0 auto}
+    body.login h1 a{background:url(' . $logo . ') no-repeat center/contain!important;width:220px!important;height:64px!important;margin:0 auto 18px!important;filter:brightness(0) invert(1)}
+    body.login form{background:#fff!important;border:0!important;border-radius:18px!important;box-shadow:0 24px 60px rgba(0,0,0,.25)!important;padding:28px 26px!important;margin-top:0!important}
+    body.login label{font-weight:600;color:#0d1f42;font-size:14px}
+    body.login input[type=text],body.login input[type=email],body.login input[type=password]{border:1.5px solid #e4e8f0!important;border-radius:12px!important;padding:10px 13px!important;font-size:16px!important;box-shadow:none!important;background:#fafbfd!important;min-height:46px}
+    body.login input:focus{border-color:#2f6fe4!important;box-shadow:0 0 0 3px rgba(47,111,228,.15)!important}
+    body.login .button-primary{background:linear-gradient(120deg,#2f6fe4,#3fa2f2)!important;border:0!important;border-radius:999px!important;padding:8px 22px!important;min-height:44px!important;font-weight:700!important;font-family:Montserrat,sans-serif;text-shadow:none!important;box-shadow:0 6px 16px rgba(47,111,228,.3)!important;float:none!important;width:100%;margin-top:6px!important}
+    body.login .message,body.login .notice,body.login #login_error{border-radius:12px!important;border-left-width:4px!important;box-shadow:0 8px 20px rgba(0,0,0,.12)!important;font-size:14px}
+    body.login #nav,body.login #backtoblog{text-align:center;padding:0!important;margin:14px 0 0!important}
+    body.login #nav a,body.login #backtoblog a{color:#fff!important;font-weight:600;font-size:14px;opacity:.9}
+    body.login #nav a:hover,body.login #backtoblog a:hover{opacity:1;text-decoration:underline}
+    body.login .language-switcher,body.login .privacy-policy-page-link{display:none}
+    body.login .eapt-login-tit{font-family:Montserrat,sans-serif;color:#fff;text-align:center;font-size:20px;margin:0 0 6px}
+    body.login .eapt-login-sub{color:rgba(255,255,255,.8);text-align:center;font-size:14px;margin:0 0 18px}
+    body.login .reset-pass-submit{display:flex;flex-direction:column;gap:8px}
+    body.login .reset-pass-submit .button{width:100%;margin:0!important}
+    body.login .wp-pwd .button.wp-hide-pw{border-radius:10px;height:44px}
+    </style>';
+});
+add_filter('login_headerurl', fn() => home_url('/'));
+add_filter('login_headertext', fn() => 'Esthetic Aligner – Portal do Credenciado');
+add_filter('login_title', function ($titulo) {
+    $acao = $_REQUEST['action'] ?? '';
+    $nomes = ['lostpassword' => 'Esqueci minha senha', 'retrievepassword' => 'Esqueci minha senha', 'rp' => 'Nova senha', 'resetpass' => 'Nova senha'];
+    return ($nomes[$acao] ?? 'Entrar') . ' · Portal do Credenciado';
+});
+add_filter('login_message', function ($msg) {
+    $acao = $_REQUEST['action'] ?? 'login';
+    if (in_array($acao, ['lostpassword', 'retrievepassword'], true) && empty($_GET['checkemail'])) {
+        return '<p class="eapt-login-tit">Esqueci minha senha</p><p class="eapt-login-sub">Digite o e-mail do seu cadastro. Vamos enviar um link para você criar uma nova senha.</p>';
+    }
+    if (in_array($acao, ['rp', 'resetpass'], true)) {
+        return '<p class="eapt-login-tit">Crie sua nova senha</p><p class="eapt-login-sub">Use pelo menos 8 caracteres, misturando letras e números.</p>';
+    }
+    return $msg;
+});
+// "Voltar" leva ao login do portal, não ao site
+add_filter('login_site_html_link', fn() => '<a href="' . esc_url(home_url('/')) . '">← Voltar para o login do portal</a>');
+// depois de pedir o link, volta para a tela de login do portal com aviso
+add_filter('lostpassword_redirect', fn() => add_query_arg('login', 'link-enviado', home_url('/')));

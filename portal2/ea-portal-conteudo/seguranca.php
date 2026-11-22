@@ -171,3 +171,49 @@ function eap_seg_pagina() {
     </div>
     <?php
 }
+
+// ------------------------------------------------------------ limite de tentativas de login
+// 5 senhas erradas para o mesmo usuário em 15 min → pausa de 15 min; 20 erros do mesmo IP → pausa de 30 min.
+function eap_seg_ip() {
+    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $h) {
+        if (!empty($_SERVER[$h])) {
+            $ip = trim(explode(',', (string) $_SERVER[$h])[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+        }
+    }
+    return '0.0.0.0';
+}
+function eap_seg_chaves($username) {
+    $u = strtolower(trim((string) $username));
+    return ['u' => 'eap_lg_u_' . md5($u), 'i' => 'eap_lg_i_' . md5(eap_seg_ip())];
+}
+function eap_seg_bloqueado($username) {
+    $k = eap_seg_chaves($username);
+    return get_transient($k['u'] . '_b') || get_transient($k['i'] . '_b');
+}
+add_filter('authenticate', function ($user, $username, $password) {
+    if ($username !== '' && $username !== null && eap_seg_bloqueado($username)) {
+        return new WP_Error('eap_bloqueado', '<strong>Acesso pausado:</strong> muitas tentativas com senha errada. Tente de novo em 15 minutos ou use “Esqueci minha senha”.');
+    }
+    return $user;
+}, 99, 3);
+add_action('wp_login_failed', function ($username, $erro = null) {
+    if (is_wp_error($erro) && $erro->get_error_code() === 'eap_bloqueado') return;
+    $k = eap_seg_chaves($username);
+    $nu = (int) get_transient($k['u']) + 1;
+    $ni = (int) get_transient($k['i']) + 1;
+    set_transient($k['u'], $nu, 15 * MINUTE_IN_SECONDS);
+    set_transient($k['i'], $ni, 15 * MINUTE_IN_SECONDS);
+    if ($nu >= 5) set_transient($k['u'] . '_b', 1, 15 * MINUTE_IN_SECONDS);
+    if ($ni >= 20) set_transient($k['i'] . '_b', 1, 30 * MINUTE_IN_SECONDS);
+    if ($nu === 5 || $ni === 20) error_log('[EA Portal] login pausado: ' . sanitize_user($username) . ' / ' . eap_seg_ip());
+}, 5, 2);
+add_action('wp_login', function ($login) {
+    $k = eap_seg_chaves($login);
+    delete_transient($k['u']);
+}, 10, 1);
+// mesma mensagem para usuário inexistente e senha errada (não revela quem tem cadastro)
+add_filter('login_errors', function ($msg) {
+    if (strpos($msg, 'Acesso pausado') !== false) return $msg;
+    return '<strong>Erro:</strong> e-mail ou senha incorretos.';
+});
