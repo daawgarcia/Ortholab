@@ -19,6 +19,7 @@ require_once __DIR__ . '/destaques.php';
 require_once __DIR__ . '/avisos.php';
 require_once __DIR__ . '/seguranca.php';
 require_once __DIR__ . '/estimativa.php';
+require_once __DIR__ . '/metricas.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {

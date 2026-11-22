@@ -239,23 +239,23 @@ function eapt_card_destaque($p) {
         case 'ea_post':
             $img = eapt_thumb_url($p->ID, 'large'); $full = eapt_thumb_url($p->ID, 'full');
             if (!$img) return;
-            echo '<div role="button" tabindex="0" class="eap-dcard eap-dcard--post" data-eap-post data-img="' . esc_url($full) . '" data-titulo="' . esc_attr($tit) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">'
-                . '<span class="eap-dcard__capa" style="background-image:url(' . esc_url($img) . ')"></span>'
+            echo '<div role="button" tabindex="0" class="eap-dcard eap-dcard--post" data-eap-post data-id="' . (int) $p->ID . '" data-img="' . esc_url($full) . '" data-titulo="' . esc_attr($tit) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">'
+                . '<span class="eap-dcard__capa" style="background-image:url(' . esc_url($img) . ')">' . eapt_novo($p, 'eap-novo--canto') . '</span>'
                 . '<strong>' . esc_html($tit) . '</strong><em>Post para redes · ver e baixar</em></div>';
             return;
         case 'ea_aula':
             $capa = function_exists('eap_video_capa') ? eap_video_capa($p->ID) : '';
             $t = get_the_terms($p, 'ea_trilha');
             echo '<a class="eap-dcard eap-dcard--aula" href="' . esc_url(add_query_arg('aula', $p->ID, home_url('/video-aulas/'))) . '">'
-                . '<span class="eap-dcard__capa"' . ($capa ? ' style="background-image:url(' . esc_url($capa) . ')"' : '') . '><i>▶</i></span>'
+                . '<span class="eap-dcard__capa"' . ($capa ? ' style="background-image:url(' . esc_url($capa) . ')"' : '') . '><i>▶</i>' . eapt_novo($p, 'eap-novo--canto') . '</span>'
                 . '<strong>' . esc_html($tit) . '</strong><em>' . esc_html(($t && !is_wp_error($t)) ? $t[0]->name : 'Vídeo aula') . '</em></a>';
             return;
         case 'ea_material':
             $url = get_post_meta($p->ID, '_eap_arquivo', true);
             $ext = strtoupper(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION)) ?: 'LINK';
             if (strlen($ext) > 4) $ext = 'LINK';
-            echo '<a class="eap-dcard eap-dcard--mat" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
-                . '<span class="eap-dcard__capa"><b class="eap-material__tipo eap-tipo-' . esc_attr(strtolower($ext)) . '">' . esc_html($ext) . '</b></span>'
+            echo '<a class="eap-dcard eap-dcard--mat" href="' . esc_url($url) . '" target="_blank" rel="noopener" data-eap-mat="' . (int) $p->ID . '">'
+                . '<span class="eap-dcard__capa"><b class="eap-material__tipo eap-tipo-' . esc_attr(strtolower($ext)) . '">' . esc_html($ext) . '</b>' . eapt_novo($p, 'eap-novo--canto') . '</span>'
                 . '<strong>' . esc_html($tit) . '</strong><em>Material para baixar</em></a>';
             return;
         case 'ea_parceiro':
@@ -315,3 +315,38 @@ add_filter('login_message', function ($msg) {
 add_filter('login_site_html_link', fn() => '<a href="' . esc_url(home_url('/')) . '">← Voltar para o login do portal</a>');
 // depois de pedir o link, volta para a tela de login do portal com aviso
 add_filter('lostpassword_redirect', fn() => add_query_arg('login', 'link-enviado', home_url('/')));
+
+
+/** Selo "Novo": itens publicados nos últimos 15 dias (só o que entrou depois da estreia do portal). */
+function eapt_novo($p, $classe = '') {
+    $p = get_post($p);
+    if (!$p) return '';
+    $data = strtotime($p->post_date_gmt . ' UTC');
+    $desde = max(time() - 15 * DAY_IN_SECONDS, (int) get_option('eap_novo_desde', time()));
+    return $data >= $desde ? '<span class="eap-novo ' . esc_attr($classe) . '">Novo</span>' : '';
+}
+
+/** Última aula aberta pelo dentista, para o "Continue assistindo" do início. */
+function eapt_ultima_aula() {
+    $id = (int) get_user_meta(get_current_user_id(), 'eap_ultima_aula', true);
+    $a = $id ? get_post($id) : null;
+    return ($a && $a->post_type === 'ea_aula' && $a->post_status === 'publish' && empty(get_post_meta($a->ID, '_eap_oculto', true))) ? $a : null;
+}
+
+/** Botão flutuante de WhatsApp com os canais do suporte e a mensagem já com nome e CRO. */
+add_action('wp_footer', function () {
+    if (!is_user_logged_in() || is_admin() || !eapt_visivel('whats') || !function_exists('eap_suporte_cfg') || eapt_pagina_livre()) return;
+    $canais = array_values(array_filter(eap_suporte_cfg()['canais'], fn($c) => !empty($c['whats'])));
+    if (!$canais) return;
+    $u = wp_get_current_user();
+    $nome = trim($u->first_name . ' ' . $u->last_name) ?: $u->display_name;
+    $cro = function_exists('eap_dado_atual') ? eap_dado_atual($u->ID, 'cro') : '';
+    $ic = '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path fill="#fff" d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.2.6 4.4 1.7 6.3L3.2 29l7.3-1.9c1.8 1 3.9 1.5 5.9 1.5h.1c7 0 12.7-5.7 12.7-12.6S23 3 16 3zm0 23.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-4.3 1.1 1.2-4.2-.3-.4a10.4 10.4 0 0 1-1.6-5.6C5.2 9.8 10 5.1 16 5.1c5.8 0 10.6 4.7 10.6 10.5S21.8 26.1 16 26.1zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.4c.2.2 2.4 3.6 5.7 5 .8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>';
+    echo '<div class="eap-whats" data-eap-whats-box><div class="eap-whats__painel" hidden><div class="eap-whats__topo"><strong>Fale com a Esthetic Aligner</strong><span>Escolha o assunto. A mensagem já vai com seu nome e CRO.</span></div>';
+    foreach ($canais as $c) {
+        $msg = 'Olá! Sou ' . $nome . ($cro ? ' (CRO ' . $cro . ')' : '') . ', credenciado(a) Esthetic Aligner. Falo pelo Portal do Credenciado sobre ' . mb_strtolower($c['titulo']) . ': ';
+        echo '<a href="' . esc_url(eap_whats_link($c['whats']) . '?text=' . rawurlencode($msg)) . '" target="_blank" rel="noopener" data-eap-whats="' . esc_attr($c['titulo']) . '"><b>' . esc_html($c['titulo']) . '</b><em>' . esc_html($c['texto']) . '</em></a>';
+    }
+    echo '</div><button type="button" class="eap-whats__bt" aria-label="Falar no WhatsApp" data-eap-whats-bt>' . $ic . '<span>Precisa de ajuda?</span></button></div>';
+    echo "<script>(function(){var b=document.querySelector('[data-eap-whats-bt]'),p=document.querySelector('.eap-whats__painel');if(!b)return;b.addEventListener('click',function(e){e.stopPropagation();p.hidden=!p.hidden;});document.addEventListener('click',function(e){if(!e.target.closest('[data-eap-whats-box]'))p.hidden=true;});})();</script>";
+}, 60);

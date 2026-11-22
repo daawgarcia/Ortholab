@@ -10,8 +10,8 @@ add_action('eapt_antes_materiais', function () {
         $img = eapt_thumb_url($p->ID, 'large');
         $full = eapt_thumb_url($p->ID, 'full');
         if (!$img) continue;
-        echo '<div role="button" tabindex="0" class="eap-post-card" data-eap-post data-img="' . esc_url($full) . '" data-titulo="' . esc_attr(get_the_title($p)) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">';
-        echo '<img src="' . esc_url($img) . '" alt="' . esc_attr(get_the_title($p)) . '" loading="lazy"></div>';
+        echo '<div role="button" tabindex="0" class="eap-post-card" data-eap-post data-id="' . (int) $p->ID . '" data-img="' . esc_url($full) . '" data-titulo="' . esc_attr(get_the_title($p)) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">';
+        echo eapt_novo($p, 'eap-novo--canto') . '<img src="' . esc_url($img) . '" alt="' . esc_attr(get_the_title($p)) . '" loading="lazy"></div>';
     }
     echo '</div>';
     eapt_modal_post();

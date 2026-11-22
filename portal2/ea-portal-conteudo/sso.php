@@ -106,6 +106,7 @@ add_action('template_redirect', function () {
     $dest = sanitize_key($_GET['eap_ir']);
     if (!in_array($dest, ['ortholab', 'rewards', 'enviofacil'], true)) return;
     if (!is_user_logged_in()) { wp_safe_redirect(home_url('/')); exit; }
+    if (function_exists('eap_evento')) eap_evento('sistema', 0, $dest);
     if ($dest === 'enviofacil') {
         $base = untrailingslashit(eap_sso_cfg('enviofacil'));
         $t = eap_sso_gerar(wp_get_current_user(), 'enviofacil');

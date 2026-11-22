@@ -25,6 +25,8 @@ function eap_secoes_portal() {
         'store'           => ['Esthetic Aligner Store', 'Atalho no início', ''],
         'ortholab'        => ['Ortholab', 'Menu e atalho', ''],
         'rewards'         => ['Esthetic Rewards', 'Atalho no início', ''],
+        'whats'           => ['Botão de WhatsApp do suporte', 'Botão flutuante no canto de todas as páginas', ''],
+        'continuar'       => ['Continue assistindo', 'Cartão no início com a última aula aberta', ''],
     ];
 }
 

@@ -52,9 +52,9 @@ function eapt_material_item($m) {
     $ext = strtoupper(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION)) ?: 'LINK';
     if (strlen($ext) > 4) $ext = 'LINK';
     $tam = function_exists('eap_tamanho_arquivo') ? eap_tamanho_arquivo($url) : '';
-    echo '<a class="eap-material" href="' . esc_url($url) . '" target="_blank" rel="noopener" data-eap-mat>';
+    echo '<a class="eap-material" href="' . esc_url($url) . '" target="_blank" rel="noopener" data-eap-mat="' . (int) $m->ID . '">';
     echo '<span class="eap-material__tipo eap-tipo-' . esc_attr(strtolower($ext)) . '">' . esc_html($ext) . '</span>';
-    echo '<span class="eap-material__txt"><strong>' . esc_html(get_the_title($m)) . '</strong>';
+    echo '<span class="eap-material__txt"><strong>' . esc_html(get_the_title($m)) . eapt_novo($m) . '</strong>';
     if ($m->post_excerpt || $tam) echo '<em>' . esc_html(trim($m->post_excerpt . ($m->post_excerpt && $tam ? ' · ' : '') . $tam)) . '</em>';
     echo '</span><span class="eap-material__baixar">' . eapt_icone('download') . 'Baixar</span></a>';
 }

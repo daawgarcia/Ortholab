@@ -34,6 +34,17 @@ $nome = trim($u->first_name) ?: $u->display_name;
 </section>
 <?php endif; ?>
 
+<?php $ult = (eapt_visivel('continuar') && eapt_visivel('video-aulas')) ? eapt_ultima_aula() : null; if ($ult) :
+  $capa = function_exists('eap_video_capa') ? eap_video_capa($ult->ID) : ''; $tt = get_the_terms($ult, 'ea_trilha'); ?>
+<section class="eap-wrap">
+  <a class="eap-continuar" href="<?php echo esc_url(add_query_arg('aula', $ult->ID, home_url('/video-aulas/'))); ?>">
+    <span class="eap-continuar__capa"<?php echo $capa ? ' style="background-image:url(' . esc_url($capa) . ')"' : ''; ?>><i>▶</i></span>
+    <span class="eap-continuar__txt"><small>Continue de onde parou</small><strong><?php echo esc_html(get_the_title($ult)); ?></strong><?php if ($tt && !is_wp_error($tt)) echo '<em>' . esc_html($tt[0]->name) . '</em>'; ?></span>
+    <span class="eap-btn eap-btn--cheio">Continuar →</span>
+  </a>
+</section>
+<?php endif; ?>
+
 <section class="eap-wrap eap-atalhos">
   <?php foreach (eapt_atalhos() as $a) : [$tit, $desc, $url, $ic] = $a; $ext = !empty($a[4]); ?>
     <a class="eap-atalho" href="<?php echo esc_url($url); ?>"<?php echo $ext ? ' target="_blank" rel="noopener"' : ''; ?>>

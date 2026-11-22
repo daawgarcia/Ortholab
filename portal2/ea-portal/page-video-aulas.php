@@ -46,7 +46,7 @@ $link = fn($a) => add_query_arg('aula', $a->ID, get_permalink());
         <ol>
           <?php foreach ($g['aulas'] as $a) : $dur = get_post_meta($a->ID, '_eap_duracao', true); ?>
             <li class="<?php echo $a->ID === $atual->ID ? 'is-atual' : ''; ?>" data-eap-item="<?php echo (int) $a->ID; ?>">
-              <a href="<?php echo esc_url($link($a)); ?>"><i class="eap-ok"></i><span><?php echo esc_html(get_the_title($a)); ?></span><?php echo $dur ? '<small>' . esc_html($dur) . '</small>' : ''; ?></a>
+              <a href="<?php echo esc_url($link($a)); ?>"><i class="eap-ok"></i><span><?php echo esc_html(get_the_title($a)); ?><?php echo eapt_novo($a); ?></span><?php echo $dur ? '<small>' . esc_html($dur) . '</small>' : ''; ?></a>
             </li>
           <?php endforeach; ?>
         </ol>
