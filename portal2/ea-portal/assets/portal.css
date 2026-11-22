@@ -685,3 +685,16 @@ body:has(.eap-nps:not([hidden])) .eap-ia-bt { visibility: hidden; }       /* pai
 body:has(.eap-ia-chat:not([hidden])) .eap-whats,
 body:has(.eap-ia-chat:not([hidden])) .eap-nps,
 body:has(.eap-ia-chat:not([hidden])) .eap-orc-fixo { visibility: hidden; } /* chat do Assistente aberto: limpa o canto */
+
+/* menu do topo cabe em notebooks (1081 a 1500 px) */
+.eap-topo .eap-wrap { max-width: 1360px; }
+@media (max-width: 1500px) {
+  body.eap .eap-logo span { display: none; }
+  .eap-nav a { padding: 8px 10px; }
+  .eap-nav__sair span { display: none; }
+}
+@media (max-width: 1280px) {
+  .eap-nav a { padding: 7px 8px; font-size: 13.5px; }
+  .eap-nav__pac svg { display: none; }
+  .eap-topo__in { gap: 14px; }
+}
