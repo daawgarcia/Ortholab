@@ -98,7 +98,7 @@ function eap_met_ultimos() {
     $excl = $equipe ? 'WHERE u.ID NOT IN (' . implode(',', array_map('intval', $equipe)) . ')' : '';
     return $wpdb->get_results("SELECT u.ID, u.display_name, u.user_email, u.user_registered,
         GREATEST(COALESCE(MAX(CASE WHEN m.meta_key='eap_ultimo_acesso' THEN CAST(m.meta_value AS UNSIGNED) END),0),
-                 COALESCE(MAX(CASE WHEN m.meta_key='_um_last_login' THEN CAST(m.meta_value AS UNSIGNED) END),0)) AS ultimo
+                 COALESCE(MAX(CASE WHEN m.meta_key='_um_last_login' THEN (CASE WHEN m.meta_value REGEXP '^[0-9]+$' THEN CAST(m.meta_value AS UNSIGNED) ELSE UNIX_TIMESTAMP(m.meta_value) END) END),0)) AS ultimo
         FROM {$wpdb->users} u LEFT JOIN {$wpdb->usermeta} m ON m.user_id=u.ID AND m.meta_key IN ('eap_ultimo_acesso','_um_last_login')
         $excl GROUP BY u.ID");
 }
