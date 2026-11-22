@@ -12,6 +12,7 @@ function eap_sso_cfg($k) {
         'segredo' => '',
         'ortholab' => 'https://ortholab2.estheticaligner.com.br',
         'rewards' => 'https://pontos.estheticaligner.com.br',
+        'enviofacil' => 'https://enviofacil.estheticaligner.com.br',
         'ortholab_ativo' => '1',
         'ortholab1' => 'https://ortholab.estheticaligner.com.br',
         'ortholab_versao' => '1', // qual Ortholab o botão abre: 1 (atual) ou 2
@@ -37,6 +38,7 @@ function eap_sso_gerar($user, $destino) {
     $p = [
         'e' => strtolower($user->user_email), 'nm' => trim($user->first_name . ' ' . $user->last_name) ?: $user->display_name,
         'cpf' => eap_sso_meta_digitos($user->ID, 'cpf'), 'cro' => eap_sso_meta_digitos($user->ID, 'cro'),
+        'w' => eap_sso_meta_digitos($user->ID, 'whats'),
         'o' => 'portal', 'd' => $destino, 'iat' => $agora, 'exp' => $agora + 90, 'n' => eap_b64url(random_bytes(12)),
     ];
     if (strlen($p['cpf']) !== 11) $p['cpf'] = '';
@@ -102,8 +104,14 @@ add_action('init', function () {
 add_action('template_redirect', function () {
     if (empty($_GET['eap_ir'])) return;
     $dest = sanitize_key($_GET['eap_ir']);
-    if (!in_array($dest, ['ortholab', 'rewards'], true)) return;
+    if (!in_array($dest, ['ortholab', 'rewards', 'enviofacil'], true)) return;
     if (!is_user_logged_in()) { wp_safe_redirect(home_url('/')); exit; }
+    if ($dest === 'enviofacil') {
+        $base = untrailingslashit(eap_sso_cfg('enviofacil'));
+        $t = eap_sso_gerar(wp_get_current_user(), 'enviofacil');
+        wp_redirect($t ? $base . '/?portal=' . rawurlencode($t) : $base . '/');
+        exit;
+    }
     if ($dest === 'ortholab' && eap_sso_cfg('ortholab_versao') !== '2') {
         // Ortholab 1 (o que está em uso hoje)
         $base = untrailingslashit(eap_sso_cfg('ortholab1'));
@@ -154,6 +162,7 @@ function eap_sso_pagina() {
 
 /** Links usados pelo tema. */
 function eap_sso_link($dest) {
+    if ($dest === 'enviofacil') return home_url('/?eap_ir=enviofacil');
     if ($dest === 'ortholab' && eap_sso_cfg('ortholab_ativo') !== '1') return '';
     return eap_sso_cfg('segredo') ? home_url('/?eap_ir=' . $dest) : '';
 }

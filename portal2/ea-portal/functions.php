@@ -114,6 +114,7 @@ function eapt_atalhos() {
         ['Vídeo aulas', 'Curso do credenciado, webinars, mentorias, dicas clínicas e podcast.', home_url('/video-aulas/'), 'play', false, 'video-aulas'],
         ['Ortholab', 'Envio de casos, documentação digital e acompanhamento do paciente.', eapt_link_ortholab(), 'lab', true, 'ortholab'],
         ['Esthetic Rewards', 'Seus pontos, categoria e prêmios do programa de fidelidade.', eapt_link_rewards(), 'clube', true, 'rewards'],
+        ['Enviar caso – Envio Fácil', 'Mande os arquivos do paciente (STL, fotos ou ZIP) já identificado pelo portal.', home_url('/?eap_ir=enviofacil'), 'download', true, 'enviofacil'],
         ['Downloads', 'Guia de início rápido, fichas, checagem 3D, preços e serviços, manuais.', home_url('/downloads/'), 'download', false, 'downloads'],
         ['Marketing', 'Folders, vídeos e posts para divulgar o tratamento.', home_url('/marketing/'), 'mkt', false, 'marketing'],
         ['Suporte ao credenciado', 'Dúvidas frequentes e chamado com nossa equipe de ortodontistas.', home_url('/suporte/'), 'suporte', false, 'suporte'],

@@ -16,6 +16,7 @@ function eap_secoes_portal() {
         'video-aulas'     => ['Vídeo aulas', 'Menu, atalho e página', 'video-aulas'],
         'aulas-recentes'  => ['Destaques do início', 'Bloco no fim do início (o conteúdo é escolhido em Destaques do início)', ''],
         'dicas'           => ['Dicas clínicas', 'Atalho no início', ''],
+        'enviofacil'      => ['Enviar caso – Envio Fácil', 'Atalho no início', ''],
         'downloads'       => ['Downloads', 'Menu, atalho e página', 'downloads'],
         'marketing'       => ['Marketing', 'Menu, atalho e página', 'marketing'],
         'posts-marketing' => ['Posts prontos para redes', 'Bloco no topo da página Marketing', ''],
