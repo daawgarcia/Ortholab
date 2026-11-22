@@ -208,12 +208,12 @@ body.eap img { max-width: 100%; height: auto; }
 .eap-material__baixar svg { width: 18px; height: 18px; }
 
 /* ---------------------------------------------------------------- rodapé */
-.eap-rodape { background: var(--eap-navy); color: rgba(255, 255, 255, .7); padding: 28px 0; font-size: 13.5px; }
+.eap-rodape { background: var(--eap-azul); color: rgba(255, 255, 255, .92); padding: 28px 0; font-size: 13.5px; }
 .eap-rodape__in { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .eap-rodape img { height: 32px; width: auto; }
 .eap-rodape p { margin: 0; }
 .eap-rodape nav { margin-left: auto; display: flex; gap: 18px; }
-.eap-rodape a { color: rgba(255, 255, 255, .78) !important; }
+.eap-rodape a { color: #fff !important; text-decoration-color: rgba(255,255,255,.5); }
 .eap-rodape a:hover { color: #fff !important; }
 
 /* ---------------------------------------------------------------- responsivo */
