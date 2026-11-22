@@ -40,7 +40,7 @@ function eap_dado_atual($uid, $tipo) {
     if ($v !== '' && $v !== false) return $v;
     if ($tipo === 'cpf' || $tipo === 'cro') return eap_sso_meta_digitos($uid, $tipo);
     if ($tipo === 'whats') {
-        foreach (['billing_phone', 'phone', 'telefone', 'celular', 'whatsapp', 'mobile_number'] as $k) { $x = get_user_meta($uid, $k, true); if ($x) return $x; }
+        foreach (['rpr_celular', 'billing_cellphone', 'ea_credenciamento_welcome_contact_phone', 'billing_phone', 'phone', 'telefone', 'celular', 'whatsapp', 'mobile_number', 'rpr_telefone_comercial'] as $k) { $x = get_user_meta($uid, $k, true); if ($x) return $x; }
     }
     return '';
 }

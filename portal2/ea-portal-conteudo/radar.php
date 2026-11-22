@@ -41,7 +41,10 @@ function eap_radar_lista() {
     // 3) sumiu: último acesso entre 45 e 180 dias atrás (ainda dá para recuperar), do mais recente para o mais antigo
     if (count($lista) < $qtd && function_exists('eap_met_ultimos')) {
         $sumidos = array_filter(eap_met_ultimos(), fn($r) => (int) $r->ultimo > 0 && (int) $r->ultimo <= $agora - 45 * DAY_IN_SECONDS && (int) $r->ultimo >= $agora - 180 * DAY_IN_SECONDS);
+        $tem_fone = fn($id) => function_exists('eap_dado_atual') && strlen(preg_replace('/\D/', '', (string) eap_dado_atual($id, 'whats'))) >= 10 ? 1 : 0;
         usort($sumidos, fn($a, $b) => (int) $b->ultimo <=> (int) $a->ultimo);
+        $sumidos = array_slice($sumidos, 0, 400); // os mais recentes; dentro deles, quem tem celular vai na frente
+        usort($sumidos, fn($a, $b) => $tem_fone($b->ID) <=> $tem_fone($a->ID) ?: (int) $b->ultimo <=> (int) $a->ultimo);
         foreach ($sumidos as $r) { if (count($lista) >= $qtd) break; $add((int) $r->ID, 'Não entra no portal desde ' . wp_date('d/m/Y', (int) $r->ultimo) . ' (' . floor(($agora - (int) $r->ultimo) / DAY_IN_SECONDS) . ' dias)', 'sumiu'); }
     }
     // dados de contato e mensagem pronta
@@ -119,15 +122,6 @@ function eap_radar_pagina() {
         $msg = 'Configurações salvas.';
     }
     if (isset($_POST['eap_radar_agora']) && check_admin_referer('eap_radar')) $msg = eap_radar_enviar() ? 'Radar enviado agora por e-mail.' : 'Não foi possível enviar: confira o e-mail de destino.';
-    if (!empty($_GET['diag']) && current_user_can('manage_options')) { // diagnóstico temporário: campos com telefone
-        global $wpdb; $out = [];
-        foreach ($wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_value FROM {$wpdb->usermeta} WHERE user_id = %d", (int) $_GET['diag'])) as $m) {
-            $d = preg_replace('/\D/', '', (string) $m->meta_value);
-            if (strlen($d) >= 8 && strlen($d) <= 14 && strlen((string) $m->meta_value) < 40) $out[] = $m->meta_key . ' = ' . substr($d, 0, 2) . '…' . substr($d, -2) . ' (' . strlen($d) . ')';
-        }
-        $keys = $wpdb->get_col("SELECT meta_key FROM {$wpdb->usermeta} WHERE meta_key REGEXP 'fone|phone|cel|whats|tel|mobile' GROUP BY meta_key ORDER BY COUNT(*) DESC LIMIT 30");
-        echo '<pre id="eapdiag">' . esc_html(implode("\n", $out) . "\n--\n" . implode(', ', $keys)) . '</pre>';
-    }
     $cfg = eap_radar_cfg();
     $lista = eap_radar_lista();
     $ult = get_option('eap_radar_ultimo');
