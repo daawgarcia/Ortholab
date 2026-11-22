@@ -290,7 +290,7 @@ function eap_resultados_pagina() {
       // primeiros passos (toda a base, sem a equipe)
       $passos = [
         'Concluíram o Curso do Credenciado' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_curso_concluido_em'"),
-        'Fizeram uma estimativa com IA' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa'"),
+        'Fizeram uma estimativa com IA' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa' AND post_status = 'private'"),
         'Cadastraram a marca' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'eap_marca' AND meta_value <> ''"),
         'Baixaram um post' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $t WHERE tipo = 'post_baixar' AND equipe = 0"),
         'Enviaram caso pelo Envio Fácil' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $t WHERE tipo = 'sistema' AND extra = 'enviofacil' AND equipe = 0"),

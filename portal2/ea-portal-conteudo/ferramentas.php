@@ -99,7 +99,7 @@ function eap_passos($uid = 0) {
     $ev = [];
     if ($t) foreach ($wpdb->get_results($wpdb->prepare("SELECT tipo, extra FROM $t WHERE user_id = %d AND tipo IN ('post_baixar','sistema','app') GROUP BY tipo, extra", $uid)) as $r) $ev[$r->tipo . ':' . $r->extra] = 1;
     $tem = fn($tipo, $extra = null) => $extra === null ? (bool) array_filter(array_keys($ev), fn($k) => strpos($k, $tipo . ':') === 0) : isset($ev[$tipo . ':' . $extra]);
-    $est = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa' AND post_author = %d", $uid));
+    $est = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ea_estimativa' AND post_status = 'private' AND post_author = %d", $uid));
     $p = [
         'curso'      => ['Assista ao Curso do Credenciado', 'As 13 aulas liberam o seu certificado.', home_url('/video-aulas/?trilha=curso-do-credenciado'), function_exists('eap_curso_concluido') && eap_curso_concluido($uid), 'video-aulas'],
         'estimativa' => ['Faça sua primeira estimativa com IA', 'Descubra o pacote indicado para um paciente.', home_url('/simulador-de-estimativa-e-pacote/'), $est > 0, 'ia-estimativa'],
@@ -163,6 +163,7 @@ add_action('admin_post_eap_limpar_testes', function () {
     if (function_exists('eap_met_tabela')) $wpdb->query('DELETE FROM ' . eap_met_tabela() . ' WHERE equipe = 1 OR user_id = ' . (int) $uid);
     foreach (get_posts(['post_type' => 'ea_pesquisa', 'post_status' => 'any', 'numberposts' => -1, 'meta_key' => '_equipe', 'meta_value' => 1, 'fields' => 'ids']) as $p) wp_delete_post($p, true);
     if (!empty($_GET['avisos'])) foreach (get_posts(['post_type' => 'ea_aviso', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids']) as $p) { update_post_meta($p, '_eap_vistos', 0); update_post_meta($p, '_eap_cliques', 0); } // só antes de lançar
+    foreach (get_posts(['post_type' => 'ea_estimativa', 'post_status' => 'private', 'author' => $uid, 'numberposts' => -1, 'fields' => 'ids']) as $p) wp_trash_post($p);
     delete_transient('eap_met_base');
     wp_safe_redirect(admin_url('admin.php?page=eap-resultados&limpo=1'));
     exit;
