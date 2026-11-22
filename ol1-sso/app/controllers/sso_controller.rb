@@ -58,7 +58,7 @@ class SsoController < ApplicationController
     return nil if segredo.empty?
     partes = token.split('.')
     return nil unless partes.length == 3 && partes[0] == 'v1'
-    esperado = b64url_enc(OpenSSL::HMAC.digest('sha256', segredo, partes[1]))
+    esperado = b64url_enc(OpenSSL::HMAC.digest('sha256', segredo, "v1.#{partes[1]}"))
     return nil unless iguais?(esperado, partes[2])
     dados = JSON.parse(b64url_dec(partes[1]))
     agora = Time.now.to_i
