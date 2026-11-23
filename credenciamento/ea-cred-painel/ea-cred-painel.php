@@ -59,6 +59,13 @@ function eacp_config_pagina() {
     <?php
 }
 
+add_action('admin_notices', function () {
+    $s = get_current_screen();
+    if (!$s || strpos($s->id, 'ea-credenciamento') === false || !current_user_can('manage_options')) return;
+    $c = eacp_cfg();
+    echo '<div class="notice ' . ($c['chave'] ? 'notice-info' : 'notice-warning') . '"><p><b>Agenda de cursos e Clube de vantagens:</b> ' . ($c['chave'] ? 'conexão com o portal configurada.' : 'falta colar a chave do portal.') . ' <a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=eacp-config')) . '">Abrir Agenda e Clube</a></p></div>';
+});
+
 // ------------------------------------------------------------ layout do site (todas as páginas públicas)
 add_filter('template_include', function ($t) {
     if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST) || is_feed() || is_robots()) return $t;
