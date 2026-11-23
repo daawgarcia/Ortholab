@@ -8,7 +8,7 @@ add_action('eapt_antes_materiais', function () {
     echo '<div class="eap-sec-tit"><h2>Posts prontos para suas redes</h2><span>Clique para ver, copiar a legenda e baixar</span></div>';
     echo '<div class="eap-marca-barra" data-eap-marca-barra hidden></div><div class="eap-posts">';
     foreach ($posts as $p) {
-        $img = eapt_thumb_url($p->ID, 'large');
+        $img = eapt_thumb_url($p->ID, 'medium_large');
         $full = eapt_thumb_url($p->ID, 'full');
         if (!$img) continue;
         echo '<div role="button" tabindex="0" class="eap-post-card" data-eap-post data-id="' . (int) $p->ID . '" data-img="' . esc_url($full) . '" data-titulo="' . esc_attr(get_the_title($p)) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">';
