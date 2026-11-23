@@ -251,7 +251,7 @@ function eapt_card_destaque($p) {
     $tit = get_the_title($p);
     switch ($p->post_type) {
         case 'ea_post':
-            $img = eapt_thumb_url($p->ID, 'medium_large'); $full = eapt_thumb_url($p->ID, 'full');
+            $img = eapt_thumb_url($p->ID, 'large'); $full = eapt_thumb_url($p->ID, 'full');
             if (!$img) return;
             echo '<div role="button" tabindex="0" class="eap-dcard eap-dcard--post" data-eap-post data-id="' . (int) $p->ID . '" data-img="' . esc_url($full) . '" data-titulo="' . esc_attr($tit) . '" data-legenda="' . esc_attr($p->post_excerpt) . '">'
                 . '<span class="eap-dcard__capa" style="background-image:url(' . esc_url($img) . ')">' . eapt_novo($p, 'eap-novo--canto') . '</span>'
