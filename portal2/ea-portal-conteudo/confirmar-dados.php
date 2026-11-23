@@ -18,7 +18,7 @@ function eap_cpf_valido($cpf) {
 
 /* documentos aceitos no primeiro acesso (os mesmos do site antigo) */
 const EAP_DOC_TERMOS = 'termos-e-condicoes-2';
-const EAP_DOC_PRIVACIDADE = 'cookies-e-anuncios';
+const EAP_DOC_PRIVACIDADE = 'politica-de-privacidade';
 function eap_doc($slug) { $p = get_page_by_path($slug); return $p && $p->post_status === 'publish' ? $p : null; }
 /** Versão dos documentos = data da última alteração de cada um. Se mudar, o aceite é pedido de novo. */
 function eap_aceite_versao() {
@@ -138,7 +138,7 @@ add_action('template_redirect', function () {
     add_filter('pre_get_document_title', fn() => 'Confirme seus dados · Portal do Credenciado', 100);
     get_header();
     $t = eap_doc(EAP_DOC_TERMOS); $pv = eap_doc(EAP_DOC_PRIVACIDADE);
-    $caixa = '<label class="eap-col2 eap-aceite"><input type="checkbox" name="aceite" value="1" required' . (!empty($_POST['aceite']) ? ' checked' : '') . '> <span>Li e concordo com os <a href="' . esc_url($t ? get_permalink($t) : '#') . '" target="_blank" rel="noopener">Termos e Condições</a> e com a <a href="' . esc_url($pv ? get_permalink($pv) : '#') . '" target="_blank" rel="noopener">Política de Privacidade e Cookies</a> da Esthetic Aligner.</span></label>';
+    $caixa = '<label class="eap-col2 eap-aceite"><input type="checkbox" name="aceite" value="1" required' . (!empty($_POST['aceite']) ? ' checked' : '') . '> <span>Li e concordo com os <a href="' . esc_url($t ? get_permalink($t) : '#') . '" target="_blank" rel="noopener">Termos e Condições</a> e com a <a href="' . esc_url($pv ? get_permalink($pv) : '#') . '" target="_blank" rel="noopener">Política de Privacidade</a> da Esthetic Aligner.</span></label>';
     if (function_exists('eapt_faixa')) eapt_faixa($so_aceite ? 'Termos e privacidade' : 'Confirme seus dados', $so_aceite ? 'Para continuar usando o portal, confirme que leu e concorda com os nossos termos.' : 'Estamos atualizando o cadastro dos credenciados. Leva cerca de um minuto e só é pedido uma vez.');
     if ($so_aceite) { ?>
     <section class="eap-conteudo"><div class="eap-wrap eap-confirmar">

@@ -10,7 +10,7 @@
       <a href="https://www.facebook.com/estheticaligner/" target="_blank" rel="noopener">Facebook</a>
       <a href="https://www.youtube.com/user/EstheticAligner" target="_blank" rel="noopener">YouTube</a>
       <?php if (is_user_logged_in()) : ?><a href="#" data-eap-app-link>📱 Instalar no celular</a><?php endif; ?>
-      <a href="<?php echo esc_url(home_url('/cookies-e-anuncios/')); ?>">Privacidade</a>
+      <a href="<?php echo esc_url(home_url('/politica-de-privacidade/')); ?>">Privacidade</a>
     </nav>
   </div>
 </footer>

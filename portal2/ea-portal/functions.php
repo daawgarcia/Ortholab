@@ -34,7 +34,7 @@ add_action('wp_enqueue_scripts', function () {
 /* ------------------------------------------------------------------ acesso: o portal é só para credenciados */
 function eapt_pagina_livre() {
     if (is_front_page() || is_404()) return true;
-    $livres = ['resgatar-senha', 'password-reset', 'register', 'cookies-e-anuncios', 'termos-e-condicoes-2', 'account'];
+    $livres = ['resgatar-senha', 'password-reset', 'register', 'cookies-e-anuncios', 'politica-de-privacidade', 'termos-e-condicoes-2', 'account'];
     $obj = get_queried_object();
     return $obj instanceof WP_Post && in_array($obj->post_name, $livres, true);
 }
