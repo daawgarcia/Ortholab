@@ -112,6 +112,9 @@ add_filter('wp_robots', function ($r) {
 /* ------------------------------------------------------------------ itens do menu e da Área do Credenciado */
 function eapt_icone($nome) {
     $i = [
+        'casa' => '<path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3L12 3Z"/>',
+        'agenda' => '<path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm-2 7h14v10H5V9Zm2 2v3h3v-3H7Z"/>',
+        'mais' => '<path d="M3 6h18v2H3V6Zm0 5h18v2H3v-2Zm0 5h18v2H3v-2Z"/>',
         'calc' => '<path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 3v3h8V6H8Zm0 6h2v2H8v-2Zm3 0h2v2h-2v-2Zm3 0h2v5h-2v-5Zm-6 3h2v2H8v-2Zm3 0h2v2h-2v-2Z"/>',
         'sono' => '<path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/><path d="M14 4h4l-4 4h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
         'play' => '<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm6 2.5v5l4.5-2.5L10 7.5ZM3 20h18v1.5H3V20Z"/>',
@@ -659,3 +662,25 @@ add_action('wp_enqueue_scripts', 'eapt_limpar_assets', 9999);
 add_action('wp_print_styles', 'eapt_limpar_assets', 0);
 add_action('wp_print_scripts', 'eapt_limpar_assets', 0);
 add_action('wp_print_footer_scripts', 'eapt_limpar_assets', 0);
+
+
+/* ------------------------------------------------------------------ barra de navegação no celular (sempre um toque para o início e as seções) */
+add_action('wp_footer', function () {
+    if (!is_user_logged_in() || eapt_pagina_livre() || isset($_GET['eap_confirmar'])) return;
+    if (function_exists('eap_precisa_confirmar') && eap_precisa_confirmar()) return;
+    $cand = [
+        ['Início', home_url('/area-do-credenciado/'), 'area-do-credenciado', 'casa', ''],
+        ['Aulas', home_url('/video-aulas/'), 'video-aulas', 'play', 'video-aulas'],
+        ['Agenda', home_url('/agenda-de-cursos/'), 'agenda-de-cursos', 'agenda', 'agenda'],
+        ['Marketing', home_url('/marketing/'), 'marketing', 'mkt', 'marketing'],
+        ['Downloads', home_url('/downloads/'), 'downloads', 'download', 'downloads'],
+        ['Suporte', home_url('/suporte/'), 'suporte', 'suporte', 'suporte'],
+    ];
+    $itens = array_slice(array_values(array_filter($cand, fn($c) => !$c[4] || eapt_visivel($c[4]))), 0, 4);
+    echo '<nav class="eap-barra" aria-label="Navegação rápida">';
+    foreach ($itens as [$rot, $url, $slug, $ic]) {
+        echo '<a href="' . esc_url($url) . '"' . (eapt_ativo($slug) ? ' class="is-ativo" aria-current="page"' : '') . '>' . eapt_icone($ic) . '<span>' . esc_html($rot) . '</span></a>';
+    }
+    echo '<button type="button" data-eap-barra-menu>' . eapt_icone('mais') . '<span>Menu</span></button></nav>';
+    echo "<script>(function(){var b=document.querySelector('[data-eap-barra-menu]');if(!b)return;b.addEventListener('click',function(){var m=document.querySelector('[data-eap-menu]');window.scrollTo({top:0,behavior:'smooth'});if(m)m.click();});document.body.classList.add('eap-com-barra');})();</script>";
+}, 5);
