@@ -17,7 +17,7 @@ $nome = trim($u->first_name) ?: $u->display_name;
 <?php if (function_exists('eap_passos') && eapt_visivel('primeiros-passos') && !get_user_meta(get_current_user_id(), 'eap_passos_ocultos', true)) :
   $ps = eap_passos(); $feitos = count(array_filter($ps, fn($p) => $p[3])); $tot = count($ps);
   if ($tot && $feitos < $tot) : ?>
-<section class="eap-wrap">
+<section class="eap-wrap eap-passos-sec">
   <div class="eap-passos" data-eap-passos>
     <div class="eap-passos__topo">
       <div><strong>Primeiros passos no portal</strong><span><?php echo (int) $feitos; ?> de <?php echo (int) $tot; ?> concluídos</span></div>

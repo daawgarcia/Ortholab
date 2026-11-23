@@ -698,3 +698,8 @@ body:has(.eap-ia-chat:not([hidden])) .eap-orc-fixo { visibility: hidden; } /* ch
   .eap-nav__pac svg { display: none; }
   .eap-topo__in { gap: 14px; }
 }
+
+/* primeiros passos ocupam o lugar que sobe sobre o topo azul; os cartões de IA descem */
+.eap-passos-sec { margin-top: -62px; position: relative; z-index: 2; }
+.eap-passos-sec .eap-passos { margin-top: 0; }
+.eap-passos-sec ~ .eap-ia { margin-top: 26px; }
