@@ -23,6 +23,7 @@ require_once __DIR__ . '/metricas.php';
 require_once __DIR__ . '/ferramentas.php';
 require_once __DIR__ . '/radar.php';
 require_once __DIR__ . '/ia.php';
+require_once __DIR__ . '/diag-tmp.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {
