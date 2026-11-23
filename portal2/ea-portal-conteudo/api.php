@@ -13,14 +13,21 @@
  */
 if (!defined('ABSPATH')) exit;
 
+/** Chave própria da integração de conteúdo (Agenda e Clube), gerada no portal. */
+function eap_api_chave() {
+    $c = (string) get_option('eap_api_chave', '');
+    if ($c === '') { $c = wp_generate_password(48, false, false); update_option('eap_api_chave', $c, false); }
+    return $c;
+}
+
 function eap_api_auth($req) {
     if (!is_ssl()) return new WP_Error('https', 'A integração exige HTTPS.', ['status' => 403]);
     $s = get_option('ea_credenciamento_portal_settings', []);
-    $esperado = (string) ($s['service_key'] ?? '');
     $h = (string) $req->get_header('authorization');
     $dado = strncmp($h, 'Bearer ', 7) === 0 ? substr($h, 7) : '';
-    if ($esperado === '' || $dado === '' || !hash_equals($esperado, $dado)) return new WP_Error('nao_autorizado', 'Não autorizado.', ['status' => 401]);
-    return true;
+    if ($dado === '') return new WP_Error('nao_autorizado', 'Não autorizado.', ['status' => 401]);
+    foreach ([eap_api_chave(), (string) ($s['service_key'] ?? '')] as $esperado) if ($esperado !== '' && hash_equals($esperado, $dado)) return true;
+    return new WP_Error('nao_autorizado', 'Não autorizado.', ['status' => 401]);
 }
 
 /** Salva a imagem enviada (base64 ou URL) como imagem destacada do post. */
@@ -112,6 +119,21 @@ function eap_api_salvar_parceiro($p, $id = 0) {
 add_action('rest_api_init', function () {
     $ns = 'ea-portal/v1';
     $auth = 'eap_api_auth';
+    register_rest_route($ns, '/agenda-publica', ['methods' => 'GET', 'permission_callback' => '__return_true', 'callback' => function () {
+        $ag = function_exists('eap_ag_cursos') ? eap_ag_cursos() : ['proximos' => []];
+        $out = [];
+        foreach ($ag['proximos'] as $p) {
+            $m = eap_ag_meta($p->ID);
+            $out[] = ['id' => $p->ID, 'titulo' => $p->post_title, 'descricao' => wp_strip_all_tags($p->post_content), 'data' => $m['data'], 'fim' => $m['fim'],
+                'data_texto' => ucfirst(eap_ag_data_longa($m)), 'horario' => ucfirst(eap_ag_horario($m)), 'dia' => $m['data'] ? eap_ag_dia($m['data']) : '', 'mes' => $m['data'] ? eap_ag_mes_curto($m['data']) : '',
+                'formato' => $m['mod'], 'formato_texto' => EAP_AG_MOD[$m['mod']] ?? '', 'cidade' => $m['cidade'], 'local' => $m['local'], 'ministrado_por' => $m['quem'],
+                'situacao' => $m['status'], 'situacao_texto' => EAP_AG_STATUS[$m['status']] ?? '', 'destaque' => !empty($m['destaque']),
+                'link' => eap_ag_link($m, $p->post_title), 'texto_botao' => $m['btn'] ?: 'Inscreva-se', 'google_agenda' => eap_ag_gcal($p, $m),
+                'imagem' => get_the_post_thumbnail_url($p, 'large') ?: ''];
+        }
+        $r = new WP_REST_Response($out); $r->header('Cache-Control', 'public, max-age=300'); $r->header('Access-Control-Allow-Origin', '*');
+        return $r;
+    }]);
     register_rest_route($ns, '/opcoes', ['methods' => 'GET', 'permission_callback' => $auth, 'callback' => fn() => [
         'formatos' => EAP_AG_MOD, 'situacoes' => EAP_AG_STATUS,
         'categorias_clube' => array_values(array_map(fn($t) => $t->name, get_terms(['taxonomy' => 'ea_parc_cat', 'hide_empty' => false]) ?: [])),
@@ -138,3 +160,15 @@ add_action('rest_api_init', function () {
         ]);
     }
 });
+
+add_action('admin_menu', function () {
+    add_submenu_page('eap-portal', 'Integrações', 'Integrações', 'manage_options', 'eap-integracoes', function () {
+        if (isset($_POST['eap_nova_chave']) && check_admin_referer('eap_integ')) { update_option('eap_api_chave', wp_generate_password(48, false, false), false); echo '<div class="notice notice-success"><p>Nova chave gerada. Atualize-a no site de credenciamento.</p></div>'; }
+        echo '<div class="wrap"><h1>Integrações</h1>';
+        echo '<h2>Site de credenciamento (Agenda de cursos e Clube de vantagens)</h2><p>Cole esta chave em <b>credenciamento.portal.estheticaligner.com.br → Painel → Agenda e Clube</b>. Com ela, o time de vendas cadastra cursos e parceiros por lá e tudo aparece aqui no portal.</p>';
+        echo '<p><input type="text" readonly value="' . esc_attr(eap_api_chave()) . '" style="width:460px;font-family:monospace" onclick="this.select()"> <button type="button" class="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value);this.textContent=\'Copiado ✓\'">Copiar</button></p>';
+        echo '<p>Endereço da API: <code>' . esc_html(rest_url('ea-portal/v1')) . '</code></p>';
+        echo '<form method="post">'; wp_nonce_field('eap_integ'); echo '<p><button class="button" name="eap_nova_chave" value="1" onclick="return confirm(\'Gerar uma nova chave? A antiga deixa de funcionar.\')">Gerar nova chave</button></p></form>';
+        echo '<h2>Site institucional</h2><p>A agenda pública (sem login) fica em <code>' . esc_html(rest_url('ea-portal/v1/agenda-publica')) . '</code> e alimenta a página Agenda de cursos do estheticaligner.com.br.</p></div>';
+    }, 90);
+}, 30);
