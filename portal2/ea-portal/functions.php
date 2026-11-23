@@ -130,6 +130,7 @@ function eapt_icone($nome) {
 function eapt_atalhos() {
     $todos = [
         ['Vídeo aulas', 'Curso do credenciado, webinars, mentorias, dicas clínicas e podcast.', home_url('/video-aulas/'), 'play', false, 'video-aulas'],
+        ['Agenda de cursos', 'Masterclasses, cursos presenciais e webinars. Garanta sua vaga.', home_url('/agenda-de-cursos/'), 'webinar', false, 'agenda'],
         ['Ortholab', 'Envio de casos, documentação digital e acompanhamento do paciente.', eapt_link_ortholab(), 'lab', true, 'ortholab'],
         ['Esthetic Rewards', 'Seus pontos, categoria e prêmios do programa de fidelidade.', eapt_link_rewards(), 'clube', true, 'rewards'],
         ['Enviar caso – Envio Fácil', 'Mande os arquivos do paciente (STL, fotos ou ZIP) já identificado pelo portal.', home_url('/?eap_ir=enviofacil'), 'download', true, 'enviofacil'],
@@ -153,6 +154,7 @@ function eapt_menu() {
     $todos = [
         ['Início', home_url('/area-do-credenciado/'), 'area-do-credenciado', ''],
         ['Vídeo aulas', home_url('/video-aulas/'), 'video-aulas', 'video-aulas'],
+        ['Agenda', home_url('/agenda-de-cursos/'), 'agenda-de-cursos', 'agenda'],
         ['Downloads', home_url('/downloads/'), 'downloads', 'downloads'],
         ['Marketing', home_url('/marketing/'), 'marketing', 'marketing'],
         ['Suporte', home_url('/suporte/'), 'suporte', 'suporte'],
@@ -484,7 +486,7 @@ function eapt_cert_faixa($classe = '') {
         . '<button type="button" class="eap-btn eap-btn--cheio" data-eap-cert-abrir>Baixar certificado</button></div>';
 }
 add_action('wp_footer', function () {
-    if (!is_user_logged_in() || !function_exists('eap_nome_certificado') || !(is_page('video-aulas') || is_page('area-do-credenciado'))) return;
+    if (!is_user_logged_in() || !function_exists('eap_nome_certificado') || !is_page('video-aulas')) return;
     $tpl_novo = wp_get_upload_dir()['basedir'] . '/certificado-credenciamento-ea.jpg'; // modelo com o logo atual (enviado pelo painel)
     $cfg = ['tpl' => file_exists($tpl_novo) ? content_url('/uploads/certificado-credenciamento-ea.jpg') : get_stylesheet_directory_uri() . '/assets/certificado.jpg', 'fonte' => 'https://fonts.gstatic.com/s/alexbrush/v23/SZc83FzrJKuqFbwMKk6EhUXz7Q.woff2'];
     ?>
@@ -513,7 +515,7 @@ add_action('wp_footer', function () {
         bt.disabled=true;bt.textContent='Gerando…';
         var S=window.EAP_FEITAS,f=new FormData();f.append('action','eap_certificado');f.append('_n',S.n);f.append('nome',nome);
         fetch(S.u,{method:'POST',body:f,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
-          if(!j.success){erro(j.data==='incompleto'?'Marque todas as aulas do Curso do Credenciado como assistidas para liberar o certificado.':'Não foi possível gerar agora. Tente de novo.');return;}
+          if(!j.success){erro(j.data==='incompleto'?'Assista a todas as aulas do Curso do Credenciado até o fim para liberar o certificado.':'Não foi possível gerar agora. Tente de novo.');return;}
           return Promise.all([EAPF.img(C.tpl),EAPF.fonte('Alex Brush',C.fonte)]).then(function(r){
             var im=r[0],c=document.createElement('canvas');c.width=im.width;c.height=im.height;var x=c.getContext('2d'),k=im.width/842;
             x.drawImage(im,0,0);x.fillStyle='#1f3b6e';x.textAlign='center';x.textBaseline='alphabetic';

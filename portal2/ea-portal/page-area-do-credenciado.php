@@ -54,7 +54,6 @@ $nome = trim($u->first_name) ?: $u->display_name;
 </section>
 <?php endif; ?>
 
-<?php if (function_exists('eap_curso_concluido') && eap_curso_concluido() && eapt_visivel('video-aulas')) : ?><section class="eap-wrap"><?php eapt_cert_faixa('eap-cert-faixa--inicio'); ?></section><?php endif; ?>
 <?php $cont = (eapt_visivel('continuar') && eapt_visivel('video-aulas')) ? eapt_ultima_aula() : null; $ult = $cont ? $cont['aula'] : null; if ($ult) :
   $capa = function_exists('eap_video_capa') ? eap_video_capa($ult->ID) : ''; $tt = get_the_terms($ult, 'ea_trilha'); ?>
 <section class="eap-wrap">

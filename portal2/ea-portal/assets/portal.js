@@ -53,6 +53,69 @@
   });
   pintar();
 
+  // equipe: marcar o curso inteiro (teste do certificado)
+  var tc = document.querySelector('[data-eap-teste-curso]');
+  if (tc) tc.addEventListener('click', function () {
+    var f = lerFeitas(); tc.getAttribute('data-eap-teste-curso').split(',').forEach(function (x) { if (f.indexOf(x) < 0) f.push(x); });
+    gravarFeitas(f); pintar(); tc.disabled = true; tc.textContent = 'Curso marcado como assistido ✓';
+  });
+
+  // aula concluída só assistindo até o fim (90% do vídeo, contando apenas o que tocou de verdade)
+  (function () {
+    var box = document.querySelector('[data-eap-assistir]'), S = window.EAP_FEITAS;
+    if (!box || !S) return;
+    var id = box.getAttribute('data-eap-assistir'), KEY = 'eap-vist-' + id, B = {}, dur = 0, ult = -1, enviado = false;
+    var bar = box.querySelector('i'), txt = box.querySelector('.eap-assistir__txt');
+    try { B = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { B = {}; }
+    function pronto() { box.classList.add('is-ok'); bar.style.width = '100%'; txt.textContent = '✓ Aula assistida'; }
+    if (lerFeitas().indexOf(id) >= 0) { pronto(); return; }
+    function ui(p) { bar.style.width = p + '%'; txt.textContent = p ? 'Você já assistiu ' + p + '% · a aula é concluída ao assistir até o fim' : 'Assista até o fim para concluir esta aula'; }
+    function pct() { if (!dur) return 0; var tot = Math.ceil(dur / 5), n = 0; for (var k in B) if (+k < tot) n++; return Math.min(100, Math.round(n / tot * 100)); }
+    function concluir() {
+      if (enviado) return; enviado = true;
+      var f = new FormData(); f.append('action', 'eap_assistiu'); f.append('_n', S.n); f.append('aula', id); f.append('dur', Math.round(dur));
+      fetch(S.u, { method: 'POST', body: f, credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+        if (!j || !j.success) { enviado = false; return; }
+        try { localStorage.setItem(CH, JSON.stringify(j.data.ids)); localStorage.removeItem(KEY); } catch (e) {}
+        pronto(); pintar();
+        if (j.data.curso) { document.querySelectorAll('[data-eap-cert-faixa]').forEach(function (x) { x.hidden = false; }); if (j.data.novo && window.eapCertAbrir) window.eapCertAbrir(true); }
+      }).catch(function () { enviado = false; });
+    }
+    function tempo(t, d) {
+      if (d > 0) dur = d;
+      if (ult >= 0 && t > ult && t - ult <= 3) { for (var b = Math.floor(ult / 5); b <= Math.floor(t / 5); b++) B[b] = 1; try { localStorage.setItem(KEY, JSON.stringify(B)); } catch (e) {} }
+      ult = t;
+      var p = pct(); ui(p);
+      if (p >= 90) concluir();
+    }
+    if (dur === 0) ui(0);
+    function script(src, ok) { var s = document.createElement('script'); s.src = src; s.onload = ok; document.head.appendChild(s); }
+    var v = document.querySelector('.eap-video video'), fr = document.querySelector('.eap-video iframe');
+    if (v) { v.addEventListener('timeupdate', function () { tempo(v.currentTime, v.duration); }); v.addEventListener('seeking', function () { ult = -1; }); return; }
+    if (!fr) return;
+    if (/player\.vimeo\.com/.test(fr.src)) {
+      fr.loading = 'eager';
+      script('https://player.vimeo.com/api/player.js', function () {
+        var p = new window.Vimeo.Player(fr);
+        p.on('timeupdate', function (d) { tempo(d.seconds, d.duration); });
+        p.on('seeked', function () { ult = -1; });
+      });
+    } else if (/youtube/.test(fr.src)) {
+      fr.loading = 'eager';
+      var antes = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () {
+        if (antes) antes();
+        var y = new window.YT.Player(fr), tm = 0;
+        y.addEventListener('onStateChange', function (e) {
+          clearInterval(tm);
+          if (e.data === 1) tm = setInterval(function () { tempo(y.getCurrentTime(), y.getDuration()); }, 1000);
+          else ult = -1;
+        });
+      };
+      script('https://www.youtube.com/iframe_api');
+    }
+  })();
+
   // rola a lista até a aula atual
   var atual = document.querySelector('.eap-curso__lista .is-atual');
   var lista = document.querySelector('.eap-curso__lista');

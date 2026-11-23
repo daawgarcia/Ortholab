@@ -69,7 +69,7 @@ add_action('template_redirect', function () {
 add_action('wp_ajax_eap_evento', function () {
     if (!check_ajax_referer('eap_evento', '_n', false)) wp_die('', 403);
     $tipo = sanitize_key($_POST['tipo'] ?? '');
-    if (!in_array($tipo, ['download', 'post', 'post_baixar', 'whats', 'orcamento', 'app'], true)) wp_die('', 400);
+    if (!in_array($tipo, ['download', 'post', 'post_baixar', 'whats', 'orcamento', 'app', 'agenda'], true)) wp_die('', 400);
     $uid = get_current_user_id();
     $k = 'eap_ev_rl_' . $uid; $n = (int) get_transient($k);
     if ($n > 300) wp_die('', 429);
@@ -94,10 +94,40 @@ add_action('wp_ajax_eap_feitas', function () {
     $ids = array_filter(array_map('intval', explode(',', (string) ($_POST['ids'] ?? ''))));
     $ids = array_values(array_filter(array_unique($ids), fn($id) => get_post_type($id) === 'ea_aula'));
     $uid = get_current_user_id();
+    // Dentista não marca à mão: só a equipe (para testes). Para o dentista, a aula entra na lista
+    // quando ele assiste até o fim (eap_assistiu); aqui ele só consegue manter o que já tem.
+    if (!current_user_can('edit_pages')) { $ja = eap_aulas_feitas($uid); $ids = array_values(array_filter($ids, fn($id) => in_array($id, $ja, true) || !get_post_meta($id, '_eap_video', true))); }
     $antes = (string) get_user_meta($uid, 'eap_curso_concluido_em', true);
     update_user_meta($uid, 'eap_aulas_feitas', array_slice($ids, 0, 2000));
     $agora = function_exists('eap_curso_concluido') ? eap_curso_concluido($uid) : '';
     wp_send_json_success(['n' => count($ids), 'curso' => (bool) $agora, 'novo' => $agora && !$antes]);
+});
+
+/** Primeira vez que o dentista abriu cada aula (para conferir o tempo assistido). */
+function eap_aula_aberta($aula_id) {
+    $uid = get_current_user_id(); if (!$uid) return;
+    $m = get_user_meta($uid, 'eap_aulas_abertas', true); $m = is_array($m) ? $m : [];
+    if (isset($m[$aula_id])) return;
+    $m[$aula_id] = time();
+    if (count($m) > 400) $m = array_slice($m, -400, null, true);
+    update_user_meta($uid, 'eap_aulas_abertas', $m);
+}
+/** O player avisa que o dentista assistiu à aula até o fim (90% do vídeo, sem pular). */
+add_action('wp_ajax_eap_assistiu', function () {
+    if (!check_ajax_referer('eap_feitas', '_n', false)) wp_send_json_error('sessao', 403);
+    $id = (int) ($_POST['aula'] ?? 0);
+    if (get_post_type($id) !== 'ea_aula') wp_send_json_error('aula', 400);
+    $uid = get_current_user_id();
+    $dur = max(0, (float) ($_POST['dur'] ?? 0));
+    $abertas = get_user_meta($uid, 'eap_aulas_abertas', true);
+    $desde = is_array($abertas) ? (int) ($abertas[$id] ?? 0) : 0;
+    // conferência de tempo: desde que abriu a aula pela primeira vez, passou pelo menos ~metade da duração (aceita velocidade 2x)
+    if (!$desde || (time() - $desde) < min($dur * 0.45, 4 * 3600)) wp_send_json_error('cedo', 400);
+    $feitas = eap_aulas_feitas($uid);
+    $antes = (string) get_user_meta($uid, 'eap_curso_concluido_em', true);
+    if (!in_array($id, $feitas, true)) { $feitas[] = $id; update_user_meta($uid, 'eap_aulas_feitas', array_slice($feitas, 0, 2000)); if (function_exists('eap_evento')) eap_evento('aula_assistida', $id); }
+    $agora = function_exists('eap_curso_concluido') ? eap_curso_concluido($uid) : '';
+    wp_send_json_success(['ids' => array_map('strval', $feitas), 'curso' => (bool) $agora, 'novo' => $agora && !$antes]);
 });
 
 /* ------------------------------------------------------------------ painel */

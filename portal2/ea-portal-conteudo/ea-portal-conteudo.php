@@ -23,6 +23,7 @@ require_once __DIR__ . '/metricas.php';
 require_once __DIR__ . '/ferramentas.php';
 require_once __DIR__ . '/radar.php';
 require_once __DIR__ . '/ia.php';
+require_once __DIR__ . '/agenda.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {
@@ -201,7 +202,7 @@ function eap_video_embed($url, $autoplay = false) {
         return '<iframe src="https://player.vimeo.com/video/' . $m[1] . '?dnt=1&title=0&byline=0&portrait=0' . ($autoplay ? '&autoplay=1' : '') . '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
     }
     if (preg_match('~(?:youtu\.be/|youtube\.com/(?:watch\?v=|embed/|shorts/))([\w-]{6,})~', $url, $m)) {
-        return '<iframe src="https://www.youtube-nocookie.com/embed/' . $m[1] . '?rel=0' . ($autoplay ? '&autoplay=1' : '') . '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
+        return '<iframe src="https://www.youtube-nocookie.com/embed/' . $m[1] . '?rel=0&enablejsapi=1&origin=' . rawurlencode(home_url()) . ($autoplay ? '&autoplay=1' : '') . '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
     }
     return '<video src="' . esc_url($url) . '" controls preload="metadata" playsinline></video>';
 }

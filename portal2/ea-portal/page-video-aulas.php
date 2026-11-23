@@ -16,13 +16,15 @@ $idx = $atual ? array_search($atual->ID, array_map(fn($a) => $a->ID, $todas), tr
 $ant = ($idx !== false && $idx > 0) ? $todas[$idx - 1] : null;
 $prox = ($idx !== false && $idx < count($todas) - 1) ? $todas[$idx + 1] : null;
 $link = fn($a) => add_query_arg('aula', $a->ID, get_permalink());
+if ($atual && function_exists('eap_aula_aberta') && !current_user_can('edit_pages')) eap_aula_aberta($atual->ID);
 ?>
 <section class="eap-faixa eap-faixa--fina"><div class="eap-wrap"><h1>Vídeo aulas</h1><p>Curso do credenciado, webinars, mentorias, dicas clínicas e podcast.</p></div></section>
 
 <?php if (!$atual) : ?>
   <section class="eap-conteudo"><div class="eap-wrap"><div class="eap-vazio">Ainda não há aulas cadastradas.<?php if (current_user_can('edit_pages')) echo ' <a href="' . esc_url(admin_url('admin.php?page=eap-importar')) . '">Importar as aulas do portal antigo</a>.'; ?></div></div></section>
 <?php else : ?>
-<div class="eap-wrap"><?php eapt_cert_faixa('eap-cert-faixa--aulas'); ?></div>
+<div class="eap-wrap"><?php eapt_cert_faixa('eap-cert-faixa--aulas'); ?>
+<?php if (current_user_can('edit_pages') && function_exists('eap_curso_ids') && eap_curso_ids()) : ?><p class="eap-teste-curso"><button type="button" class="eap-btn eap-btn--linha" data-eap-teste-curso="<?php echo esc_attr(implode(',', eap_curso_ids())); ?>">Equipe: marcar todo o Curso do Credenciado como assistido (teste do certificado)</button></p><?php endif; ?></div>
 <section class="eap-wrap eap-curso" data-eap-curso>
   <div class="eap-curso__player">
     <div class="eap-video"><?php echo eap_video_embed(get_post_meta($atual->ID, '_eap_video', true)); ?></div>
@@ -32,7 +34,13 @@ $link = fn($a) => add_query_arg('aula', $a->ID, get_permalink());
         <h2><?php echo esc_html(get_the_title($atual)); ?></h2>
         <?php if ($atual->post_excerpt) echo '<p>' . esc_html($atual->post_excerpt) . '</p>'; ?>
       </div>
-      <label class="eap-check eap-feito"><input type="checkbox" data-eap-feito="<?php echo (int) $atual->ID; ?>"> Marcar como assistida</label>
+      <?php $tem_video = (bool) get_post_meta($atual->ID, '_eap_video', true);
+      if (current_user_can('edit_pages') || !$tem_video) : ?>
+        <label class="eap-check eap-feito"><input type="checkbox" data-eap-feito="<?php echo (int) $atual->ID; ?>"> Marcar como assistida<?php echo current_user_can('edit_pages') && $tem_video ? ' <small>(só a equipe)</small>' : ''; ?></label>
+      <?php endif; ?>
+      <?php if ($tem_video && !current_user_can('edit_pages')) : ?>
+        <div class="eap-assistir" data-eap-assistir="<?php echo (int) $atual->ID; ?>"><span class="eap-assistir__bar"><i></i></span><span class="eap-assistir__txt">Assista até o fim para concluir esta aula</span></div>
+      <?php endif; ?>
     </div>
     <div class="eap-curso__nav">
       <?php if ($ant) : ?><a class="eap-btn eap-btn--linha" href="<?php echo esc_url($link($ant)); ?>">← Anterior</a><?php else : ?><span></span><?php endif; ?>
