@@ -49,7 +49,7 @@
       } else {
         corpo.innerHTML = '<p>Receba no celular os avisos de cursos, aulas novas e novidades da Esthetic Aligner. Você escolhe o que quer receber e pode desligar quando quiser.</p><button type="button" class="eap-btn eap-btn--cheio eap-push-ativar">Ativar notificações</button><p class="eap-push-obs">No máximo uma por dia, só das 8h às 20h.</p>';
         var b = corpo.querySelector('.eap-push-ativar');
-        b.addEventListener('click', function () { b.disabled = true; b.textContent = 'Ativando…'; ativar().then(function (j) { if (j && j.data && j.data.prefs) C.prefs = j.data.prefs; localStorage.setItem(FECHOU, '1'); var cv = document.querySelector('.eap-push-convite'); if (cv) cv.remove(); pintar(); }).catch(function (e) { if (e.message === 'negado') pintar(); else { b.disabled = false; b.textContent = 'Ativar notificações'; } }); });
+        b.addEventListener('click', function () { b.disabled = true; b.textContent = 'Ativando…'; ativar().then(function (j) { if (j && j.data && j.data.prefs) C.prefs = j.data.prefs; localStorage.setItem(FECHOU, '1'); var cv = document.querySelector('.eap-push-convite'); if (cv) cv.parentNode.remove(); pintar(); }).catch(function (e) { if (e.message === 'negado') pintar(); else { b.disabled = false; b.textContent = 'Ativar notificações'; } }); });
       }
     });
   }
@@ -62,8 +62,8 @@
     assinaturaAtual().then(function (s) {
       if (s || localStorage.getItem(FECHOU) || (temPush && Notification.permission === 'denied') || (!temPush && !ios)) return;
       var d = document.createElement('section');
-      d.className = 'eap-wrap eap-push-convite';
-      d.innerHTML = '<div><span class="eap-push-convite__ic">🔔</span><span><strong>Receba avisos no celular</strong><em>Cursos, aulas novas e novidades da Esthetic Aligner, sem precisar entrar no portal.</em></span></div><div><button type="button" class="eap-btn eap-btn--cheio" data-eap-push>Ativar</button><button type="button" class="eap-push-convite__x" aria-label="Agora não">Agora não</button></div>';
+      d.className = 'eap-wrap';
+      d.innerHTML = '<div class="eap-push-convite"><div><span class="eap-push-convite__ic">🔔</span><span><strong>Receba avisos no celular</strong><em>Cursos, aulas novas e novidades da Esthetic Aligner, sem precisar entrar no portal.</em></span></div><div><button type="button" class="eap-btn eap-btn--cheio" data-eap-push>Ativar</button><button type="button" class="eap-push-convite__x" aria-label="Agora não">Agora não</button></div></div>';
       lugar.parentNode.insertBefore(d, lugar);
       d.querySelector('.eap-push-convite__x').addEventListener('click', function () { localStorage.setItem(FECHOU, '1'); d.remove(); });
     });
