@@ -122,7 +122,8 @@ add_action('pre_get_posts', function ($q) {
 });
 add_action('admin_notices', function () {
     $s = get_current_screen();
-    if ($s && $s->id === 'edit-ea_curso') echo '<div class="notice notice-info"><p>Os cursos aparecem em <a href="' . esc_url(home_url('/agenda-de-cursos/')) . '" target="_blank">/agenda-de-cursos/</a> em ordem de data. Cursos que já passaram saem da agenda sozinhos (ficam em “Cursos que já aconteceram”).</p></div>';
+    if ($s && $s->id === 'edit-ea_curso') echo '<div class="notice notice-info"><p>Os cursos aparecem em <a href="' . esc_url(home_url('/agenda-de-cursos/')) . '" target="_blank">/agenda-de-cursos/</a> em ordem de data. Cursos que já passaram saem da agenda sozinhos (ficam em “Cursos que já aconteceram”).'
+        . (get_option('eap_agenda_importado') ? '' : ' <a class="button" data-eap-ag-importar href="' . esc_url(wp_nonce_url(admin_url('admin-post.php?action=eap_agenda_importar'), 'eap_agenda_importar')) . '">Trazer os cursos da agenda do site</a>') . '</p></div>';
 });
 
 /** Importa uma vez os cursos da agenda do site antigo (com as imagens). */
