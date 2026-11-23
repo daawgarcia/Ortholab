@@ -25,6 +25,7 @@ require_once __DIR__ . '/radar.php';
 require_once __DIR__ . '/ia.php';
 require_once __DIR__ . '/agenda.php';
 require_once __DIR__ . '/api.php';
+require_once __DIR__ . '/push.php';
 
 /* ------------------------------------------------------------------ tipos de conteúdo */
 add_action('init', function () {

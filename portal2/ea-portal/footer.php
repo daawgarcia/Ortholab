@@ -9,7 +9,7 @@
       <a href="https://www.instagram.com/estheticaligner/" target="_blank" rel="noopener">Instagram</a>
       <a href="https://www.facebook.com/estheticaligner/" target="_blank" rel="noopener">Facebook</a>
       <a href="https://www.youtube.com/user/EstheticAligner" target="_blank" rel="noopener">YouTube</a>
-      <?php if (is_user_logged_in()) : ?><a href="#" data-eap-app-link>📱 Instalar no celular</a><?php endif; ?>
+      <?php if (is_user_logged_in()) : ?><a href="#" data-eap-app-link>📱 Instalar no celular</a><?php if (function_exists('eap_push_cfg_js') && eap_push_cfg_js()) : ?><a href="#" data-eap-push>🔔 Notificações</a><?php endif; endif; ?>
       <a href="<?php echo esc_url(home_url('/termos-de-uso/')); ?>">Termos de uso</a>
       <a href="<?php echo esc_url(home_url('/politica-de-privacidade/')); ?>">Privacidade</a>
     </nav>

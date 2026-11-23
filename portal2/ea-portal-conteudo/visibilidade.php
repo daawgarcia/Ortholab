@@ -30,6 +30,7 @@ function eap_secoes_portal() {
         'continuar'       => ['Continue assistindo', 'Cartão no início com a última aula aberta', ''],
         'primeiros-passos'=> ['Primeiros passos', 'Checklist no início para o credenciado começar a usar o portal', ''],
         'assistente'      => ['Assistente EA (IA)', 'Botão de chat no canto (liberação e chave em Portal do Credenciado → Assistente EA)', ''],
+        'push'            => ['Notificações no celular', 'Convite no início e opção no rodapé para o dentista ativar (envios em Portal do Credenciado → 🔔 Notificações)', ''],
         'pesquisa'        => ['Pesquisa de satisfação', 'Pergunta de 0 a 10 que aparece a partir do 3º dia de uso (no máximo a cada 90 dias)', ''],
     ];
 }

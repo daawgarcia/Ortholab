@@ -26,6 +26,10 @@ add_action('wp_enqueue_scripts', function () {
         wp_add_inline_script('eapt-marca', 'window.EAP_FERR=' . wp_json_encode(eap_ferr_cfg()) . ';', 'before');
     }
     if (is_user_logged_in()) wp_enqueue_script('eapt-ferramentas', get_stylesheet_directory_uri() . '/assets/eap-ferramentas.js', [], (string) filemtime($dir . '/assets/eap-ferramentas.js'), true);
+    if (is_user_logged_in() && function_exists('eap_push_cfg_js') && !eapt_pagina_livre() && ($pcfg = eap_push_cfg_js())) {
+        wp_enqueue_script('eapt-push', get_stylesheet_directory_uri() . '/assets/eap-push.js', [], filemtime(get_stylesheet_directory() . '/assets/eap-push.js'), true);
+        wp_add_inline_script('eapt-push', 'window.EAP_PUSH=' . wp_json_encode($pcfg) . ';', 'before');
+    }
     if (is_user_logged_in() && function_exists('eap_aulas_feitas')) {
         wp_add_inline_script('eapt-portal', 'window.EAP_FEITAS=' . wp_json_encode(['tem' => metadata_exists('user', get_current_user_id(), 'eap_aulas_feitas'), 'ids' => array_map('strval', eap_aulas_feitas()), 'u' => admin_url('admin-ajax.php'), 'n' => wp_create_nonce('eap_feitas')]) . ';', 'before');
     }
@@ -404,6 +408,8 @@ add_action('init', function () {
         // não guarda páginas (o conteúdo é do credenciado logado); só mostra um aviso quando estiver sem internet
         echo "self.addEventListener('install',function(){self.skipWaiting();});"
             . "self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});"
+            . "self.addEventListener('push',function(e){var d={};try{d=e.data.json();}catch(x){d={title:'Esthetic Aligner',body:e.data?e.data.text():''};}e.waitUntil(self.registration.showNotification(d.title||'Esthetic Aligner',{body:d.body||'',icon:d.icon||'',badge:d.icon||'',tag:d.tag||'eap',data:{url:d.url||'/'}}));});"
+            . "self.addEventListener('notificationclick',function(e){e.notification.close();var u=(e.notification.data&&e.notification.data.url)||'/';e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(function(l){for(var i=0;i<l.length;i++){if('focus' in l[i]&&l[i].url.indexOf(self.location.origin)===0){l[i].navigate(u);return l[i].focus();}}return self.clients.openWindow(u);}));});"
             . "self.addEventListener('fetch',function(e){if(e.request.mode!=='navigate')return;e.respondWith(fetch(e.request).catch(function(){return new Response('<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\"><title>Sem conexão</title><body style=\"font-family:system-ui;text-align:center;padding:60px 24px;color:#1b2433\"><h2>Sem conexão com a internet</h2><p>Confira sua conexão e tente de novo.</p><button onclick=\"location.reload()\" style=\"background:#2f6fe4;color:#fff;border:0;border-radius:999px;padding:12px 22px;font-size:15px\">Tentar de novo</button>',{headers:{'Content-Type':'text/html; charset=utf-8'}});}));});";
         exit;
     }

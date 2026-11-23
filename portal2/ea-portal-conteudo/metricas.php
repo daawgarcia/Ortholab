@@ -59,7 +59,7 @@ add_action('template_redirect', function () {
             $a = get_post((int) $_GET['aula']);
             if ($a && $a->post_type === 'ea_aula' && $a->post_status === 'publish') {
                 eap_evento('aula', $a->ID);
-                update_user_meta($uid, 'eap_ultima_aula', $a->ID);
+                update_user_meta($uid, 'eap_ultima_aula', $a->ID); update_user_meta($uid, 'eap_ultima_aula_em', time());
             }
         }
     }
