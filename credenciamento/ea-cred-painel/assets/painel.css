@@ -107,3 +107,5 @@ body.eacp *{box-sizing:border-box}
   .eacp .ea-cred-card{padding:20px}
 }
 @media (max-width:782px){.admin-bar .eacp-topo{top:46px}}
+.eacp .ea-cred-cep button,.eacp .ea-cred-cep .ea-cred-button{background:var(--c-azul)!important}
+.eacp .ea-cred-card label,.eacp .ea-cred-card input,.eacp .ea-cred-card select,.eacp .ea-cred-card p{font-family:"Open Sans",system-ui,sans-serif}
