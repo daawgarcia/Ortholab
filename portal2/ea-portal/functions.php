@@ -630,8 +630,10 @@ function eapt_assets_desnecessarios() {
     static $padroes = null;
     if ($padroes !== null) return $padroes;
     $o = get_queried_object();
-    $c = $o instanceof WP_Post ? (string) $o->post_content : '';
     $slug = $o instanceof WP_Post ? $o->post_name : '';
+    // páginas com modelo próprio do portal (page-<slug>.php) não mostram o conteúdo antigo do editor
+    $proprio = is_front_page() || ($o instanceof WP_Post && $o->post_type === 'page' && file_exists(get_stylesheet_directory() . '/page-' . $slug . '.php'));
+    $c = ($o instanceof WP_Post && !$proprio) ? (string) $o->post_content : '';
     $padroes = [];
     $paginas_um = ['resgatar-senha', 'password-reset', 'register', 'account', 'user', 'login', 'logout', 'members'];
     if (!in_array($slug, $paginas_um, true) && strpos($c, '[ultimatemember') === false) $padroes[] = '/plugins/ultimate-member/';
