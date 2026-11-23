@@ -622,3 +622,38 @@ add_action('wp_footer', function () {
     })();</script>
     <?php
 }, 58);
+
+/* ------------------------------------------------------------------ desempenho: não carregar no portal o que é de plugins/tema antigos
+ * Ultimate Member, Jupiter, WPBakery e Contact Form 7 carregavam ~60 arquivos em todas as páginas.
+ * Ficam só onde são usados (páginas do UM, conteúdo feito no WPBakery, formulário do Suporte). */
+function eapt_assets_desnecessarios() {
+    static $padroes = null;
+    if ($padroes !== null) return $padroes;
+    $o = get_queried_object();
+    $c = $o instanceof WP_Post ? (string) $o->post_content : '';
+    $slug = $o instanceof WP_Post ? $o->post_name : '';
+    $padroes = [];
+    $paginas_um = ['resgatar-senha', 'password-reset', 'register', 'account', 'user', 'login', 'logout', 'members'];
+    if (!in_array($slug, $paginas_um, true) && strpos($c, '[ultimatemember') === false) $padroes[] = '/plugins/ultimate-member/';
+    if (strpos($c, '[vc_') === false && strpos($c, '[mk_') === false) { $padroes[] = '/themes/jupiter/'; $padroes[] = '/plugins/jupiter-donut/'; $padroes[] = '/plugins/js_composer'; }
+    if ($slug !== 'suporte' && strpos($c, '[contact-form-7') === false) $padroes[] = '/plugins/contact-form-7/';
+    return $padroes;
+}
+function eapt_limpar_assets() {
+    if (is_admin()) return;
+    $p = eapt_assets_desnecessarios();
+    if (!$p) return;
+    foreach ([wp_styles(), wp_scripts()] as $reg) {
+        foreach ((array) $reg->queue as $h) {
+            $src = isset($reg->registered[$h]) ? (string) $reg->registered[$h]->src : '';
+            foreach ($p as $pad) if ($src && strpos($src, $pad) !== false) {
+                if ($reg instanceof WP_Scripts) wp_dequeue_script($h); else wp_dequeue_style($h);
+                break;
+            }
+        }
+    }
+}
+add_action('wp_enqueue_scripts', 'eapt_limpar_assets', 9999);
+add_action('wp_print_styles', 'eapt_limpar_assets', 0);
+add_action('wp_print_scripts', 'eapt_limpar_assets', 0);
+add_action('wp_print_footer_scripts', 'eapt_limpar_assets', 0);
