@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EA Credenciamento – Painel de vendas
  * Description: Layout do site de credenciamento no padrão Esthetic Aligner e cadastro da Agenda de cursos e do Clube de vantagens pelo time de vendas (enviados automaticamente ao Portal do Credenciado).
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Esthetic Aligner
  */
 if (!defined('ABSPATH')) exit;
@@ -114,4 +114,29 @@ add_action('admin_post_eacp_parceiro', function () {
     $img = eacp_imagem_enviada(); if (!empty($img['erro'])) eacp_voltar('clube', $img['erro'], true, ['editar' => $id ?: 'novo']);
     $r = eacp_api('POST', '/parceiros' . ($id ? '/' . $id : ''), $d + $img);
     is_wp_error($r) ? eacp_voltar('clube', $r->get_error_message(), true, ['editar' => $id ?: 'novo']) : eacp_voltar('clube', $id ? 'Parceiro atualizado no portal.' : 'Parceiro publicado no portal.');
+});
+
+// ------------------------------------------------------------ API para o aplicativo Windows (mesma chave de sincronização do app)
+add_action('rest_api_init', function () {
+    $auth = function ($req) {
+        if (!is_ssl()) return new WP_Error('https', 'A integração exige HTTPS.', ['status' => 403]);
+        $s = get_option('ea_credenciamento_settings', []);
+        $esperado = (string) ($s['sync_key'] ?? '');
+        $h = (string) $req->get_header('authorization');
+        $dado = strncmp($h, 'Bearer ', 7) === 0 ? substr($h, 7) : '';
+        return ($esperado !== '' && $dado !== '' && hash_equals($esperado, $dado)) ? true : new WP_Error('nao_autorizado', 'Não autorizado.', ['status' => 401]);
+    };
+    $repassar = function ($metodo, $rota, $corpo = null) {
+        $r = eacp_api($metodo, $rota, $corpo);
+        return is_wp_error($r) ? new WP_Error('portal', $r->get_error_message(), ['status' => 502]) : $r;
+    };
+    register_rest_route('ea-credenciamento/v1', '/conteudo/opcoes', ['methods' => 'GET', 'permission_callback' => $auth, 'callback' => fn() => $repassar('GET', '/opcoes')]);
+    register_rest_route('ea-credenciamento/v1', '/conteudo/(?P<tipo>cursos|parceiros)', [
+        ['methods' => 'GET', 'permission_callback' => $auth, 'callback' => fn($r) => $repassar('GET', '/' . $r['tipo'])],
+        ['methods' => 'POST', 'permission_callback' => $auth, 'callback' => fn($r) => $repassar('POST', '/' . $r['tipo'], (array) $r->get_json_params())],
+    ]);
+    register_rest_route('ea-credenciamento/v1', '/conteudo/(?P<tipo>cursos|parceiros)/(?P<id>\d+)', [
+        ['methods' => 'POST', 'permission_callback' => $auth, 'callback' => fn($r) => $repassar('POST', '/' . $r['tipo'] . '/' . (int) $r['id'], (array) $r->get_json_params())],
+        ['methods' => 'DELETE', 'permission_callback' => $auth, 'callback' => fn($r) => $repassar('DELETE', '/' . $r['tipo'] . '/' . (int) $r['id'])],
+    ]);
 });
