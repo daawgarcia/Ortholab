@@ -17,7 +17,7 @@ function eap_cpf_valido($cpf) {
 }
 
 /* documentos aceitos no primeiro acesso (os mesmos do site antigo) */
-const EAP_DOC_TERMOS = 'termos-e-condicoes-2';
+const EAP_DOC_TERMOS = 'termos-de-uso';
 const EAP_DOC_PRIVACIDADE = 'politica-de-privacidade';
 function eap_doc($slug) { $p = get_page_by_path($slug); return $p && $p->post_status === 'publish' ? $p : null; }
 /** Versão dos documentos = data da última alteração de cada um. Se mudar, o aceite é pedido de novo. */
@@ -97,7 +97,7 @@ function eap_confirmar_salvar($u) {
     if (mb_strlen($end['bairro']) < 2) $erros[] = 'Informe o bairro.';
     if (mb_strlen($end['cidade']) < 2) $erros[] = 'Informe a cidade.';
     if (!preg_match('/^[A-Z]{2}$/', $end['uf'])) $erros[] = 'Escolha o estado do endereço.';
-    if (empty($_POST['aceite'])) $erros[] = 'Para continuar, marque que leu e concorda com os Termos e Condições e a Política de Privacidade.';
+    if (empty($_POST['aceite'])) $erros[] = 'Para continuar, marque que leu e concorda com os Termos e Condições de Uso e a Política de Privacidade.';
     if ($erros) return $erros;
 
     $partes = preg_split('/\s+/', trim($nome), 2);
@@ -125,7 +125,7 @@ add_action('template_redirect', function () {
     $so_aceite = (bool) get_user_meta($u->ID, 'eap_dados_confirmados', true) && !eap_aceite_ok($u->ID);
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('eap_confirmar') && $so_aceite) {
         if (!empty($_POST['aceite'])) { eap_registrar_aceite($u->ID); wp_safe_redirect(home_url('/area-do-credenciado/')); exit; }
-        $erros = ['Para continuar, marque que leu e concorda com os Termos e Condições e a Política de Privacidade.'];
+        $erros = ['Para continuar, marque que leu e concorda com os Termos e Condições de Uso e a Política de Privacidade.'];
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('eap_confirmar')) {
         $erros = eap_confirmar_salvar($u);
         if (!$erros) { wp_safe_redirect(home_url('/area-do-credenciado/?dados=ok')); exit; }
@@ -138,7 +138,7 @@ add_action('template_redirect', function () {
     add_filter('pre_get_document_title', fn() => 'Confirme seus dados · Portal do Credenciado', 100);
     get_header();
     $t = eap_doc(EAP_DOC_TERMOS); $pv = eap_doc(EAP_DOC_PRIVACIDADE);
-    $caixa = '<label class="eap-col2 eap-aceite"><input type="checkbox" name="aceite" value="1" required' . (!empty($_POST['aceite']) ? ' checked' : '') . '> <span>Li e concordo com os <a href="' . esc_url($t ? get_permalink($t) : '#') . '" target="_blank" rel="noopener">Termos e Condições</a> e com a <a href="' . esc_url($pv ? get_permalink($pv) : '#') . '" target="_blank" rel="noopener">Política de Privacidade</a> da Esthetic Aligner.</span></label>';
+    $caixa = '<label class="eap-col2 eap-aceite"><input type="checkbox" name="aceite" value="1" required' . (!empty($_POST['aceite']) ? ' checked' : '') . '> <span>Li e concordo com os <a href="' . esc_url($t ? get_permalink($t) : '#') . '" target="_blank" rel="noopener">Termos e Condições de Uso</a> e com a <a href="' . esc_url($pv ? get_permalink($pv) : '#') . '" target="_blank" rel="noopener">Política de Privacidade</a> da Esthetic Aligner.</span></label>';
     if (function_exists('eapt_faixa')) eapt_faixa($so_aceite ? 'Termos e privacidade' : 'Confirme seus dados', $so_aceite ? 'Para continuar usando o portal, confirme que leu e concorda com os nossos termos.' : 'Estamos atualizando o cadastro dos credenciados. Leva cerca de um minuto e só é pedido uma vez.');
     if ($so_aceite) { ?>
     <section class="eap-conteudo"><div class="eap-wrap eap-confirmar">
