@@ -682,5 +682,8 @@ add_action('wp_footer', function () {
         echo '<a href="' . esc_url($url) . '"' . (eapt_ativo($slug) ? ' class="is-ativo" aria-current="page"' : '') . '>' . eapt_icone($ic) . '<span>' . esc_html($rot) . '</span></a>';
     }
     echo '<button type="button" data-eap-barra-menu>' . eapt_icone('mais') . '<span>Menu</span></button></nav>';
-    echo "<script>(function(){var b=document.querySelector('[data-eap-barra-menu]');if(!b)return;b.addEventListener('click',function(){var m=document.querySelector('[data-eap-menu]');window.scrollTo({top:0,behavior:'smooth'});if(m)m.click();});document.body.classList.add('eap-com-barra');})();</script>";
+    echo "<div class=\"eap-barra-fundo\" data-eap-barra-fundo></div><script>(function(){var b=document.querySelector('[data-eap-barra-menu]'),n=document.querySelector('[data-eap-nav]'),f=document.querySelector('[data-eap-barra-fundo]');if(!b||!n)return;document.body.classList.add('eap-com-barra');"
+        . "function abrir(x){n.classList.toggle('is-aberto',x);document.body.classList.toggle('eap-menu-aberto',x);b.classList.toggle('is-ativo',x);}"
+        . "b.addEventListener('click',function(){abrir(!n.classList.contains('is-aberto'));});f.addEventListener('click',function(){abrir(false);});"
+        . "document.addEventListener('keydown',function(e){if(e.key==='Escape')abrir(false);});})();</script>";
 }, 5);
