@@ -15,10 +15,17 @@ export default function AdminCouponsPage() {
     queryFn: () => api.get('/admin/coupons').then(r => r.data),
   })
 
+  // relatório: a partir do início do Ortholab 2 (ou do período escolhido), de 10 em 10
+  const [de, setDe] = useState('')
+  const [ate, setAte] = useState('')
+  const [pagina, setPagina] = useState(1)
   const { data: reportData, isLoading: reportLoading } = useQuery({
-    queryKey: ['admin-coupons-report'],
-    queryFn: () => api.get('/admin/coupons/report').then(r => r.data),
+    queryKey: ['admin-coupons-report', de, ate, pagina],
+    queryFn: () => api.get('/admin/coupons/report', { params: { de: de || undefined, ate: ate || undefined, page: pagina, limit: 10 } }).then(r => r.data),
+    placeholderData: (prev: any) => prev,
   })
+  const totalPaginas = Math.max(1, Math.ceil((reportData?.total || 0) / 10))
+  const dataBR = (iso?: string | null) => iso ? new Date(iso).toLocaleDateString('pt-BR') : ''
 
   const createCoupon = useMutation({
     mutationFn: () => api.post('/admin/coupons', form),
@@ -54,13 +61,13 @@ export default function AdminCouponsPage() {
     },
   })
 
-  const downloadReport = async () => {
+  const downloadReport = async (tudo = false) => {
     try {
-      const response = await api.get('/admin/coupons/report.xlsx', { responseType: 'blob' })
+      const response = await api.get('/admin/coupons/report.xlsx', { responseType: 'blob', params: tudo ? { tudo: 1 } : { de: de || undefined, ate: ate || undefined } })
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.download = `relatorio_uso_cupons_${new Date().toISOString().slice(0, 10)}.xlsx`
+      link.download = tudo ? `relatorio_uso_cupons_historico_completo.xlsx` : `relatorio_uso_cupons_${de || 'inicio-ortholab2'}_a_${ate || new Date().toISOString().slice(0, 10)}.xlsx`
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -125,11 +132,26 @@ export default function AdminCouponsPage() {
       <div className="border rounded-lg bg-white p-4 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">Relatório de uso de cupons</h2>
-          <Button variant="outline" onClick={downloadReport} className="gap-2">
-            <Download className="w-4 h-4" /> Baixar Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => downloadReport(false)} className="gap-2">
+              <Download className="w-4 h-4" /> Baixar Excel do período
+            </Button>
+            <Button variant="outline" onClick={() => downloadReport(true)} className="gap-2">
+              <Download className="w-4 h-4" /> Baixar todo o histórico
+            </Button>
+          </div>
         </div>
-        <p className="text-sm text-gray-500">Por cupom: caixa, paciente, dentista e quem colocou o cupom (equipe ou dentista). O Excel traz tudo isso.</p>
+        <p className="text-sm text-gray-500">Por cupom: caixa, paciente, dentista e quem colocou o cupom (equipe ou dentista). A tela mostra a partir do início do Ortholab 2{reportData?.inicioOrtholab2 ? ` (${dataBR(reportData.inicioOrtholab2)})` : ''}; o histórico antigo fica no Excel.</p>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-500">De
+            <Input type="date" value={de} onChange={e => { setDe(e.target.value); setPagina(1) }} className="mt-1 w-44" />
+          </label>
+          <label className="text-xs text-gray-500">Até
+            <Input type="date" value={ate} onChange={e => { setAte(e.target.value); setPagina(1) }} className="mt-1 w-44" />
+          </label>
+          {(de || ate) && <Button variant="ghost" size="sm" onClick={() => { setDe(''); setAte(''); setPagina(1) }}>Limpar período</Button>}
+          <span className="pb-2 text-sm text-gray-500">{reportData?.total ?? 0} uso(s) no período</span>
+        </div>
 
         {reportLoading ? (
           <div className="text-sm text-gray-500">Carregando relatório...</div>
@@ -142,7 +164,7 @@ export default function AdminCouponsPage() {
                   <p className="text-xs text-gray-500">{item.totalUses} uso(s) • {item.uniqueDentists} dentista(s)</p>
                 </div>
               ))}
-              {(reportData?.summary || []).length === 0 && <div className="text-sm text-gray-500">Nenhum uso registrado ainda.</div>}
+              {(reportData?.summary || []).length === 0 && <div className="text-sm text-gray-500">Nenhum uso de cupom neste período.</div>}
             </div>
 
             {(reportData?.usages || []).length > 0 && (
@@ -175,6 +197,15 @@ export default function AdminCouponsPage() {
                     ))}
                   </tbody>
                 </table>
+                {totalPaginas > 1 && (
+                  <div className="flex items-center justify-between pt-3 text-sm text-gray-500">
+                    <span>Página {pagina} de {totalPaginas}</span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" disabled={pagina <= 1} onClick={() => setPagina(pagina - 1)}>‹ Anterior</Button>
+                      <Button variant="outline" size="sm" disabled={pagina >= totalPaginas} onClick={() => setPagina(pagina + 1)}>Próxima ›</Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>

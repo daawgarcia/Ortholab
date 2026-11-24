@@ -229,49 +229,74 @@ export async function adminRoutes(fastify: FastifyInstance) {
     return { coupons }
   })
 
-  fastify.get('/coupons/report', { preHandler: requireRole(Role.ADMIN) }, async () => {
-    const cases = await fastify.prisma.case.findMany({
-      where: { discountCoupon: { not: null } },
-      select: {
-        id: true,
-        caseNumber: true,
-        discountCoupon: true,
-        status: true,
-        createdAt: true,
-        dentist: { select: { id: true, name: true, clinic: true, email: true } },
-        patientName: true,
-        patient: { select: { name: true, boxNumber: true } },
-        couponAppliedAt: true,
-        couponAppliedBy: { select: { name: true, role: true } },
-        service: { select: { name: true, type: true } },
-        financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+  // Início do Ortholab 2: configurável (SystemSetting ortholab2_data_inicio, AAAA-MM-DD);
+  // sem configuração, o 1º caso criado direto no Ortholab 2 (sem vir do Ortholab 1); sem nenhum, hoje.
+  async function inicioOrtholab2(): Promise<Date> {
+    const conf = await fastify.prisma.systemSetting.findUnique({ where: { key: 'ortholab2_data_inicio' } })
+    if (conf?.value && !isNaN(Date.parse(conf.value))) return new Date(`${conf.value}T00:00:00-03:00`)
+    const primeiro = await fastify.prisma.case.findFirst({ where: { legacyId: null }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } })
+    if (primeiro) return primeiro.createdAt
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0); return hoje
+  }
 
+  // período do relatório de cupons: data do uso = quando o cupom foi colocado (ou a criação do caso)
+  async function filtroCupons(query: any, todos = false) {
+    const where: any = { discountCoupon: { not: null } }
+    const de = query?.de ? new Date(`${query.de}T00:00:00-03:00`) : (todos ? null : await inicioOrtholab2())
+    const ate = query?.ate ? new Date(`${query.ate}T23:59:59.999-03:00`) : null
+    if (de || ate) {
+      const faixa: any = {}
+      if (de) faixa.gte = de
+      if (ate) faixa.lte = ate
+      where.OR = [{ couponAppliedAt: faixa }, { couponAppliedAt: null, createdAt: faixa }]
+    }
+    return { where, de, ate }
+  }
+
+  const SELECT_USO_CUPOM = {
+    id: true, caseNumber: true, discountCoupon: true, status: true, createdAt: true,
+    dentist: { select: { id: true, name: true, clinic: true, email: true } },
+    patientName: true, patient: { select: { name: true, boxNumber: true } },
+    couponAppliedAt: true, couponAppliedBy: { select: { name: true, role: true } },
+    service: { select: { name: true, type: true } },
+    financial: { select: { billedAt: true, amount: true, invoiceNumber: true } },
+  } as const
+
+  fastify.get('/coupons/report', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
+    const q = request.query as any
+    const { where, de, ate } = await filtroCupons(q)
+    const page = Math.max(1, parseInt(q?.page || '1'))
+    const limit = Math.min(50, Math.max(1, parseInt(q?.limit || '10')))
+    const [usages, total, porCupom] = await Promise.all([
+      fastify.prisma.case.findMany({ where, select: SELECT_USO_CUPOM, orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit }),
+      fastify.prisma.case.count({ where }),
+      fastify.prisma.case.findMany({ where, select: { discountCoupon: true, dentistId: true } }),
+    ])
     const usageByCoupon = new Map<string, { code: string; totalUses: number; dentists: Set<string> }>()
-    for (const item of cases) {
+    for (const item of porCupom) {
       const code = item.discountCoupon || ''
       if (!code) continue
       const existing = usageByCoupon.get(code) || { code, totalUses: 0, dentists: new Set<string>() }
       existing.totalUses += 1
-      if (item.dentist?.id) existing.dentists.add(item.dentist.id)
+      if (item.dentistId) existing.dentists.add(item.dentistId)
       usageByCoupon.set(code, existing)
     }
-
     return {
-      usages: cases,
-      summary: Array.from(usageByCoupon.values()).map((item) => ({
-        code: item.code,
-        totalUses: item.totalUses,
-        uniqueDentists: item.dentists.size,
+      usages, total, page, limit,
+      de: de ? de.toISOString() : null, ate: ate ? ate.toISOString() : null,
+      inicioOrtholab2: (await inicioOrtholab2()).toISOString(),
+      summary: Array.from(usageByCoupon.values()).sort((a, b) => b.totalUses - a.totalUses).map((item) => ({
+        code: item.code, totalUses: item.totalUses, uniqueDentists: item.dentists.size,
       })),
     }
   })
 
   fastify.get('/coupons/report.xlsx', { preHandler: requireRole(Role.ADMIN) }, async (request, reply) => {
+    // ?tudo=1 baixa todo o histórico (inclusive o que veio do Ortholab 1); senão, o período escolhido
+    const q = request.query as any
+    const { where } = await filtroCupons(q, q?.tudo === '1')
     const cases = await fastify.prisma.case.findMany({
-      where: { discountCoupon: { not: null } },
+      where,
       select: {
         id: true,
         caseNumber: true,
