@@ -189,6 +189,15 @@ def main():
 
     def upsert_users(rows, key):
         cols = list(rows[0].keys())
+        # e-mail que mudou de dono no Ortholab 1: libera antes (senão a troca bate na regra de e-mail único)
+        desejados = {(r.get("email") or "").lower(): r[key] for r in rows if r.get("email")}
+        if desejados:
+            p.execute('SELECT id, lower(email), "legacyDentistId", "legacyUserId" FROM "User" WHERE lower(email) = ANY(%s)', (list(desejados),))
+            liberar = [uid for uid, em, ld, lu in p.fetchall()
+                       if (ld if key == "legacyDentistId" else lu) != desejados.get(em) and (ld is not None or lu is not None)]
+            if liberar:
+                p.execute('UPDATE "User" SET email = \'troca-\' || id || \'@troca.invalid\' WHERE id = ANY(%s)', (liberar,))
+                stats["emails_trocados_de_dono"] += len(liberar)
         def upd(c):
             # país e perfil definidos no Ortholab 2 (tela Usuários) não são sobrescritos pela sincronização
             if c == "allowedCountries":

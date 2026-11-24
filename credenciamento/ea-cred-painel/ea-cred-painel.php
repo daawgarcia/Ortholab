@@ -101,7 +101,7 @@ add_action('admin_post_eacp_curso', function () {
     if ($d['titulo'] === '' || !preg_match('~^\d{4}-\d{2}-\d{2}$~', $d['data'])) eacp_voltar('agenda', 'Preencha pelo menos o nome do curso e a data.', true, ['editar' => $id ?: 'novo']);
     $img = eacp_imagem_enviada(); if (!empty($img['erro'])) eacp_voltar('agenda', $img['erro'], true, ['editar' => $id ?: 'novo']);
     $r = eacp_api('POST', '/cursos' . ($id ? '/' . $id : ''), $d + $img);
-    is_wp_error($r) ? eacp_voltar('agenda', $r->get_error_message(), true, ['editar' => $id ?: 'novo']) : eacp_voltar('agenda', $id ? 'Curso atualizado no portal e no site.' : 'Curso publicado no portal e no site.');
+    is_wp_error($r) ? eacp_voltar('agenda', $r->get_error_message(), true, ['editar' => $id ?: 'novo']) : eacp_voltar('agenda', !$d['publicado'] ? 'Rascunho salvo (não aparece para os dentistas).' : ($id ? 'Curso atualizado no portal e no site.' : 'Curso publicado no portal e no site.'));
 });
 add_action('admin_post_eacp_parceiro', function () {
     if (!eacp_pode() || !check_admin_referer('eacp_parceiro')) wp_die('Sem permissão.');
@@ -113,7 +113,7 @@ add_action('admin_post_eacp_parceiro', function () {
     if ($d['nome'] === '') eacp_voltar('clube', 'Preencha o nome do parceiro.', true, ['editar' => $id ?: 'novo']);
     $img = eacp_imagem_enviada(); if (!empty($img['erro'])) eacp_voltar('clube', $img['erro'], true, ['editar' => $id ?: 'novo']);
     $r = eacp_api('POST', '/parceiros' . ($id ? '/' . $id : ''), $d + $img);
-    is_wp_error($r) ? eacp_voltar('clube', $r->get_error_message(), true, ['editar' => $id ?: 'novo']) : eacp_voltar('clube', $id ? 'Parceiro atualizado no portal.' : 'Parceiro publicado no portal.');
+    is_wp_error($r) ? eacp_voltar('clube', $r->get_error_message(), true, ['editar' => $id ?: 'novo']) : eacp_voltar('clube', !$d['publicado'] ? 'Rascunho salvo (não aparece para os dentistas).' : ($id ? 'Parceiro atualizado no portal.' : 'Parceiro publicado no portal.'));
 });
 
 // ------------------------------------------------------------ API para o aplicativo Windows (mesma chave de sincronização do app)
