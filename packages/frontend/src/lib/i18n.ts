@@ -34,7 +34,7 @@ const ES: Record<string, string> = {
   // dashboard
   'Aqui está um resumo do seu painel': 'Aquí tienes un resumen de tu panel', 'Novo Paciente': 'Nuevo Paciente',
   'Aguardando sua aprovação': 'Esperando tu aprobación', 'Pacientes Recentes': 'Pacientes recientes', 'Ver todos': 'Ver todos',
-  'Nenhum paciente encontrado': 'Ningún paciente encontrado', 'Criar primeiro paciente': 'Crear primer paciente', 'Caixa': 'Caja',
+  'Nenhum paciente encontrado': 'Ningún paciente encontrado', 'Criar primeiro paciente': 'Crear primer paciente', 'Caixa': 'Caja', '‹ Anterior': '‹ Anterior', 'Próxima ›': 'Siguiente ›', 'Buscar entre os pacientes deste dentista: nome ou nº da caixa': 'Buscar entre los pacientes de este dentista: nombre o n.º de caja',
   'Todos': 'Todos', 'Hoje': 'Hoy', 'Esta semana': 'Esta semana', 'Este mês': 'Este mes', 'Total de Pacientes': 'Total de pacientes',
   'A Preparar': 'Por preparar', 'A Movimentar': 'Por mover', 'Aguardando Aprovação': 'Esperando aprobación', 'Em Impressão': 'En impresión',
   'Em Recorte': 'En recorte', 'Em Postagem': 'En envío', 'Casos Faturados': 'Casos facturados', 'Valor Faturado': 'Valor facturado',
@@ -377,6 +377,7 @@ const ES: Record<string, string> = {
 }
 
 const PADROES: Array<[RegExp, (...m: string[]) => string]> = [
+  [/^Página (\d+) de (\d+) · (\d+) paciente\(s\)( deste dentista)?$/, (_, a, b, c, d) => `Página ${a} de ${b} · ${c} paciente(s)${d ? ' de este dentista' : ''}`],
   [/^aguardando há (\d+) dia\(s\)$/, (_, n) => `esperando hace ${n} día(s)`],
   [/^há (\d+) dias$/, (_, n) => `hace ${n} días`],
   [/^há 1 dia$/, () => 'hace 1 día'],

@@ -41,12 +41,17 @@ export default function PatientsPage() {
   const [dentistSearch, setDentistSearch] = useState('')
   const termoDentista = useDebounce(dentistSearch.trim(), 300)
 
+  const POR_PAGINA = 50
+  const [pagina, setPagina] = useState(1)
+  useEffect(() => { setPagina(1) }, [termo, dentistId])
   const { data, isLoading } = useQuery({
-    queryKey: ['patients', termo, dentistId],
+    queryKey: ['patients', termo, dentistId, pagina],
     queryFn: () => {
       const qs = new URLSearchParams()
       if (termo.length >= 2) qs.set('search', termo)
       if (dentistId) qs.set('dentistId', dentistId)
+      qs.set('page', String(pagina))
+      qs.set('limit', String(POR_PAGINA))
       return api.get(`/patients?${qs}`).then(r => r.data)
     },
     staleTime: 30000,
@@ -68,7 +73,7 @@ export default function PatientsPage() {
             <>
               <button onClick={() => navigate(`/dentists/${dentistId}`)} className="text-sm text-primary hover:underline">‹ Voltar para {dentistaAtual.name}</button>
               <h1 className="text-2xl font-bold text-gray-900">Pacientes de {dentistaAtual.name}</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} paciente(s) deste dentista · <button onClick={() => navigate('/patients')} className="text-primary hover:underline">ver todos os pacientes</button></p>
+              <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} paciente(s) deste dentista</p>
             </>
           ) : (
             <>
@@ -87,7 +92,7 @@ export default function PatientsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Nome do paciente, nº da caixa ou dentista (aceita erro de digitação)"
+            placeholder={params.get('dentistId') ? 'Buscar entre os pacientes deste dentista: nome ou nº da caixa' : 'Nome do paciente, nº da caixa ou dentista (aceita erro de digitação)'}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
@@ -162,6 +167,18 @@ export default function PatientsPage() {
           })}
         </div>
       </div>
+      {(data?.total ?? 0) > POR_PAGINA && (() => {
+        const totalPaginas = Math.ceil((data?.total ?? 0) / POR_PAGINA)
+        return (
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>Página {pagina} de {totalPaginas} · {data?.total} paciente(s){params.get('dentistId') ? ' deste dentista' : ''}</span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={pagina <= 1} onClick={() => { setPagina(pagina - 1); window.scrollTo({ top: 0 }) }}>‹ Anterior</Button>
+              <Button variant="outline" size="sm" disabled={pagina >= totalPaginas} onClick={() => { setPagina(pagina + 1); window.scrollTo({ top: 0 }) }}>Próxima ›</Button>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
