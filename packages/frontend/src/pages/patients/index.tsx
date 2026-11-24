@@ -11,8 +11,9 @@ import { Search, Plus, UserCircle } from 'lucide-react'
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   ALINHADORES: 'Alinhadores',
   FINALIZACAO: 'Contenção',
-  PLACA_MIORRELAXANTE: 'Placa Miorrelaxante',
+  PLACA_MIORRELAXANTE: 'EA Mio',
   EA_AIR2: 'EA Air²',
+  EA_GUARD: 'EA Guard',
 }
 
 function getTreatmentLabel(patient: any) {

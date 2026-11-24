@@ -64,6 +64,7 @@ export function getAllowedServiceTypesForProduct(productType?: string) {
     FINALIZACAO: ['RETAINER'],
     PLACA_MIORRELAXANTE: ['OTHER'],
     EA_AIR2: ['AIR'],
+    EA_GUARD: ['OTHER'],
   }
   return productType ? map[productType] || null : null
 }
@@ -93,7 +94,7 @@ export function getServiceDisplayName(service?: any) {
   if (kind === 'REFINEMENT') return 'Refinamento'
   if (kind === 'AIR') return 'EA AIR²'
   if (kind === 'RETAINER') return 'Finalização/Contenção'
-  if (kind === 'OTHER') return service?.name || 'Placa Miorrelaxante'
+  if (kind === 'OTHER') return service?.name || 'EA Mio'
   return service?.name || 'Serviço'
 }
 

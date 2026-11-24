@@ -45,6 +45,7 @@ enum ProductType {
   FINALIZACAO
   PLACA_MIORRELAXANTE
   EA_AIR2
+  EA_GUARD
 }
 
 enum DocumentType {

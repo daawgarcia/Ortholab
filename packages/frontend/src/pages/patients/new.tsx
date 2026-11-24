@@ -17,8 +17,9 @@ const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37,
 const PRODUCTS = [
   { key: 'ALINHADORES', label: 'Alinhadores' },
   { key: 'FINALIZACAO', label: 'Contenção' },
-  { key: 'PLACA_MIORRELAXANTE', label: 'Placa Miorrelaxante' },
   { key: 'EA_AIR2', label: 'EA Air²' },
+  { key: 'PLACA_MIORRELAXANTE', label: 'EA Mio' },
+  { key: 'EA_GUARD', label: 'EA Guard' },
 ]
 
 function ToothSVG({ number, selected, onClick }: { number: number; selected: boolean; onClick: () => void }) {
@@ -223,7 +224,7 @@ export default function NewPatientPage() {
       toast({
         variant: 'destructive',
         title: 'Selecione o tipo de tratamento',
-        description: 'Escolha Alinhadores, Contenção, EA Air² ou Placa Miorrelaxante para continuar.',
+        description: 'Escolha Alinhadores, Contenção, EA Air², EA Mio ou EA Guard para continuar.',
       })
       return
     }
@@ -306,7 +307,7 @@ export default function NewPatientPage() {
           <div className="px-5 py-3 border-b bg-gray-50">
             <p className="text-sm font-semibold text-gray-700">Tipo de Tratamento *</p>
           </div>
-          <div className="p-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="p-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {PRODUCTS.map(p => (
               <button
                 key={p.key}

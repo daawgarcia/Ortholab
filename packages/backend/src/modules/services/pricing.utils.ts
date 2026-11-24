@@ -8,6 +8,7 @@ const PRODUCT_SERVICE_TYPES_MAP: Record<string, string[]> = {
   FINALIZACAO: ['RETAINER'],
   PLACA_MIORRELAXANTE: ['OTHER'],
   EA_AIR2: ['AIR'],
+  EA_GUARD: ['OTHER'],
 }
 
 function normalizeText(value?: string | null) {

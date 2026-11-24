@@ -391,7 +391,7 @@ def main():
             if f.get("ea_mio") or f.get("ea_splint"):
                 return "PLACA_MIORRELAXANTE"
             if f.get("ea_guard"):
-                return "FINALIZACAO"
+                return "EA_GUARD"
         if (o.get("amount_of_retainers") or 0) > 0:
             return "FINALIZACAO"
         # pedido ainda no começo (sem quantidades) é caso de alinhador; finalizado sem informação fica sem produto

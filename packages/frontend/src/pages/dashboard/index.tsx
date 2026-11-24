@@ -15,8 +15,9 @@ import { toast } from '@/hooks/use-toast'
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   ALINHADORES: 'Alinhadores',
   FINALIZACAO: 'Contenção',
-  PLACA_MIORRELAXANTE: 'Placa Miorrelaxante',
+  PLACA_MIORRELAXANTE: 'EA Mio',
   EA_AIR2: 'EA Air²',
+  EA_GUARD: 'EA Guard',
 }
 
 const PERIOD_OPTIONS = [
