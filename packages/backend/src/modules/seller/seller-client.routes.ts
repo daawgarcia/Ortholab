@@ -7,7 +7,7 @@ export async function sellerClientRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: requireRole(Role.ADMIN) }, async (request) => {
     const { search } = request.query as { search?: string }
 
-    const where: any = { role: Role.SELLER }
+    const where: any = { role: Role.SELLER, oculto: false }
     if (search) {
       where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { email: { contains: search, mode: 'insensitive' } }]
     }

@@ -20,6 +20,8 @@ import psycopg2
 import psycopg2.extras
 import pymysql
 
+from sync_hash import filtrar, gravar
+
 SP = ZoneInfo("America/Sao_Paulo")
 BASE_URL = "https://ortholab2-arquivos-ea.s3.sa-east-1.amazonaws.com/ortholab1-arquivos/uploads/"
 now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -108,6 +110,10 @@ def main():
     def upsert(table, rows, casts=None):
         if not rows:
             return 0
+        lidas = len(rows)
+        rows, impressoes = filtrar(p, table, rows, "legacyKey", agora=now)
+        if not rows:
+            return f"{lidas} (nenhuma mudança)"
         casts = casts or {}
         cols = list(rows[0].keys())
         upd = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", "legacyKey"))
@@ -119,8 +125,9 @@ def main():
                    f'ON CONFLICT ("legacyKey") DO UPDATE SET {upd}',
                 rows[i:i + 5000], template=tmpl, page_size=5000)
             total += len(rows[i:i + 5000])
+        gravar(p, impressoes)
         pg.commit()
-        return total
+        return f"{lidas} ({total} novas ou alteradas)" 
 
     # ------------------------------------------------------------ fotos
     rows = []

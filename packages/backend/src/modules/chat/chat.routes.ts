@@ -73,6 +73,7 @@ export async function chatRoutes(fastify: FastifyInstance, opts: { wsClients: Ma
           where: {
             id: { in: ids.filter(i => i !== user.id) },
             status: 'ACTIVE' as any,
+            oculto: false,
             ...(user.role === Role.LAB_TECH || user.role === Role.EXPEDITION
               ? { role: { not: Role.DENTIST } }
               : paises ? { AND: [{ OR: [{ role: { not: Role.DENTIST } }, whereDentistaPais(paises)] }] } : {}),

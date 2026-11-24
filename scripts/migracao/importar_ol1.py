@@ -25,6 +25,8 @@ import psycopg2
 import psycopg2.extras
 import pymysql
 
+from sync_hash import filtrar, gravar
+
 PLACEHOLDER_DOMAIN = "sem-email.ortholab2.local"
 
 # Papéis do Ortholab 1 -> Role do Ortholab 2
@@ -342,15 +344,19 @@ def main():
         })
     cols = list(rows[0].keys())
     updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in ("id", "legacyId", "createdAt"))
-    psycopg2.extras.execute_values(
+    total_pacientes = len(rows)
+    rows, imp_pacientes = filtrar(p, "Patient", rows, "legacyId", agora=now)
+    stats["pacientes_alterados"] = len(rows)
+    if rows: psycopg2.extras.execute_values(
         p,
         f'INSERT INTO "Patient" ({", ".join(chr(34) + c + chr(34) for c in cols)}) VALUES %s ON CONFLICT ("legacyId") DO UPDATE SET {updates} '
         # LGPD: paciente anonimizado no Ortholab 2 nunca volta a ser identificado pela sincronização
         f'WHERE "Patient".name NOT LIKE \'Paciente anonimizado %%\'',
         rows, template="(" + ", ".join(f"%({c})s" for c in cols) + ")", page_size=1000,
     )
-    stats["pacientes"] = len(rows)
-    log(f"Pacientes: {len(rows)} (sem dentista: {stats['pacientes_sem_dentista']})")
+    gravar(p, imp_pacientes)
+    stats["pacientes"] = total_pacientes
+    log(f"Pacientes: {total_pacientes}, {len(rows)} novos ou alterados (sem dentista: {stats['pacientes_sem_dentista']})")
     pg.commit()
 
     p.execute('SELECT "legacyId", id, "dentistId", name, dob, gender FROM "Patient" WHERE "legacyId" IS NOT NULL')
@@ -471,16 +477,20 @@ def main():
         f'%({c})s::"CaseStatus"' if c == "status" else f'%({c})s::"ProductType"' if c == "productType"
         else f"%({c})s::jsonb" if c in ("planningFormData", "planejamentoLab") else f"%({c})s" for c in cols
     ) + ")"
-    psycopg2.extras.execute_values(
+    total_casos = len(rows)
+    rows, imp_casos = filtrar(p, "Case", rows, "legacyId", agora=now)
+    stats["casos_alterados"] = len(rows)
+    if rows: psycopg2.extras.execute_values(
         p,
         f'INSERT INTO "Case" ({", ".join(chr(34) + c + chr(34) for c in cols)}) VALUES %s ON CONFLICT ("legacyId") DO UPDATE SET {updates}',
         rows, template=tmpl, page_size=1000,
     )
     # próximos casos criados no Ortholab 2 continuam a numeração do Ortholab 1
     p.execute("""SELECT setval(pg_get_serial_sequence('"Case"', 'caseNumber'), (SELECT MAX("caseNumber") FROM "Case"))""")
-    stats["casos"] = len(rows)
+    gravar(p, imp_casos)
+    stats["casos"] = total_casos
     pg.commit()
-    log(f"Casos: {len(rows)} (sem paciente: {stats['casos_sem_paciente']}, cancelados: {stats['casos_cancelados']})")
+    log(f"Casos: {total_casos}, {len(rows)} novos ou alterados (sem paciente: {stats['casos_sem_paciente']}, cancelados: {stats['casos_cancelados']})")
 
     # ------------------------------------------------------------------ entradas (igual ao Ortholab 1)
     # Mesma regra do entries_controller#pending_entries do Ortholab 1: paciente cujo último envio
