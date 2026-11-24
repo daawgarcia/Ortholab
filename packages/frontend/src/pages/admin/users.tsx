@@ -12,7 +12,7 @@ import { CheckCircle, XCircle, Search, Plus, X } from 'lucide-react'
 
 const ROLES = ['DENTIST', 'LAB_TECH', 'ADMIN', 'FINANCIAL', 'SELLER', 'EXPEDITION']
 const ROLE_LABELS: Record<string, string> = {
-  DENTIST: 'Dentista', LAB_TECH: 'Lab Tech', ADMIN: 'Administrador', FINANCIAL: 'Financeiro', SELLER: 'Vendas', EXPEDITION: 'Expedição'
+  DENTIST: 'Dentista', LAB_TECH: 'Laboratório', ADMIN: 'Administrador', FINANCIAL: 'Financeiro', SELLER: 'Vendas', EXPEDITION: 'Expedição'
 }
 
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
