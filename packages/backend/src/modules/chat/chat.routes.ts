@@ -275,11 +275,5 @@ async function isChatAllowed(
     })
     return !!link
   }
-  if (sender.role === Role.DENTIST && receiver.role === 'SELLER') {
-    const link = await fastify.prisma.sellerClient.findUnique({
-      where: { sellerId_clientId: { sellerId: receiver.id, clientId: sender.id } },
-    })
-    return !!link
-  }
   return false
 }
