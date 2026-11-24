@@ -95,6 +95,7 @@ model User {
   email                   String     @unique
   password                String
   role                    Role       @default(DENTIST)
+  roleDefinidoNoOl2       Boolean    @default(false) // perfil trocado na tela Usuários: a sincronização com o Ortholab 1 não sobrescreve
   status                  UserStatus @default(PENDING)
   allowedCountries        String[]  @default([]) // equipe: países que pode ver no workflow (vazio = todos)
   cro                     String?

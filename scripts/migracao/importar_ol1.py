@@ -221,7 +221,7 @@ def main():
             if c == "allowedCountries":
                 return '"allowedCountries" = CASE WHEN cardinality("User"."allowedCountries") > 0 THEN "User"."allowedCountries" ELSE EXCLUDED."allowedCountries" END'
             if c == "role":
-                return '"role" = CASE WHEN "User".role IN (\'SELLER\', \'FINANCIAL\', \'EXPEDITION\') THEN "User".role ELSE EXCLUDED.role END'
+                return '"role" = CASE WHEN "User"."roleDefinidoNoOl2" OR "User".role IN (\'SELLER\', \'FINANCIAL\', \'EXPEDITION\') THEN "User".role ELSE EXCLUDED.role END'
             return f'"{c}" = EXCLUDED."{c}"'
         updates = ", ".join(upd(c) for c in cols if c not in ("id", key, "createdAt"))
         sql = (

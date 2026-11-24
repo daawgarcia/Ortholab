@@ -95,7 +95,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
     const { role } = request.body as { role: Role }
     const user = await fastify.prisma.user.update({
       where: { id },
-      data: { role, tokenVersion: { increment: 1 } },
+      data: { role, roleDefinidoNoOl2: true, tokenVersion: { increment: 1 } },
       select: { id: true, name: true, email: true, role: true },
     })
     await fastify.audit.log(request, { action: 'admin.user_role', resource: 'User', resourceId: id, metadata: { role } })
