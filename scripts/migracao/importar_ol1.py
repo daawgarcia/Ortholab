@@ -397,6 +397,10 @@ def main():
         # pedido ainda no começo (sem quantidades) é caso de alinhador; finalizado sem informação fica sem produto
         return "ALINHADORES" if o.get("in_progress") else None
 
+    # Financeiro do Ortholab 1: boleto aberto na aprovação (finished=0) = "caso a faturar"
+    boleto = {}
+    for b in q("SELECT order_id, finished, created_at, updated_at FROM workflow_payment_slips ORDER BY id"):
+        boleto[b["order_id"]] = b  # fica o mais recente
     rows = []
     for o in q("SELECT * FROM workflow_orders ORDER BY id"):
         pt = patient_by_legacy.get(o["patient_id"])
@@ -454,6 +458,9 @@ def main():
             "dropoutInsurance": bool(o.get("has_dropout_insurance")),
             "discountCoupon": clean(o.get("discount_coupon")),
             "packActive": bool(o.get("active_pack")),
+            "faturamentoPendente": bool(boleto.get(o["id"]) and not boleto[o["id"]].get("finished")),
+            "faturamentoDesde": boleto[o["id"]]["created_at"] if o["id"] in boleto else None,
+            "faturamentoConcluidoEm": (boleto[o["id"]].get("updated_at") if o["id"] in boleto and boleto[o["id"]].get("finished") else None),
             # data do último evento = há quanto tempo o caso está na coluna (como o Ortholab 1 ordena)
             "createdAt": o.get("created_at") or now,
             "updatedAt": last_event_at.get(o["id"]) or o.get("updated_at") or now,

@@ -131,7 +131,7 @@ export default function FinancialPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Financeiro</h1>
-          <p className="text-sm text-muted-foreground">{data?.total || 0} casos no workflow financeiro · o botão “Protheus” copia os dados do caso para lançar</p>
+          <p className="text-sm text-muted-foreground">{billed === 'true' ? `${data?.total || 0} caso(s) faturado(s)` : billed === 'all' ? `${data?.total || 0} caso(s) no workflow financeiro` : `${data?.total || 0} caso(s) a faturar`} · o botão “Protheus” copia os dados do caso para lançar</p>
         </div>
         <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="w-4 h-4" /> Exportar Excel</Button>
       </div>
@@ -148,9 +148,9 @@ export default function FinancialPage() {
         <Input placeholder="Buscar paciente ou dentista..." className="max-w-xs" value={search} onChange={e => setSearch(e.target.value)} />
         <select value={billed} onChange={e => setBilled(e.target.value)}
           className="h-10 rounded-md border border-input bg-background px-3 text-sm">
-          <option value="">Todos</option>
-          <option value="false">Pendente</option>
-          <option value="true">Faturado</option>
+          <option value="">A faturar (como no Ortholab 1)</option>
+          <option value="true">Faturados</option>
+          <option value="all">Todos</option>
         </select>
       </div>
 
@@ -174,7 +174,7 @@ export default function FinancialPage() {
                 <div key={c.id} className="grid grid-cols-12 gap-4 px-6 py-3 items-center text-sm">
                   <div className="col-span-1">
                     <p className="font-bold text-primary">#{c.caseNumber}</p>
-                    {c.approvedAt && !c.financial?.invoiceNumber && (() => { const d = diasUteis(c.approvedAt); return <p className={`text-[11px] ${d >= 2 ? 'font-semibold text-rose-600' : 'text-muted-foreground'}`}>{d === 0 ? 'aprovado hoje' : `há ${d}d úteis`}</p> })()}
+                    {(c.faturamentoDesde || c.approvedAt) && c.faturamentoPendente && !c.financial?.invoiceNumber && (() => { const d = diasUteis(c.faturamentoDesde || c.approvedAt); return <p className={`text-[11px] ${d >= 2 ? 'font-semibold text-rose-600' : 'text-muted-foreground'}`}>{d === 0 ? 'aprovado hoje' : `há ${d}d úteis`}</p> })()}
                     <button type="button" title="Copiar os dados para lançar no Protheus" onClick={() => { navigator.clipboard.writeText(textoProtheus(c, getDisplayAmount(c))); toast({ title: 'Copiado', description: 'Dados prontos para colar no Protheus.' }) }}
                       className="mt-1 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-primary"><Copy className="h-3 w-3" /> Protheus</button>
                   </div>

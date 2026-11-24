@@ -183,6 +183,10 @@ model Case {
   checagem          Json?     // indicação da Checagem Virtual 3D lida do PDF do planejamento
   status            CaseStatus   @default(DRAFT)
   billingType       String?
+  // "a faturar" igual ao Ortholab 1 (boleto aberto na aprovação para produção, fechado pelo financeiro)
+  faturamentoPendente    Boolean   @default(false)
+  faturamentoDesde       DateTime?
+  faturamentoConcluidoEm DateTime?
   installmentOption String?
   dropoutInsurance  Boolean      @default(false)
   discountCoupon    String?

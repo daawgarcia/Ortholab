@@ -14,14 +14,20 @@ export async function financialRoutes(fastify: FastifyInstance) {
       },
     }
 
-    if (billed === 'true') {
-      where.financial = { invoiceNumber: { not: null } }
-    }
-
-    if (billed === 'false') {
+    // Igual ao Ortholab 1: "a faturar" = caso aprovado para produção com o faturamento ainda aberto
+    // (no Ortholab 1, boleto não finalizado). Padrão da tela.
+    if (!billed || billed === 'false') {
+      where.faturamentoPendente = true
       where.OR = [
         { financial: { is: null } },
         { financial: { invoiceNumber: null } },
+      ]
+    }
+
+    if (billed === 'true') {
+      where.OR = [
+        { financial: { invoiceNumber: { not: null } } },
+        { faturamentoConcluidoEm: { not: null } },
       ]
     }
 
@@ -37,7 +43,7 @@ export async function financialRoutes(fastify: FastifyInstance) {
           payment: true,
           financial: { include: { billedBy: { select: { name: true } } } },
         },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: !billed || billed === 'false' ? [{ faturamentoDesde: 'asc' }, { caseNumber: 'asc' }] : [{ faturamentoConcluidoEm: 'desc' }, { updatedAt: 'desc' }],
         skip,
         take: parseInt(limit),
       }),
@@ -122,6 +128,8 @@ export async function financialRoutes(fastify: FastifyInstance) {
     if (numericAmount === null || !Number.isFinite(numericAmount) || numericAmount <= 0) {
       return reply.status(400).send({ error: 'Informe um valor válido para liberar cobrança ao cliente' })
     }
+
+    await fastify.prisma.case.update({ where: { id: caseId }, data: { faturamentoPendente: false, faturamentoConcluidoEm: new Date() } })
 
     const financial = await fastify.prisma.financial.upsert({
       where: { caseId },

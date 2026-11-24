@@ -19,7 +19,14 @@ const prismaPlugin: FastifyPluginAsync = fp(async (server) => {
       const id = params.args?.where?.id
       if (data && id && (data.status === 'APPROVED' || data.status === 'PRINTING_3D') && data.approvedAt === undefined) {
         const atual = await prisma.case.findUnique({ where: { id }, select: { approvedAt: true } })
-        if (atual && !atual.approvedAt) data.approvedAt = new Date()
+        if (atual && !atual.approvedAt) {
+          data.approvedAt = new Date()
+          // igual ao Ortholab 1: aprovou para produção, entra em "casos a faturar"
+          if (data.faturamentoPendente === undefined) {
+            data.faturamentoPendente = true
+            data.faturamentoDesde = data.approvedAt
+          }
+        }
       }
     }
     return next(params)
