@@ -160,7 +160,7 @@ export default function FinancialPage() {
           cases.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">Nenhum caso encontrado</div> : (
             <div className="divide-y">
               <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-muted-foreground uppercase bg-gray-50 rounded-t-xl">
-                <div className="col-span-1">#</div>
+                <div className="col-span-1">Caixa</div>
                 <div className="col-span-2">Paciente</div>
                 <div className="col-span-2">Dentista</div>
                 <div className="col-span-2">Clínica / CNPJ</div>
@@ -173,7 +173,7 @@ export default function FinancialPage() {
               {cases.map((c: any) => (
                 <div key={c.id} className="grid grid-cols-12 gap-4 px-6 py-3 items-center text-sm">
                   <div className="col-span-1">
-                    <p className="font-bold text-primary">#{c.caseNumber}</p>
+                    <p className="font-bold text-primary">{c.patient?.boxNumber || 'sem caixa'}</p>
                     {(c.faturamentoDesde || c.approvedAt) && c.faturamentoPendente && !c.financial?.invoiceNumber && (() => { const d = diasUteis(c.faturamentoDesde || c.approvedAt); return <p className={`text-[11px] ${d >= 2 ? 'font-semibold text-rose-600' : 'text-muted-foreground'}`}>{d === 0 ? 'aprovado hoje' : `há ${d}d úteis`}</p> })()}
                     <button type="button" title="Copiar os dados para lançar no Protheus" onClick={() => { navigator.clipboard.writeText(textoProtheus(c, getDisplayAmount(c))); toast({ title: 'Copiado', description: 'Dados prontos para colar no Protheus.' }) }}
                       className="mt-1 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-primary"><Copy className="h-3 w-3" /> Protheus</button>
@@ -209,7 +209,7 @@ export default function FinancialPage() {
       {billModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-md mx-4">
-            <CardHeader><CardTitle>Faturar Caso #{billModal.caseNumber}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Faturar caixa {billModal.patient?.boxNumber || 'sem caixa'} · {billModal.patientName}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1"><label className="text-xs font-medium">Número da NF (opcional)</label><Input placeholder="NF-12345" value={billForm.invoiceNumber} onChange={e => setBillForm(f => ({ ...f, invoiceNumber: e.target.value }))} /></div>
               <div className="space-y-1"><label className="text-xs font-medium">Valor (R$)</label><Input type="number" placeholder="0.00" value={billForm.amount} onChange={e => setBillForm(f => ({ ...f, amount: e.target.value }))} /></div>

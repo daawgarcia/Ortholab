@@ -68,7 +68,7 @@ const ES: Record<string, string> = {
   'Paciente — Novo': 'Paciente — Nuevo', 'Novo paciente': 'Nuevo paciente', 'Nome *': 'Nombre *', 'Sexo': 'Sexo', 'Masc': 'Masc', 'Fem': 'Fem',
   'Data de Nascimento': 'Fecha de nacimiento', 'Data de nascimento': 'Fecha de nacimiento', 'Dentista *': 'Dentista *', 'Selecione o dentista': 'Selecciona el dentista',
   'Dentes': 'Dientes', 'Tipo de Tratamento *': 'Tipo de tratamiento *', 'Planejamento Alinhadores': 'Planificación de alineadores', 'Alinhadores': 'Alineadores',
-  'Contenção': 'Contención', 'Placa Miorrelaxante': 'Placa miorrelajante', 'A faturar (como no Ortholab 1)': 'Por facturar (como en Ortholab 1)', 'Faturados': 'Facturados', 'EA Mio': 'EA Mio', 'EA Guard': 'EA Guard', 'Paciente cadastrado com sucesso': 'Paciente registrado con éxito',
+  'Contenção': 'Contención', 'Placa Miorrelaxante': 'Placa miorrelajante', 'A faturar (como no Ortholab 1)': 'Por facturar (como en Ortholab 1)', 'Faturados': 'Facturados', 'Caixa': 'Caja', 'sem caixa': 'sin caja', 'EA Mio': 'EA Mio', 'EA Guard': 'EA Guard', 'Paciente cadastrado com sucesso': 'Paciente registrado con éxito',
   'Selecione o tipo de tratamento': 'Selecciona el tipo de tratamiento', 'Escolha Alinhadores, Contenção, EA Air², EA Mio ou EA Guard para continuar.': 'Elige Alineadores, Contención, EA Air², EA Mio o EA Guard para continuar.',
   'Observações adicionais...': 'Observaciones adicionales...', 'Nome completo': 'Nombre completo', 'Salvar': 'Guardar', 'Voltar': 'Volver',
   'Cadastrar paciente': 'Registrar paciente', 'Enviar': 'Enviar', 'Próximo': 'Siguiente', 'Anterior': 'Anterior', 'Erro': 'Error', 'Erro ao salvar': 'Error al guardar',
