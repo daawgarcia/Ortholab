@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Roda na máquina temporária (us-east-1), de hora em hora.
+# Roda na máquina temporária (us-east-1), a cada 10 minutos.
 # Tira um SNAPSHOT do disco do Ortholab 1 (só leitura — nada muda no Ortholab 1),
 # cria um volume a partir dele, copia o MySQL, gera o dump e envia para o S3 do Ortholab 2.
 set -euo pipefail

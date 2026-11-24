@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala na máquina temporária (us-east-1) o snapshot + dump do Ortholab 1 de hora em hora.
+# Instala na máquina temporária (us-east-1) o snapshot + dump do Ortholab 1 a cada 10 minutos.
 set -euo pipefail
 mkdir -p /opt/ol2sync /data/sync
 aws s3 cp s3://ortholab2-arquivos-ea/sync/scripts/ol1_snapshot_dump.sh /opt/ol2sync/ol1_snapshot_dump.sh --only-show-errors --region sa-east-1
@@ -17,9 +17,9 @@ StandardError=append:/var/log/ol1-snapshot-dump.log
 U
 cat > /etc/systemd/system/ol1-snapshot-dump.timer <<'U'
 [Unit]
-Description=Ortholab 2 - dump do Ortholab 1 de hora em hora
+Description=Ortholab 2 - dump do Ortholab 1 a cada 10 minutos
 [Timer]
-OnCalendar=*-*-* *:05:00
+OnCalendar=*-*-* *:05/10:00
 Persistent=true
 [Install]
 WantedBy=timers.target

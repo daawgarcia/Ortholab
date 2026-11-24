@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala no servidor do Ortholab 2 o recebimento automático do Ortholab 1 (a cada 10 min).
+# Instala no servidor do Ortholab 2 o recebimento automático do Ortholab 1 (verifica a cada 2 min; o Ortholab 1 gera cópia a cada 10 min).
 set -euo pipefail
 cat > /etc/systemd/system/ortholab2-sync.service <<'U'
 [Unit]
@@ -12,10 +12,10 @@ StandardError=append:/opt/ortholab2/logs/sync.log
 U
 cat > /etc/systemd/system/ortholab2-sync.timer <<'U'
 [Unit]
-Description=Ortholab 2 - sincronização com o Ortholab 1 (a cada 10 min)
+Description=Ortholab 2 - sincronização com o Ortholab 1 (verifica a cada 2 min; o Ortholab 1 gera cópia a cada 10 min)
 [Timer]
 OnBootSec=5min
-OnUnitActiveSec=10min
+OnUnitActiveSec=2min
 Persistent=true
 [Install]
 WantedBy=timers.target

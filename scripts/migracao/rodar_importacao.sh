@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Importação Ortholab 1 -> Ortholab 2 (usada também na sincronização de hora em hora).
+# Importação Ortholab 1 -> Ortholab 2 (usada também na sincronização a cada 10 minutos).
 # Lê a senha do Postgres do deploy/.env. Só LÊ o Ortholab 1 (cópia MySQL + bucket).
 set -euo pipefail
 cd "$(dirname "$0")"
