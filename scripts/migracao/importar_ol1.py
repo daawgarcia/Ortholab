@@ -16,7 +16,7 @@ import os
 import secrets
 import sys
 import uuid
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date, datetime, time, timezone
 from zoneinfo import ZoneInfo
 
@@ -305,7 +305,7 @@ def main():
             "id": str(uuid.uuid4()),
             "legacyId": pt["id"],
             "name": clean(pt["name"]) or f"Paciente {pt['id']}",
-            "gender": clean(pt.get("gender")),
+            "gender": {"male": "M", "female": "F", "m": "M", "f": "F"}.get((clean(pt.get("gender")) or "").lower()),
             "dob": pt.get("birthday"),
             "dentistId": did,
             "active": bool(pt.get("active", 1)),
@@ -346,6 +346,30 @@ def main():
         canceled = {r["order_id"] for r in q("SELECT order_id FROM workflow_canceled_orders")}
     except Exception:
         canceled = set()
+    # produto do caso: o Ortholab 1 não grava o produto no pedido; deduz pelas quantidades e pela
+    # ficha de "outros serviços" (EA Air, EA MIO, EA Splint, EA Guard) enviada perto da abertura do pedido
+    osf_por_paciente = defaultdict(list)
+    for f in q("SELECT patient_id, created_at, ea_guard, ea_splint, ea_mio, ea_air FROM other_services_forms"):
+        osf_por_paciente[f["patient_id"]].append(f)
+
+    def produto_do_pedido(o):
+        alin = (o.get("amount_of_upper_aligners") or 0) + (o.get("amount_of_lower_aligners") or 0)
+        if alin > 0:
+            return "ALINHADORES"
+        perto = [f for f in osf_por_paciente.get(o["patient_id"], [])
+                 if f.get("created_at") and o.get("created_at") and abs((f["created_at"] - o["created_at"]).days) <= 20]
+        for f in perto:
+            if f.get("ea_air"):
+                return "EA_AIR2"
+            if f.get("ea_mio") or f.get("ea_splint"):
+                return "PLACA_MIORRELAXANTE"
+            if f.get("ea_guard"):
+                return "FINALIZACAO"
+        if (o.get("amount_of_retainers") or 0) > 0:
+            return "FINALIZACAO"
+        # pedido ainda no começo (sem quantidades) é caso de alinhador; finalizado sem informação fica sem produto
+        return "ALINHADORES" if o.get("in_progress") else None
+
     rows = []
     for o in q("SELECT * FROM workflow_orders ORDER BY id"):
         pt = patient_by_legacy.get(o["patient_id"])
@@ -373,7 +397,7 @@ def main():
             "caseNumber": o["id"],
             "dentistId": dentist_id,
             "patientId": patient_id,
-            "productType": "ALINHADORES",
+            "productType": produto_do_pedido(o),
             "patientName": pname,
             "patientDob": pdob,
             "gender": pgender,

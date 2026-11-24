@@ -325,6 +325,17 @@ export async function caseApprovalRoutes(fastify: FastifyInstance) {
   })
 
   // Stream de vídeo — aceita token como query param para uso em <video src>
+  // Endereço assinado do vídeo (6 h), pedido com login normal: o player troca o endereço sozinho se expirar
+  fastify.get('/video/:videoId/url', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { videoId } = request.params as { videoId: string }
+    const video = await fastify.prisma.caseApprovalVideo.findUnique({ where: { id: videoId }, include: { case: { select: { dentistId: true } } } })
+    if (!video) return reply.status(404).send({ error: 'Vídeo não encontrado' })
+    if (user.role === Role.DENTIST && video.case.dentistId !== user.id) return reply.status(403).send({ error: 'Acesso negado' })
+    if (video.videoUrl.includes('/api/uploads/')) return { url: video.videoUrl }
+    return { url: await fastify.s3.signedUrlForUrl(video.videoUrl, 6 * 3600) }
+  })
+
   fastify.get('/video/:videoId/stream', async (request, reply) => {
     const query = request.query as { token?: string }
     const header = request.headers.authorization

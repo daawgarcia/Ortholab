@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/status-badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { Download, DollarSign, Loader2, CheckCircle } from 'lucide-react'
+import { Download, DollarSign, Loader2, CheckCircle, Copy, PackageX } from 'lucide-react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { diasUteis } from '@/lib/prazos'
 
 function getAmountDetails(c: any) {
   if (c.financial?.amount !== null && c.financial?.amount !== undefined) {
@@ -32,8 +34,68 @@ function getAmountDetails(c: any) {
   return { tone: 'text-muted-foreground', text: 'Valor ainda sem composição disponível' }
 }
 
+/** Texto pronto para digitar no Protheus (processo manual do financeiro até a integração). */
+function textoProtheus(c: any, valor: number | null) {
+  const doc = (c.dentist?.cnpj || c.dentist?.cpf || '').replace(/\D/g, '')
+  const lab = c.planejamentoLab || {}
+  const linhas = [
+    `Cliente: ${c.dentist?.name || ''}${c.dentist?.totvsCode ? ` — código ${c.dentist.totvsCode}${c.dentist?.totvsLoja ? `/${c.dentist.totvsLoja}` : ''}` : ''}`,
+    `CPF/CNPJ: ${doc || '—'}`,
+    `Caso nº ${c.caseNumber}${c.patient?.boxNumber ? ` · caixa ${c.patient.boxNumber}` : ''} · paciente ${c.patientName}`,
+    `Produto: ${c.service?.name || '—'}${lab.seriesSuperior != null ? ` · séries sup ${lab.seriesSuperior} / inf ${lab.seriesInferior}${Number(lab.guias) > 0 ? ` · guias ${lab.guias}` : ''}` : ''}`,
+    `Valor: ${valor != null ? formatCurrency(valor) : '—'} · parcelas ${c.installmentOption || '—'}${c.discountCoupon ? ` · cupom ${c.discountCoupon}` : ''}${c.deliveryMethod === 'RETIRA' ? ' · retira (sem frete)' : c.freightAmount ? ` · frete ${formatCurrency(Number(c.freightAmount))}` : ''}`,
+    c.approvedAt ? `Aprovado em ${new Date(c.approvedAt).toLocaleDateString('pt-BR')}` : '',
+  ]
+  return linhas.filter(Boolean).join('\n')
+}
+
+function PacotesPerdidos() {
+  const qc = useQueryClient()
+  const [status, setStatus] = useState('pendente')
+  const { data, isLoading } = useQuery({ queryKey: ['pacotes-perdidos', status], queryFn: () => api.get(`/pacotes-perdidos?status=${status}`).then(r => r.data) })
+  const lancar = useMutation({
+    mutationFn: (id: string) => api.post(`/pacotes-perdidos/${id}/lancado`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['pacotes-perdidos'] }); toast({ title: 'Marcado como lançado no Protheus' }) },
+  })
+  const itens = data?.itens || []
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="flex items-center gap-2 border-b px-6 py-3">
+          {[['pendente', 'A lançar no Protheus'], ['lancado', 'Já lançados'], ['', 'Todos']].map(([v, l]) => (
+            <button key={v} onClick={() => setStatus(v)} className={`rounded-full px-3 py-1 text-xs ring-1 ${status === v ? 'bg-primary text-white ring-primary' : 'ring-gray-200 text-gray-600'}`}>{l}</button>
+          ))}
+          <span className="ml-auto text-xs text-muted-foreground">Marcados pelo laboratório/admin em cada caso (Perdeu MID / Perdeu FULL)</span>
+        </div>
+        {isLoading ? <div className="py-10 text-center text-sm text-muted-foreground">Carregando...</div> :
+          itens.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">Nada por aqui.</div> : (
+          <div className="divide-y">
+            {itens.map((i: any) => (
+              <div key={i.id} className="grid grid-cols-12 items-center gap-4 px-6 py-3 text-sm">
+                <div className="col-span-1"><span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">Perdeu {i.tipo}</span></div>
+                <div className="col-span-3"><Link to={`/cases/${i.case?.id}`} className="font-medium text-primary hover:underline">{i.case?.patientName}</Link><p className="text-xs text-muted-foreground">Caso #{i.case?.caseNumber}{i.case?.patient?.boxNumber ? ` · caixa ${i.case.patient.boxNumber}` : ''}</p></div>
+                <div className="col-span-3"><p>{i.case?.dentist?.name}</p><p className="text-xs text-muted-foreground">{i.case?.dentist?.totvsCode ? `Protheus ${i.case.dentist.totvsCode}${i.case.dentist.totvsLoja ? '/' + i.case.dentist.totvsLoja : ''} · ` : ''}{i.case?.dentist?.cnpj || i.case?.dentist?.cpf || ''}</p></div>
+                <div className="col-span-3 text-xs text-muted-foreground">Marcado por {i.marcadoPor} em {formatDate(i.marcadoEm)}{i.motivo ? ` · ${i.motivo}` : ''}{i.totvsEm ? <><br />Lançado {i.totvsPor ? `por ${i.totvsPor} ` : ''}em {formatDate(i.totvsEm)}</> : null}</div>
+                <div className="col-span-2 text-right">
+                  {['MANUAL_PENDENTE', 'ERRO'].includes(i.totvsStatus)
+                    ? <Button size="sm" variant="outline" className="h-7 text-xs" disabled={lancar.isPending} onClick={() => lancar.mutate(i.id)}><CheckCircle className="mr-1 h-3 w-3" /> Já lancei</Button>
+                    : <span className="text-xs font-medium text-emerald-700">✓ No Protheus</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function FinancialPage() {
   const qc = useQueryClient()
+  const [params, setParams] = useSearchParams()
+  const aba = params.get('aba') === 'pacotes' ? 'pacotes' : 'faturar'
+  const { data: pp } = useQuery({ queryKey: ['pacotes-perdidos', 'contagem'], queryFn: () => api.get('/pacotes-perdidos?status=pendente').then(r => r.data), refetchInterval: 120000 })
+
   const [search, setSearch] = useState('')
   const [billed, setBilled] = useState('')
   const [billModal, setBillModal] = useState<any>(null)
@@ -69,11 +131,19 @@ export default function FinancialPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Financeiro</h1>
-          <p className="text-sm text-muted-foreground">{data?.total || 0} casos no workflow financeiro</p>
+          <p className="text-sm text-muted-foreground">{data?.total || 0} casos no workflow financeiro · o botão “Protheus” copia os dados do caso para lançar</p>
         </div>
         <Button variant="outline" onClick={exportExcel} className="gap-2"><Download className="w-4 h-4" /> Exportar Excel</Button>
       </div>
 
+      <div className="flex gap-2 border-b">
+        <button onClick={() => setParams({})} className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${aba === 'faturar' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}>Casos a faturar</button>
+        <button onClick={() => setParams({ aba: 'pacotes' })} className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium ${aba === 'pacotes' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}>
+          <PackageX className="h-4 w-4" /> Pacotes perdidos {pp?.pendentes ? <span className="rounded-full bg-rose-600 px-1.5 text-[11px] font-bold text-white">{pp.pendentes}</span> : null}
+        </button>
+      </div>
+
+      {aba === 'pacotes' ? <PacotesPerdidos /> : <>
       <div className="flex gap-3">
         <Input placeholder="Buscar paciente ou dentista..." className="max-w-xs" value={search} onChange={e => setSearch(e.target.value)} />
         <select value={billed} onChange={e => setBilled(e.target.value)}
@@ -102,7 +172,12 @@ export default function FinancialPage() {
               </div>
               {cases.map((c: any) => (
                 <div key={c.id} className="grid grid-cols-12 gap-4 px-6 py-3 items-center text-sm">
-                  <div className="col-span-1 font-bold text-primary">#{c.caseNumber}</div>
+                  <div className="col-span-1">
+                    <p className="font-bold text-primary">#{c.caseNumber}</p>
+                    {c.approvedAt && !c.financial?.invoiceNumber && (() => { const d = diasUteis(c.approvedAt); return <p className={`text-[11px] ${d >= 2 ? 'font-semibold text-rose-600' : 'text-muted-foreground'}`}>{d === 0 ? 'aprovado hoje' : `há ${d}d úteis`}</p> })()}
+                    <button type="button" title="Copiar os dados para lançar no Protheus" onClick={() => { navigator.clipboard.writeText(textoProtheus(c, getDisplayAmount(c))); toast({ title: 'Copiado', description: 'Dados prontos para colar no Protheus.' }) }}
+                      className="mt-1 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-primary"><Copy className="h-3 w-3" /> Protheus</button>
+                  </div>
                   <div className="col-span-2">{c.patientName}</div>
                   <div className="col-span-2">{c.dentist?.name}</div>
                   <div className="col-span-2 text-muted-foreground text-xs"><p>{c.dentist?.clinic}</p><p>{c.dentist?.cnpj}</p></div>
@@ -128,6 +203,8 @@ export default function FinancialPage() {
           )}
         </CardContent>
       </Card>
+
+      </>}
 
       {billModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

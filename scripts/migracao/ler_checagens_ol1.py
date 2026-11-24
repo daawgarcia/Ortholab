@@ -34,7 +34,7 @@ GERAL = re.compile(r"Estima\w*[^;0-9]{0,80}?:\s*" + FAIXA, re.I)
 PROD = re.compile(r"produ(?:[çc][ãa]o|cci[óo]n)\s+de\s+(.{0,120}?)\s+para\s+esta", re.I)
 FS = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+superiores?", re.I)
 FI = re.compile(r"(\d{1,3})\s*s[ée]ries?\s+inferiores?", re.I)
-VERSAO_LEITURA = 4
+VERSAO_LEITURA = 5
 
 
 def log(m):
@@ -92,36 +92,48 @@ def main():
                          database=os.environ.get("MYSQL_DB", "ol1"), charset="utf8", cursorclass=pymysql.cursors.DictCursor, autocommit=True)
     pg = psycopg2.connect(os.environ["PG_DSN"])
     p = pg.cursor()
-    p.execute('''SELECT c.id, c."legacyId", pt."legacyId", c.checagem
+    p.execute('''SELECT c.id, c."legacyId", pt."legacyId", c.checagem, c."createdAt"
                  FROM "Case" c JOIN "Patient" pt ON pt.id = c."patientId"
                  WHERE c.status::text IN %s AND pt."legacyId" IS NOT NULL''', (STATUS,))
     casos = p.fetchall()
     log(f"Casos para ler checagem: {len(casos)}")
     m = my.cursor()
     lidos = pulados = sem_pdf = sem_dado = 0
-    for case_id, order_id, patient_legacy, atual in casos:
-        m.execute("SELECT id, file FROM v2_works WHERE patient_id=%s AND LOWER(file) LIKE '%%.pdf' ORDER BY id DESC LIMIT 1",
-                  (patient_legacy,))
-        w = m.fetchone()
-        if not w:
+    for case_id, order_id, patient_legacy, atual, criado in casos:
+        # todos os PDFs de planejamento enviados para este caso (desde a abertura do caso); sem nenhum, usa o último do paciente
+        m.execute("SELECT id, file, created_at FROM v2_works WHERE patient_id=%s AND LOWER(file) LIKE '%%.pdf' AND created_at >= %s ORDER BY id",
+                  (patient_legacy, criado))
+        works = m.fetchall()
+        if not works:
+            m.execute("SELECT id, file, created_at FROM v2_works WHERE patient_id=%s AND LOWER(file) LIKE '%%.pdf' ORDER BY id DESC LIMIT 1", (patient_legacy,))
+            works = m.fetchall()
+        if not works:
             sem_pdf += 1
             continue
-        chave = f"ol1-v2work-{w['id']}"
-        if atual and atual.get("arquivoId") == chave and atual.get("versao") == VERSAO_LEITURA:
+        chaves = [f"ol1-v2work-{w['id']}" for w in works]
+        if atual and atual.get("versao") == VERSAO_LEITURA and [x.get("arquivoId") for x in (atual.get("planejamentos") or [])] == chaves:
             pulados += 1
             continue
-        with tempfile.TemporaryDirectory() as d:
-            arq = os.path.join(d, "p.pdf")
-            if not baixar(w["id"], w["file"], arq):
-                sem_pdf += 1
-                continue
-            r = ler_pdf(arq)
-        if not r:
-            sem_dado += 1
-            r = {}
-        r.update({"arquivo": w["file"], "arquivoId": chave, "versao": VERSAO_LEITURA,
-                  "lidoEm": datetime.now(timezone.utc).isoformat()})
-        p.execute('UPDATE "Case" SET checagem = %s::jsonb WHERE id = %s', (json.dumps(r), case_id))
+        anteriores = {x.get("arquivoId"): x for x in ((atual or {}).get("planejamentos") or [])}
+        planejamentos = []
+        for w, chave in zip(works, chaves):
+            if chave in anteriores and anteriores[chave].get("versao") == VERSAO_LEITURA:
+                planejamentos.append(anteriores[chave]); continue
+            with tempfile.TemporaryDirectory() as d:
+                arq = os.path.join(d, "p.pdf")
+                r = ler_pdf(arq) if baixar(w["id"], w["file"], arq) else None
+            if not r:
+                sem_dado += 1
+                r = {}
+            r.update({"arquivo": w["file"], "arquivoId": chave, "versao": VERSAO_LEITURA,
+                      "data": w["created_at"].replace(tzinfo=timezone.utc).isoformat() if w.get("created_at") else None,
+                      "lidoEm": datetime.now(timezone.utc).isoformat()})
+            planejamentos.append(r)
+        # mantém a escolha feita no Ortholab 2; senão vale o planejamento mais recente
+        escolhido = (atual or {}).get("escolhido")
+        base = next((x for x in planejamentos if x["arquivoId"] == escolhido), planejamentos[-1])
+        final = dict(base, planejamentos=planejamentos, escolhido=base["arquivoId"], versao=VERSAO_LEITURA)
+        p.execute('UPDATE "Case" SET checagem = %s::jsonb WHERE id = %s', (json.dumps(final, default=str), case_id))
         pg.commit()
         lidos += 1
         if lidos % 10 == 0:

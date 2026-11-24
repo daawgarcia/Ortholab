@@ -411,6 +411,26 @@ export async function workflowEventRoutes(fastify: FastifyInstance) {
     }
   })
 
+  // Caso com mais de um planejamento: dentista (do caso), admin ou laboratório escolhem qual vale (séries e valor seguem ele)
+  fastify.post('/case/:caseId/planejamento-escolhido', { preHandler: authenticate }, async (request, reply) => {
+    const user = request.user as JwtPayload
+    const { caseId } = request.params as { caseId: string }
+    const { arquivoId } = (request.body as any) || {}
+    const caso = await fastify.prisma.case.findUnique({ where: { id: caseId } })
+    if (!caso) return reply.status(404).send({ error: 'Caso não encontrado' })
+    const pode = user.role === Role.ADMIN || user.role === Role.LAB_TECH || (user.role === Role.DENTIST && caso.dentistId === user.id)
+    if (!pode || !(await dentistaNoEscopo(fastify.prisma, user, caso.dentistId))) return reply.status(403).send({ error: 'Acesso negado' })
+    const atual: any = caso.checagem || {}
+    const lista: any[] = Array.isArray(atual.planejamentos) ? atual.planejamentos : []
+    const p = lista.find(x => String(x.arquivoId) === String(arquivoId))
+    if (!p) return reply.status(400).send({ error: 'Planejamento não encontrado neste caso' })
+    if (!['IN_PLANNING', 'IN_MOVEMENT', 'LAB_APPROVAL', 'WAITING_APPROVAL', 'REVISION_REQUESTED', 'SUBMITTED'].includes(caso.status as any) && user.role === Role.DENTIST) {
+      return reply.status(400).send({ error: 'Este caso já foi aprovado; fale com o laboratório para trocar o planejamento.' })
+    }
+    await fastify.prisma.case.update({ where: { id: caseId }, data: { checagem: { ...p, planejamentos: lista, escolhido: p.arquivoId, escolhidoPor: user.id, escolhidoEm: new Date().toISOString() } as any } })
+    return { ok: true }
+  })
+
   fastify.post('/case/:caseId/approve', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload
     const { caseId } = request.params as { caseId: string }

@@ -47,6 +47,7 @@ import { whatsappRoutes } from './modules/whatsapp/whatsapp.routes'
 import { reportsRoutes } from './modules/reports/reports.routes'
 import { buscaRoutes, prepararBusca } from './modules/busca/busca'
 import { lgpdRoutes, prepararLgpd, registrarAuditoriaDeAcesso } from './modules/lgpd/lgpd.routes'
+import { pacotePerdidoRoutes } from './modules/pacote-perdido/pacote-perdido.routes'
 import { orcamentoRoutes } from './modules/orcamento/orcamento'
 import { prepararFrete } from './modules/orcamento/frete'
 import { startAvisoChecagemJob } from './modules/jobs/aviso-checagem.job'
@@ -279,6 +280,7 @@ const start = async () => {
   await app.register(buscaRoutes, { prefix: '/api/busca' })
   await app.register(lgpdRoutes, { prefix: '/api/lgpd' })
   await app.register(orcamentoRoutes, { prefix: '/api/orcamento' })
+  await app.register(pacotePerdidoRoutes, { prefix: '/api/pacotes-perdidos' })
   prepararFrete(app.prisma).catch((e) => app.log.error(e, 'frete'))
   prepararLgpd(app).catch((e) => app.log.error(e, 'lgpd: minutas'))
   prepararBusca(app.prisma).catch(() => {})

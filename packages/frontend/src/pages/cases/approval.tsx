@@ -2,6 +2,7 @@
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
+import { VideoSeguro } from '@/components/video/video-seguro'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -309,12 +310,8 @@ export function CaseApprovalPage() {
           
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
             {selectedVideo && (
-              <video
-                src={`${APPROVAL_API_BASE}/cases/video/${selectedVideo.id}/stream?token=${encodeURIComponent(accessToken || '')}`}
-                controls
-                className="w-full h-full"
-                autoPlay
-              />
+              <VideoSeguro className="w-full h-full" nome={selectedVideo.title}
+                obterUrl={() => api.get(`/cases/video/${selectedVideo.id}/url`).then(r => r.data.url)} />
             )}
           </div>
           

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { useAuthStore } from '@/store/auth'
 import { caixaFmt } from '@/lib/rotulo'
+import { tomSetor, CLASSE_TOM, SELO_TOM } from '@/lib/prazos'
 
 const PAISES = [
   { v: '', l: 'Todos' }, { v: 'brasil', l: 'Brasil' }, { v: 'colombia', l: 'Colômbia' },
@@ -97,8 +98,10 @@ function WorkflowList({
           )}
           {cases.map((c: any) => {
             const label = `${caixaFmt(c.patient?.boxNumber)} – ${c.patientName}`
+            const setor = status === 'PRINTING_3D' ? 'impressao3d' : status === 'LABORATORY' ? 'recorte' : null
+            const regra = setor ? tomSetor(setor, c.updatedAt || c.createdAt) : null
             return (
-              <div key={c.id} className="px-5 py-3 flex items-center gap-4">
+              <div key={c.id} className={`px-5 py-3 flex items-center gap-4 ${regra ? CLASSE_TOM[regra.tom] : ''}`}>
                 <button
                   onClick={() => navigate(`/cases/${c.id}`)}
                   className="text-sm text-primary font-medium hover:underline flex-1 text-left"
@@ -107,6 +110,11 @@ function WorkflowList({
                 </button>
                 {c.dentist && (
                   <span className="text-xs text-gray-400">{c.dentist.name}</span>
+                )}
+                {regra && (
+                  <span className={`shrink-0 rounded px-1.5 py-px text-[11px] tabular-nums ${SELO_TOM[regra.tom]}`} title="Regra do setor: amarelo com 1 dia útil, vermelho a partir de 2">
+                    {regra.diasUteis === 0 ? 'hoje' : `${regra.diasUteis}d úteis`}
+                  </span>
                 )}
                 {advanceLabel && (
                   <Button

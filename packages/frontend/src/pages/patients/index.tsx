@@ -29,7 +29,14 @@ export default function PatientsPage() {
   const [search, setSearch] = useState(params.get('busca') || '')
   const termo = useDebounce(search.trim(), 300)
   useEffect(() => { const b = params.get('busca'); if (b !== null) setSearch(b) }, [params])
-  const [dentistId, setDentistId] = useState('')
+  const [dentistId, setDentistId] = useState(params.get('dentistId') || '')
+  useEffect(() => { setDentistId(params.get('dentistId') || '') }, [params])
+  const { data: dentistaAtual } = useQuery({
+    queryKey: ['dentist-name', dentistId],
+    queryFn: () => api.get(`/dentists/${dentistId}`).then(r => r.data),
+    enabled: !!dentistId && !!params.get('dentistId'),
+    staleTime: 300000,
+  })
   const [dentistSearch, setDentistSearch] = useState('')
   const termoDentista = useDebounce(dentistSearch.trim(), 300)
 
@@ -56,8 +63,18 @@ export default function PatientsPage() {
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} paciente(s) cadastrado(s)</p>
+          {params.get('dentistId') && dentistaAtual ? (
+            <>
+              <button onClick={() => navigate(`/dentists/${dentistId}`)} className="text-sm text-primary hover:underline">‹ Voltar para {dentistaAtual.name}</button>
+              <h1 className="text-2xl font-bold text-gray-900">Pacientes de {dentistaAtual.name}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} paciente(s) deste dentista · <button onClick={() => navigate('/patients')} className="text-primary hover:underline">ver todos os pacientes</button></p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} paciente(s) cadastrado(s)</p>
+            </>
+          )}
         </div>
         <Button onClick={() => navigate('/patients/new')} className="gap-2">
           <Plus className="w-4 h-4" />
@@ -75,7 +92,7 @@ export default function PatientsPage() {
             className="pl-9"
           />
         </div>
-        <div className="relative max-w-sm">
+        {!params.get('dentistId') && <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Buscar dentista por nome..."
@@ -83,8 +100,8 @@ export default function PatientsPage() {
             onChange={e => setDentistSearch(e.target.value)}
             className="pl-9"
           />
-        </div>
-        {dentistsData?.dentists && (
+        </div>}
+        {dentistsData?.dentists && !params.get('dentistId') && (
           <select
             value={dentistId}
             onChange={e => setDentistId(e.target.value)}
@@ -132,7 +149,7 @@ export default function PatientsPage() {
                       {treatmentLabel}
                     </span>
                   )}
-                  {p.gender && <span className="text-xs text-gray-400">{p.gender === 'M' ? 'Masc' : 'Fem'}</span>}
+                  {['M', 'F', 'male', 'female'].includes(p.gender) && <span className="text-xs text-gray-400">{p.gender === 'M' || p.gender === 'male' ? 'Masc' : 'Fem'}</span>}
                 </span>
                 <span className="text-sm text-gray-500 truncate">{p.dentist?.name || '—'}</span>
                 <span className="text-sm text-gray-500">{p._count?.cases ?? 0} caso(s)</span>

@@ -12,6 +12,7 @@ import { ArrowLeft, Upload, CheckCircle, RefreshCw, Send, FileText, X, Loader2 }
 import { toast } from '@/hooks/use-toast'
 import { useDropzone } from 'react-dropzone'
 import { ChecagemCard } from '@/components/cases/checagem-card'
+import { PacotePerdidoCard } from '@/components/cases/pacote-perdido'
 import { rotuloCaso } from '@/lib/rotulo'
 
 function DocUploader({ caseId, type, label, onDone }: any) {
@@ -221,8 +222,9 @@ export default function CaseDetailPage() {
       )}
 
       {(c.status === 'WAITING_APPROVAL' || c.checagem) && (
-        <ChecagemCard checagem={c.checagem} aguardandoDesde={c.status === 'WAITING_APPROVAL' ? c.updatedAt : undefined} planejamentoLab={c.planejamentoLab} />
+        <ChecagemCard checagem={c.checagem} aguardandoDesde={c.status === 'WAITING_APPROVAL' ? c.updatedAt : undefined} planejamentoLab={c.planejamentoLab} caseId={c.id} dentistId={c.dentistId} />
       )}
+      {!isDentist && <PacotePerdidoCard caseId={c.id} />}
 
       <div className="grid grid-cols-3 gap-5">
         <div className="col-span-2 space-y-5">
@@ -232,7 +234,7 @@ export default function CaseDetailPage() {
               <div><p className="text-muted-foreground text-xs">Dentista</p><p className="font-medium">{c.dentist?.name}</p></div>
               <div><p className="text-muted-foreground text-xs">Clínica</p><p className="font-medium">{c.dentist?.clinic || '-'}</p></div>
               <div><p className="text-muted-foreground text-xs">Data de nascimento</p><p className="font-medium">{c.patientDob ? formatDate(c.patientDob) : '-'}</p></div>
-              <div><p className="text-muted-foreground text-xs">Gênero</p><p className="font-medium">{c.gender === 'M' ? 'Masculino' : c.gender === 'F' ? 'Feminino' : '-'}</p></div>
+              <div><p className="text-muted-foreground text-xs">Gênero</p><p className="font-medium">{c.gender === 'M' || c.gender === 'male' ? 'Masculino' : c.gender === 'F' || c.gender === 'female' ? 'Feminino' : '-'}</p></div>
               <div><p className="text-muted-foreground text-xs">Serviço</p><p className="font-medium">{c.service?.name || '-'}</p></div>
               {c.notes && <div className="col-span-2"><p className="text-muted-foreground text-xs">Observações</p><p className="font-medium">{c.notes}</p></div>}
             </CardContent>

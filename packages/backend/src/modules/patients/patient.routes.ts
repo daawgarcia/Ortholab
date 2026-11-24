@@ -468,7 +468,7 @@ export async function patientRoutes(fastify: FastifyInstance) {
 
   // Bucket privado: devolve links temporários (1 h) em vez da URL crua do arquivo
   const withSignedUrls = <T extends { url: string }>(items: T[]) =>
-    Promise.all(items.map(async (item) => ({ ...item, url: await fastify.s3.signedUrlForUrl(item.url, 3600) })))
+    Promise.all(items.map(async (item) => ({ ...item, url: await fastify.s3.signedUrlForUrl(item.url, /\.(mp4|mov|webm|m4v)(\?|$)/i.test(String((item as any).filename || item.url)) ? 6 * 3600 : 3600) })))
 
   fastify.get('/:id/photos', { preHandler: authenticate }, async (request) => {
     const { id } = request.params as { id: string }
@@ -658,9 +658,14 @@ export async function patientRoutes(fastify: FastifyInstance) {
                 orderBy: { createdAt: 'desc' },
               })
               if (caso) {
+                // guarda todos os planejamentos do caso; o novo passa a ser o escolhido (dá para trocar no card)
+                const atual: any = caso.checagem || {}
+                const anteriores: any[] = Array.isArray(atual.planejamentos) ? atual.planejamentos : (atual.arquivoId ? [{ ...atual, planejamentos: undefined, escolhido: undefined }] : [])
+                const novo = { ...checagem, arquivoId: file.id, arquivo: part.filename, data: new Date().toISOString() }
+                const planejamentos = [...anteriores.filter(p => p.arquivoId !== file.id), novo]
                 await fastify.prisma.case.update({
                   where: { id: caso.id },
-                  data: { checagem: { ...checagem, arquivoId: file.id } as any },
+                  data: { checagem: { ...novo, planejamentos, escolhido: file.id } as any },
                 })
               }
             }).catch(console.error)

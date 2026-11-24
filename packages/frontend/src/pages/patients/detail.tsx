@@ -4,6 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import api from '@/lib/api'
+import { VideoSeguro } from '@/components/video/video-seguro'
+import { PacotePerdidoCard } from '@/components/cases/pacote-perdido'
 import { ensureSelectedServiceInList, filterServicesForProduct, getAllowedInstallments, getServiceDisplayName, inferProductType, isAlignerType, normalizeServiceKind, sortBillingServices } from '@/lib/billing'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -352,6 +354,7 @@ function WorkflowTab({ cases, patientId }: { cases: any[]; patientId: string }) 
                         </div>
                       </div>
                     )}
+                    {selectedCase && <PacotePerdidoCard caseId={selectedCase} />}
                     {showBillingSection && canManageBilling && (
                       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-gray-50">
@@ -689,7 +692,8 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
                 <p className="text-sm font-semibold">{f.filename}</p>
                 <p className="text-xs text-gray-400">{new Date(f.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })}</p>
               </div>
-              <video src={f.url} controls preload="metadata" className="w-full max-h-[500px] bg-black" playsInline />
+              <VideoSeguro src={f.url} nome={f.filename}
+                obterUrl={() => api.get(`/patients/${patientId}/work-files`).then(r => ((r.data?.files || []).find((x: any) => x.id === f.id) || f).url)} />
             </div>
           ))}
         </div>
@@ -725,12 +729,10 @@ function CheckagemVirtual3DTab({ patientId, cases }: { patientId: string; cases:
                   )}
                 </div>
               </div>
-              <video
-                src={`${VIDEO_API_BASE}/cases/video/${video.id}/stream?token=${encodeURIComponent(accessToken || '')}`}
-                controls
-                className="w-full max-h-[500px] bg-black"
+              <VideoSeguro
+                obterUrl={() => api.get(`/cases/video/${video.id}/url`).then(r => r.data.url)}
+                nome={video.title}
                 onPlay={() => handleView(video.id)}
-                playsInline
               />
             </div>
           ))}

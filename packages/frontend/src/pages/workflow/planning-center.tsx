@@ -7,6 +7,7 @@ import { useUiStore } from '@/store/ui'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { FileDown, Search, Loader2, ArrowRight, RefreshCw } from 'lucide-react'
+import { tomPlanning, CLASSE_TOM, SELO_TOM } from '@/lib/prazos'
 
 // Mesmas 5 colunas do Planning Center do Ortholab 1
 const COLUMNS = [
@@ -122,6 +123,13 @@ export default function PlanningCenterPage() {
         </Button>
       </div>
 
+      <p className="-mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
+        <span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-200 align-middle mr-1" />mais de 2 dias úteis na etapa</span>
+        <span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-200 align-middle mr-1" />caso a alterar</span>
+        <span>Aguardando aprovação: vermelho a partir de 30 dias corridos (cobra a checagem)</span>
+        <span>Dias úteis sem fim de semana e feriados</span>
+      </p>
+
       <div className="flex-1 min-h-0 grid grid-cols-5 gap-3">
         {COLUMNS.map(col => {
           const lista = filtrado?.[col.key] || []
@@ -141,15 +149,16 @@ export default function PlanningCenterPage() {
                   <li className="py-10 text-center text-sm text-gray-400">Nenhum caso</li>
                 )}
                 {!isLoading && lista.map((c: any) => {
-                  const dias = diasDesde(dataEvento(c))
+                  const regra = tomPlanning(col.key, dataEvento(c))
+                  const dias = col.key === 'WAITING_APPROVAL' ? regra.diasCorridos : regra.diasUteis
                   return (
-                    <li key={c.id} className="group relative hover:bg-gray-50">
+                    <li key={c.id} className={`group relative hover:brightness-[0.98] ${CLASSE_TOM[regra.tom] || 'hover:bg-gray-50'}`}>
                       <button onClick={() => navigate(`/cases/${c.id}`)} className="w-full text-left px-3 py-2">
                         <div className="flex items-center gap-2">
                           <p className="text-[13px] font-medium text-gray-900 truncate" title={c.patientName}>{c.patientName}</p>
-                          <span className={`ml-auto shrink-0 rounded px-1.5 py-px text-[11px] tabular-nums ${corDias(dias)}`}
-                            title={`Na etapa desde ${new Date(dataEvento(c)).toLocaleDateString('pt-BR')}`}>
-                            {dias === 0 ? 'hoje' : `${dias}d`}
+                          <span className={`ml-auto shrink-0 rounded px-1.5 py-px text-[11px] tabular-nums ${SELO_TOM[regra.tom]}`}
+                            title={`Na etapa desde ${new Date(dataEvento(c)).toLocaleDateString('pt-BR')} · ${regra.diasUteis} dia(s) útil(eis) · ${regra.diasCorridos} dia(s) corrido(s)`}>
+                            {dias === 0 ? 'hoje' : col.key === 'WAITING_APPROVAL' ? `${dias}d` : `${dias}d úteis`}
                           </span>
                         </div>
                         <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-gray-500 min-w-0">

@@ -203,6 +203,7 @@ model Case {
   refinements      Case[]          @relation("CaseRefinements")
   documents        CaseDocument[]
   plannings        Planning[]
+  pacotesPerdidos  PacotePerdido[]
   production       Production?
   payment          Payment?
   financial        Financial?
@@ -826,4 +827,27 @@ model FreightRate {
   updatedAt DateTime @updatedAt
 
   @@index([uf])
+}
+
+
+/// "Perdeu MID / Perdeu FULL": o dentista perdeu o pacote do caso. Só a equipe vê; admin e laboratório marcam.
+/// Enquanto a integração com o Protheus não está ligada, o financeiro lança à mão e marca aqui como lançado.
+model PacotePerdido {
+  id            String    @id @default(uuid())
+  caseId        String
+  tipo          String    // MID | FULL
+  motivo        String?
+  marcadoPorId  String
+  marcadoEm     DateTime  @default(now())
+  desfeitoEm    DateTime?
+  desfeitoPorId String?
+  totvsStatus   String    @default("MANUAL_PENDENTE") // MANUAL_PENDENTE | LANCADO_MANUAL | ENVIADO | ERRO
+  totvsEm       DateTime?
+  totvsPorId    String?
+  totvsInfo     String?
+
+  case Case @relation(fields: [caseId], references: [id])
+
+  @@index([caseId])
+  @@index([totvsStatus])
 }

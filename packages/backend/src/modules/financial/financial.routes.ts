@@ -31,7 +31,8 @@ export async function financialRoutes(fastify: FastifyInstance) {
       fastify.prisma.case.findMany({
         where,
         include: {
-          dentist: { select: { name: true, clinic: true, cnpj: true, email: true } },
+          dentist: { select: { name: true, clinic: true, cnpj: true, cpf: true, email: true, totvsCode: true, totvsLoja: true } },
+          patient: { select: { boxNumber: true } },
           service: { include: { prices: { orderBy: { validFrom: 'desc' } } } },
           payment: true,
           financial: { include: { billedBy: { select: { name: true } } } },
