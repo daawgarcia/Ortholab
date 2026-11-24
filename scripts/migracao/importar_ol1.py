@@ -205,7 +205,7 @@ def main():
                         dentistas_existentes.add(alvo)
                         stats["login_adotado_por_dentista"] += 1
                     else:
-                        p.execute('UPDATE "User" SET "legacyUserId" = NULL WHERE id = %s', (uid_ol2,))
+                        p.execute('UPDATE "User" SET "legacyUserId" = NULL, email = \'troca-\' || id || \'@troca.invalid\' WHERE id = %s', (uid_ol2,))
                         stats["login_trocou_de_dentista"] += 1
         # e-mail que mudou de dono no Ortholab 1: libera antes (senão a troca bate na regra de e-mail único)
         desejados = {(r.get("email") or "").lower(): r[key] for r in rows if r.get("email")}
