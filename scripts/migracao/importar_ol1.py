@@ -189,6 +189,24 @@ def main():
 
     def upsert_users(rows, key):
         cols = list(rows[0].keys())
+        if key == "legacyDentistId":
+            # login do Ortholab 1 que passou a outro dentista: ajusta antes (regra de legacyUserId único)
+            por_uid = {r["legacyUserId"]: r["legacyDentistId"] for r in rows if r.get("legacyUserId")}
+            if por_uid:
+                p.execute('SELECT "legacyDentistId" FROM "User" WHERE "legacyDentistId" IS NOT NULL')
+                dentistas_existentes = {x[0] for x in p.fetchall()}
+                p.execute('SELECT id, "legacyUserId", "legacyDentistId" FROM "User" WHERE "legacyUserId" = ANY(%s)', (list(por_uid),))
+                for uid_ol2, lu, ld in p.fetchall():
+                    alvo = por_uid[lu]
+                    if ld == alvo:
+                        continue
+                    if ld is None and alvo not in dentistas_existentes:
+                        p.execute('UPDATE "User" SET "legacyDentistId" = %s WHERE id = %s', (alvo, uid_ol2))
+                        dentistas_existentes.add(alvo)
+                        stats["login_adotado_por_dentista"] += 1
+                    else:
+                        p.execute('UPDATE "User" SET "legacyUserId" = NULL WHERE id = %s', (uid_ol2,))
+                        stats["login_trocou_de_dentista"] += 1
         # e-mail que mudou de dono no Ortholab 1: libera antes (senão a troca bate na regra de e-mail único)
         desejados = {(r.get("email") or "").lower(): r[key] for r in rows if r.get("email")}
         if desejados:
