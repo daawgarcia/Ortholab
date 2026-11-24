@@ -31,9 +31,9 @@ StandardError=append:/opt/ortholab2/logs/copia-arquivos.log
 U
 cat > /etc/systemd/system/ortholab2-copia-incremental.timer <<'U'
 [Unit]
-Description=Ortholab 2 - copia de arquivos de hora em hora
+Description=Ortholab 2 - copia de arquivos a cada 10 minutos
 [Timer]
-OnCalendar=*-*-* *:35:00
+OnCalendar=*-*-* *:02/10:00
 Persistent=true
 [Install]
 WantedBy=timers.target

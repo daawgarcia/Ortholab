@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cópia automática (de hora em hora) dos arquivos novos do Ortholab 1 para o bucket do Ortholab 2.
+# Cópia automática (a cada 10 minutos) dos arquivos novos do Ortholab 1 para o bucket do Ortholab 2.
 # Somente LEITURA no bucket antigo. Não roda enquanto a cópia inicial ainda estiver em andamento.
 set -euo pipefail
 log(){ echo "[$(date '+%F %T')] $*"; }
