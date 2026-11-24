@@ -124,10 +124,9 @@ export default function PatientsPage() {
       <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-0 divide-y">
           <div className="contents">
-            <div className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase bg-gray-50 col-span-4 grid grid-cols-[1fr_150px_80px_60px] gap-4">
+            <div className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase bg-gray-50 col-span-4 grid grid-cols-[1fr_220px_60px] gap-4">
               <span>Nome</span>
               <span>Dentista</span>
-              <span>Casos</span>
               <span>Status</span>
             </div>
           </div>
@@ -145,7 +144,7 @@ export default function PatientsPage() {
               <button
                 key={p.id}
                 onClick={() => navigate(`/patients/${p.id}`)}
-                className="col-span-4 grid grid-cols-[1fr_150px_80px_60px] gap-4 px-5 py-3.5 text-left hover:bg-gray-50 transition-colors items-center"
+                className="col-span-4 grid grid-cols-[1fr_220px_60px] gap-4 px-5 py-3.5 text-left hover:bg-gray-50 transition-colors items-center"
               >
                 <span className="flex items-center gap-2">
                   <UserCircle className="w-5 h-5 text-gray-300 shrink-0" />
@@ -158,7 +157,6 @@ export default function PatientsPage() {
                   {['M', 'F', 'male', 'female'].includes(p.gender) && <span className="text-xs text-gray-400">{p.gender === 'M' || p.gender === 'male' ? 'Masc' : 'Fem'}</span>}
                 </span>
                 <span className="text-sm text-gray-500 truncate">{p.dentist?.name || '—'}</span>
-                <span className="text-sm text-gray-500">{p._count?.cases ?? 0} caso(s)</span>
                 <span className={`text-xs font-medium ${p.active ? 'text-green-600' : 'text-gray-400'}`}>
                   {p.active ? 'Ativo' : 'Inativo'}
                 </span>
